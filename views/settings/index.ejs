@@ -1,0 +1,291 @@
+<h1 style="margin-top: 2rem;">Settings</h1>
+
+<div class="tabs">
+    <div class="tab active">General Settings</div>
+    <a href="/admin/settings/categories" class="tab" style="text-decoration: none; color: inherit;">Categories</a>
+</div>
+
+<div class="grid">
+    <!-- Countries -->
+    <div class="card">
+        <h3>Countries</h3>
+        <form action="/admin/settings/add" method="POST" class="form-group responsive-flex">
+            <input type="hidden" name="type" value="country">
+            <div class="flex-container">
+                <input type="text" name="value" placeholder="Add Country" required>
+                <button type="submit" class="btn btn-primary">Add</button>
+            </div>
+        </form>
+        <div class="table-responsive">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Country</th>
+                        <th style="width: 100px;">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% countries.forEach(function(c) { %>
+                        <tr>
+                            <td>
+                                <%= c.value %>
+                            </td>
+                            <td>
+                                <div style="display: flex; gap: 5px;">
+                                    <button
+                                        onclick="openEditModal('<%= c.id %>', '<%= c.value %>', 'Edit Country', 'Country Name')"
+                                        class="btn btn-secondary" style="padding: 4px 8px; font-size: 12px;">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button
+                                        onclick="openDeleteModal('/admin/settings/delete/<%= c.id %>', 'Are you sure you want to delete the country \'<%= c.value %>\'?')"
+                                        class="btn btn-danger" style="padding: 4px 8px; font-size: 12px;">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        <% }); %>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Mobile View -->
+        <div class="mobile-category-cards">
+            <% countries.forEach(function(c) { %>
+                <div class="category-card">
+                    <div class="category-card-header">
+                        <div class="category-card-name">
+                            <%= c.value %>
+                        </div>
+                        <div class="category-card-actions">
+                            <button
+                                onclick="openEditModal('<%= c.id %>', '<%= c.value %>', 'Edit Country', 'Country Name')"
+                                class="btn btn-secondary btn-sm">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button
+                                onclick="openDeleteModal('/admin/settings/delete/<%= c.id %>', 'Delete country \'<%= c.value %>\'?')"
+                                class="btn btn-danger btn-sm">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <% }); %>
+        </div>
+    </div>
+
+    <!-- Product Types -->
+    <div class="card">
+        <h3>Product Types</h3>
+        <form action="/admin/settings/add" method="POST" class="form-group responsive-flex">
+            <input type="hidden" name="type" value="product_type">
+            <div class="flex-container">
+                <input type="text" name="value" placeholder="Add Product Type" required>
+                <button type="submit" class="btn btn-primary">Add</button>
+            </div>
+        </form>
+        <div class="table-responsive">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Type</th>
+                        <th style="width: 100px;">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% productTypes.forEach(function(t) { %>
+                        <tr>
+                            <td>
+                                <%= t.value %>
+                            </td>
+                            <td>
+                                <div style="display: flex; gap: 5px;">
+                                    <button
+                                        onclick="openEditModal('<%= t.id %>', '<%= t.value %>', 'Edit Product Type', 'Type Name')"
+                                        class="btn btn-secondary" style="padding: 4px 8px; font-size: 12px;">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button
+                                        onclick="openDeleteModal('/admin/settings/delete/<%= t.id %>', 'Are you sure you want to delete the product type \'<%= t.value %>\'?')"
+                                        class="btn btn-danger" style="padding: 4px 8px; font-size: 12px;">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        <% }); %>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Mobile View -->
+        <div class="mobile-category-cards">
+            <% productTypes.forEach(function(t) { %>
+                <div class="category-card">
+                    <div class="category-card-header">
+                        <div class="category-card-name">
+                            <%= t.value %>
+                        </div>
+                        <div class="category-card-actions">
+                            <button
+                                onclick="openEditModal('<%= t.id %>', '<%= t.value %>', 'Edit Product Type', 'Type Name')"
+                                class="btn btn-secondary btn-sm">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button
+                                onclick="openDeleteModal('/admin/settings/delete/<%= t.id %>', 'Delete product type \'<%= t.value %>\'?')"
+                                class="btn btn-danger btn-sm">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <% }); %>
+        </div>
+    </div>
+</div>
+
+<!-- Custom Modals Overlay -->
+<div id="modalOverlay" class="modal-overlay" style="display: none;">
+
+    <!-- Edit Setting Modal -->
+    <div id="editSettingModal" class="custom-modal-content" style="display: none;">
+        <div class="modal-header">
+            <h3 id="editModalTitle">Edit Setting</h3>
+            <button onclick="closeAllModals()" class="close-btn">&times;</button>
+        </div>
+        <form id="editSettingForm" method="POST" style="margin-top: 1.5rem;">
+            <div class="form-group">
+                <label id="editLabel">Value</label>
+                <input type="text" name="value" id="edit_value" required>
+            </div>
+            <div style="display: flex; gap: 10px; margin-top: 2rem;">
+                <button type="button" onclick="closeAllModals()" class="btn btn-secondary"
+                    style="flex: 1;">Cancel</button>
+                <button type="submit" class="btn btn-primary" style="flex: 1;">Save Changes</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div id="deleteConfirmationModal" class="custom-modal-content"
+        style="display: none; border-top: 4px solid var(--danger);">
+        <div style="text-align: center; padding: 1rem 0;">
+            <div
+                style="width: 60px; height: 60px; background: #fee2e2; color: var(--danger); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.5rem; font-size: 1.5rem;">
+                <i class="fas fa-exclamation-triangle"></i>
+            </div>
+            <h3 style="margin-bottom: 0.5rem;">Are you sure?</h3>
+            <p id="deleteModalMessage" style="color: var(--gray-600); font-size: 0.95rem;">This action cannot be undone.
+            </p>
+        </div>
+        <div style="display: flex; gap: 10px; margin-top: 1.5rem;">
+            <button type="button" onclick="closeAllModals()" class="btn btn-secondary" style="flex: 1;">Cancel</button>
+            <form id="deleteConfirmForm" method="POST" style="flex: 1;">
+                <button type="submit" class="btn btn-danger" style="width: 100%;">Yes, Delete</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+    .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.6);
+        backdrop-filter: blur(4px);
+        z-index: 2000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .custom-modal-content {
+        background: var(--white);
+        padding: 2rem;
+        border-radius: 12px;
+        width: 100%;
+        max-width: 400px;
+        box-shadow: var(--shadow-lg);
+        animation: modalScaleUp 0.2s ease-out;
+    }
+
+    .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 1px solid var(--gray-100);
+        padding-bottom: 1rem;
+    }
+
+    .close-btn {
+        background: none;
+        border: none;
+        font-size: 1.5rem;
+        color: var(--gray-400);
+        cursor: pointer;
+        line-height: 1;
+    }
+
+    @keyframes modalScaleUp {
+        from {
+            opacity: 0;
+            transform: scale(0.95) translateY(10px);
+        }
+
+        to {
+            opacity: 1;
+            transform: scale(1) translateY(0);
+        }
+    }
+</style>
+
+<script>
+    function openEditModal(id, value, title, labelText) {
+        const overlay = document.getElementById('modalOverlay');
+        const modal = document.getElementById('editSettingModal');
+        const form = document.getElementById('editSettingForm');
+        const valueInput = document.getElementById('edit_value');
+        const titleEl = document.getElementById('editModalTitle');
+        const labelEl = document.getElementById('editLabel');
+
+        form.action = '/admin/settings/edit/' + id;
+        valueInput.value = value;
+        titleEl.textContent = title;
+        labelEl.textContent = labelText || "Value";
+
+        overlay.style.display = 'flex';
+        modal.style.display = 'block';
+        document.getElementById('deleteConfirmationModal').style.display = 'none';
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function openDeleteModal(actionUrl, message) {
+        const overlay = document.getElementById('modalOverlay');
+        const modal = document.getElementById('deleteConfirmationModal');
+        const form = document.getElementById('deleteConfirmForm');
+        const messageEl = document.getElementById('deleteModalMessage');
+
+        form.action = actionUrl;
+        messageEl.textContent = message;
+
+        overlay.style.display = 'flex';
+        modal.style.display = 'block';
+        document.getElementById('editSettingModal').style.display = 'none';
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function closeAllModals() {
+        document.getElementById('modalOverlay').style.display = 'none';
+    }
+
+    // Close on overlay click
+    document.getElementById('modalOverlay').addEventListener('click', function (e) {
+        if (e.target === this) closeAllModals();
+    });
+</script>

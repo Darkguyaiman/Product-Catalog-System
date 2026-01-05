@@ -1,0 +1,272 @@
+﻿<div class="companies-page">
+    <% if (typeof query !=='undefined' && query.error) { %>
+        <div class="alert alert-danger"
+            style="margin-bottom: 20px; padding: 12px; background: #fee2e2; color: #dc2626; border-radius: 8px; font-weight: 600;">
+            <i class="fas fa-exclamation-circle"></i>
+            <%= query.error %>
+        </div>
+        <% } %>
+            <div class="card-header companies-header" style="gap: 15px;">
+                <h1>Edit Company: <%= company.name %>
+                </h1>
+                <a href="/admin/companies" class="btn btn-secondary btn-sm" title="Go Back">
+                    <i class="fas fa-arrow-left"></i>
+                </a>
+            </div>
+
+            <div class="card" style="max-width: 800px; margin: 0 auto;">
+                <form id="editCompanyForm" action="/admin/companies/edit/<%= company.id %>" method="POST"
+                    enctype="multipart/form-data">
+                    <input type="hidden" name="existing_logo" id="existing_logo" value="<%= company.logo %>">
+                    <input type="hidden" name="logo_removed" id="logo_removed" value="false">
+
+                    <div class="grid-2">
+                        <div class="form-group">
+                            <label>Company/Brand Name <span style="color: var(--danger);">*</span></label>
+                            <input type="text" name="name" value="<%= company.name %>" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Registration Number</label>
+                            <input type="text" name="reg_no" value="<%= company.reg_no %>">
+                        </div>
+                        <div class="form-group">
+                            <label>Registration Date</label>
+                            <input type="date" name="reg_date"
+                                value="<%= company.reg_date ? new Date(company.reg_date).toISOString().split('T')[0] : '' %>">
+                        </div>
+                        <div class="form-group">
+                            <label>Contact Number</label>
+                            <input type="text" name="contact_number" value="<%= company.contact_number %>">
+                        </div>
+                        <div class="form-group">
+                            <label>Email Address</label>
+                            <input type="email" name="email" value="<%= company.email %>">
+                        </div>
+                        <div class="form-group">
+                            <label>Website URL</label>
+                            <input type="text" name="website" value="<%= company.website %>">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Company Address</label>
+                        <textarea name="address" rows="3"><%= company.address %></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Company Logo</label>
+                        <div class="upload-zone" id="logoUploadZone">
+                            <div class="upload-content" <%=company.logo ? 'style="display: none;"' : '' %>>
+                                <i class="fas fa-cloud-upload-alt upload-icon"></i>
+                                <p class="upload-text">Drag and drop logo here or <span
+                                        class="browse-link">browse</span></p>
+                                <p class="upload-hint">SVG, PNG, JPG (Recommended: Square, 400x400px)</p>
+                            </div>
+                            <input type="file" name="logo" id="logoInput" accept="image/*" style="display: none;">
+
+                            <div id="filePreview" class="file-preview"
+                                style="<%= company.logo ? 'display: flex;' : 'display: none;' %>">
+                                <img id="previewImg" src="<%= company.logo || '' %>" alt="Preview">
+                                <div class="file-info" id="fileInfoChip"
+                                    style="<%= company.logo ? 'display: flex;' : 'display: none;' %>">
+                                    <span id="fileName" class="file-name">
+                                        <%= company.logo ? 'Current Logo' : '' %>
+                                    </span>
+                                    <button type="button" class="remove-file" id="removeLogo" title="Remove Logo">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div
+                        style="display: flex; gap: 15px; margin-top: 2rem; border-top: 1px solid var(--gray-100); padding-top: 2rem;">
+                        <button type="submit" class="btn btn-primary" id="submitBtn" style="flex: 2;">
+                            <i class="fas fa-save"></i> <span>Update Company</span>
+                        </button>
+                        <a href="/admin/companies" class="btn btn-secondary" style="flex: 1;">Cancel</a>
+                    </div>
+                </form>
+            </div>
+</div>
+
+<style>
+    .upload-zone {
+        border: 2px dashed var(--gray-300);
+        border-radius: 12px;
+        padding: 2.5rem 1.5rem;
+        text-align: center;
+        background: var(--gray-50);
+        transition: all 0.2s ease;
+        cursor: pointer;
+        position: relative;
+    }
+
+    .upload-zone:hover,
+    .upload-zone.dragover {
+        border-color: var(--blue-medium);
+        background: rgba(0, 91, 150, 0.05);
+    }
+
+    .upload-icon {
+        font-size: 3rem;
+        color: var(--gray-400);
+        margin-bottom: 1rem;
+    }
+
+    .upload-text {
+        font-weight: 600;
+        color: var(--gray-700);
+        margin-bottom: 0.5rem;
+    }
+
+    .browse-link {
+        color: var(--blue-medium);
+        text-decoration: underline;
+    }
+
+    .upload-hint {
+        font-size: 0.85rem;
+        color: var(--gray-500);
+    }
+
+    .file-preview {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 15px;
+    }
+
+    #previewImg {
+        width: 120px;
+        height: 120px;
+        object-fit: contain;
+        border-radius: 8px;
+        background: white;
+        padding: 10px;
+        box-shadow: var(--shadow-sm);
+        border: 1px solid var(--gray-200);
+    }
+
+    .file-info {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        background: white;
+        padding: 8px 15px;
+        border-radius: 20px;
+        border: 1px solid var(--gray-200);
+        box-shadow: var(--shadow-sm);
+    }
+
+    .file-name {
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: var(--gray-700);
+        max-width: 200px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .remove-file {
+        background: #fff;
+        color: var(--danger);
+        border: 1px solid #fee2e2;
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.2s;
+        box-shadow: var(--shadow-sm);
+    }
+
+    .remove-file:hover {
+        background: var(--danger);
+        color: white;
+        border-color: var(--danger);
+        transform: scale(1.1);
+    }
+</style>
+
+<script>
+    const zone = document.getElementById('logoUploadZone');
+    const input = document.getElementById('logoInput');
+    const content = zone.querySelector('.upload-content');
+    const preview = document.getElementById('filePreview');
+    const previewImg = document.getElementById('previewImg');
+    const fileName = document.getElementById('fileName');
+    const removeBtn = document.getElementById('removeLogo');
+
+    zone.addEventListener('click', () => input.click());
+
+    zone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        zone.classList.add('dragover');
+    });
+
+    zone.addEventListener('dragleave', () => {
+        zone.classList.remove('dragover');
+    });
+
+    zone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        zone.classList.remove('dragover');
+        if (e.dataTransfer.files.length) {
+            input.files = e.dataTransfer.files;
+            handleFile(input.files[0]);
+        }
+    });
+
+    input.addEventListener('change', () => {
+        if (input.files.length) {
+            handleFile(input.files[0]);
+        }
+    });
+
+    function handleFile(file) {
+        if (!file.type.startsWith('image/')) {
+            alert('Please upload an image file');
+            return;
+        }
+
+        content.style.display = 'none';
+        preview.style.display = 'flex';
+        document.getElementById('fileInfoChip').style.display = 'flex';
+        removeBtn.style.display = 'flex';
+        fileName.textContent = file.name;
+        document.getElementById('logo_removed').value = 'false';
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            previewImg.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+    }
+
+    removeBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        input.value = '';
+        content.style.display = 'block';
+        preview.style.display = 'none';
+        document.getElementById('fileInfoChip').style.display = 'none';
+
+        // Mark as removed for backend
+        document.getElementById('logo_removed').value = 'true';
+        
+    });
+</script>
+
+<script>
+    document.getElementById('editCompanyForm').addEventListener('submit', function() {
+        const btn = document.getElementById('submitBtn');
+        btn.classList.add('btn-loading');
+        btn.disabled = true;
+        btn.querySelector('span').textContent = 'Updating...';
+    });
+</script>
+

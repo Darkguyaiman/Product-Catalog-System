@@ -1,0 +1,49 @@
+/* Categories Mobile Card View */
+.mobile-category-cards {
+    display: none;
+}
+
+@media screen and (max-width: 768px) {
+    .mobile-category-cards {
+        display: block;
+    }
+
+    .category-card {
+        background: var(--white);
+        border-radius: 12px;
+        padding: 1.25rem;
+        margin-bottom: 1rem;
+        border: 1px solid var(--gray-200);
+        box-shadow: var(--shadow-sm);
+    }
+
+    .category-card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 0.75rem;
+    }
+
+    .category-card-name {
+        font-weight: 700;
+        color: var(--blue-darkest);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .category-card-actions {
+        display: flex;
+        gap: 8px;
+    }
+
+    .category-card-details {
+        font-size: 0.9rem;
+        color: var(--gray-600);
+    }
+
+    /* Hide Table on Mobile */
+    .table-responsive table {
+        display: none !important;
+    }
+}

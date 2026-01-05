@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Product Catalog System</title>
+
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <link rel="icon" type="image/x-icon" href="/Favicon.ico">
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/chip.css">
+</head>
+
+<body class="<%= path === '/auth/login' ? 'auth-page' : '' %>">
+    <% if (locals.user) { %>
+        <!-- Mobile Sidebar Toggle -->
+        <button id="sidebarToggle" class="sidebar-toggle" aria-label="Toggle Menu">
+            <i class="fa-solid fa-bars"></i>
+        </button>
+
+        <!-- Sidebar Backdrop -->
+        <div id="sidebarBackdrop" class="sidebar-backdrop"></div>
+
+        <div class="main-wrapper">
+            <nav class="sidebar">
+                <div class="sidebar-header">
+                    <img src="/QSS Healthcare.png" alt="Logo" style="height: 35px; margin-bottom: 10px;">
+                    <span
+                        style="font-size: 1.1rem; font-weight: 700; letter-spacing: -0.5px; text-align: center;">Product
+                        Catalog</span>
+                </div>
+                <div class="sidebar-nav">
+                    <a href="/admin" class="sidebar-link <%= path === '/admin' ? 'active' : '' %>">
+                        <i class="fa-solid fa-chart-line"></i> Dashboard
+                    </a>
+                    <a href="/admin/marketing"
+                        class="sidebar-link <%= path.startsWith('/admin/marketing') ? 'active' : '' %>">
+                        <i class="fa-solid fa-bullhorn"></i> Marketing
+                    </a>
+                    <a href="/admin/products"
+                        class="sidebar-link <%= path.startsWith('/admin/products') ? 'active' : '' %>">
+                        <i class="fa-solid fa-boxes-stacked"></i> Products
+                    </a>
+                    <a href="/admin/suppliers"
+                        class="sidebar-link <%= path.startsWith('/admin/suppliers') ? 'active' : '' %>">
+                        <i class="fa-solid fa-truck-field"></i> Suppliers
+                    </a>
+                    <a href="/admin/companies"
+                        class="sidebar-link <%= path.startsWith('/admin/companies') ? 'active' : '' %>">
+                        <i class="fa-solid fa-building"></i> Companies
+                    </a>
+                    <a href="/admin/settings"
+                        class="sidebar-link <%= path.startsWith('/admin/settings') ? 'active' : '' %>">
+                        <i class="fa-solid fa-gear"></i> Settings
+                    </a>
+                </div>
+                <div class="sidebar-footer">
+                    <a href="/home" target="_blank" class="sidebar-link">
+                        <i class="fa-solid fa-external-link-alt"></i> View Public Site
+                    </a>
+                    <a href="/auth/logout" class="sidebar-link">
+                        <i class="fa-solid fa-sign-out-alt"></i> Logout
+                    </a>
+                </div>
+            </nav>
+
+            <!-- Main Content -->
+            <main class="main-content">
+                <div class="container">
+                    <%- body %>
+                </div>
+            </main>
+        </div>
+        <% } else { %>
+            <!-- Public Navbar -->
+            <% if (path !=='/auth/login' ) { %>
+                <nav class="public-navbar">
+                    <div class="container">
+                        <a href="/home" class="nav-brand">
+                            <img src="/QSS Healthcare.png" alt="Logo"
+                                style="height: 32px; margin-right: 10px; vertical-align: middle;">
+                            <span>Product Catalog</span>
+                        </a>
+                        <div class="nav-links">
+                            <a href="/home" class="nav-link <%= path === '/home' || path === '/' ? 'active' : '' %>">
+                                <i class="fa-solid fa-house"></i>
+                                <span>Home</span>
+                            </a>
+                            <a href="/products"
+                                class="nav-link <%= path.startsWith('/products') || path.startsWith('/product/') ? 'active' : '' %>">
+                                <i class="fa-solid fa-boxes-stacked"></i>
+                                <span>Products</span>
+                            </a>
+                            <a href="/auth/login" class="nav-link <%= path === '/auth/login' ? 'active' : '' %>">
+                                <i class="fa-solid fa-user-shield"></i>
+                                <span>Login</span>
+                            </a>
+                        </div>
+                    </div>
+                </nav>
+                <% } %>
+
+                    <%- body %>
+
+                        <% if (path !=='/auth/login' ) { %>
+                            <footer
+                                style="background-color: var(--blue-darkest); color: var(--blue-lightest); padding: 3rem 0; margin-top: 4rem;">
+                                <div class="container text-center">
+                                    <p>&copy; <%= new Date().getFullYear() %> QSS Healthcare Product Catalog System. All
+                                            rights
+                                            reserved.</p>
+                                </div>
+                            </footer>
+                            <% } %>
+                                <% } %>
+
+                                    <% if (locals.user) { %>
+                                        <script>
+                                            document.addEventListener('DOMContentLoaded', () => {
+                                                const sidebar = document.querySelector('.sidebar');
+                                                const sidebarToggle = document.querySelector('#sidebarToggle');
+                                                const backdrop = document.querySelector('#sidebarBackdrop');
+
+                                                if (sidebarToggle) {
+                                                    sidebarToggle.addEventListener('click', () => {
+                                                        sidebar.classList.toggle('open');
+                                                        backdrop.classList.toggle('active');
+
+                                                        const icon = sidebarToggle.querySelector('i');
+                                                        if (sidebar.classList.contains('open')) {
+                                                            icon.className = 'fa-solid fa-xmark';
+                                                        } else {
+                                                            icon.className = 'fa-solid fa-bars';
+                                                        }
+                                                    });
+                                                }
+
+                                                if (backdrop) {
+                                                    backdrop.addEventListener('click', () => {
+                                                        sidebar.classList.remove('open');
+                                                        backdrop.classList.remove('active');
+                                                        const icon = sidebarToggle.querySelector('i');
+                                                        if (icon) {
+                                                            icon.className = 'fa-solid fa-bars';
+                                                        }
+                                                    });
+                                                }
+                                            });
+                                        </script>
+                                        <% } %>
+</body>
+
+</html>

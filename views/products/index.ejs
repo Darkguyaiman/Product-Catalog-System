@@ -1,0 +1,210 @@
+<div class="companies-page">
+    <div class="card-header companies-header"
+        style="justify-content: space-between; align-items: center; border-bottom: none; margin-bottom: 1rem; padding-bottom: 2rem; margin-top: 2rem;">
+        <h1 style="margin: 0;">Product Management</h1>
+        <a href="/admin/products/create" class="btn btn-primary add-company-btn">
+            <i class="fas fa-plus"></i> <span>Register New Product</span>
+        </a>
+    </div>
+
+    <!-- Desktop Table View -->
+    <div class="card desktop-only">
+        <!-- Filters / Search -->
+        <!-- Filters / Search -->
+        <form action="/admin/products" method="GET"
+            style="padding-bottom: 1.5rem; border-bottom: 1px solid var(--gray-200); margin-bottom: 1.5rem; display: flex; gap: 1rem;">
+            <div style="position: relative; flex: 2;">
+                <i class="fas fa-search"
+                    style="position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: var(--gray-400);"></i>
+                <input type="text" name="search" placeholder="Search products (Press Enter)..."
+                    value="<%= typeof search !== 'undefined' ? search : '' %>"
+                    style="width: 100%; padding: 0.75rem 1rem 0.75rem 2.5rem; border: 1px solid var(--gray-300); border-radius: 6px;">
+            </div>
+            <select name="category" onchange="this.form.submit()"
+                style="padding: 0.75rem 1rem; border: 1px solid var(--gray-300); border-radius: 6px; min-width: 150px; width: auto;">
+                <option value="">All Categories</option>
+                <% if(typeof categories !=='undefined' ) { %>
+                    <% categories.forEach(c=> { %>
+                        <option value="<%= c.id %>" <%=(typeof selectedCategory !=='undefined' &&
+                            selectedCategory==c.id) ? 'selected' : '' %>>
+                            <%= c.name %>
+                        </option>
+                        <% }) %>
+                            <% } %>
+            </select>
+        </form>
+
+        <div class="table-responsive">
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width: 80px;">Image</th>
+                        <th style="width: 300px;">Product Info</th>
+                        <th>Reg. Numbers</th>
+                        <th>Description</th>
+                        <th style="text-align: center; width: 120px;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% if (products.length===0) { %>
+                        <tr>
+                            <td colspan="5" style="text-align: center; padding: 2rem; color: var(--gray-500);">
+                                No products found. Click "Register New Product" to get started.
+                            </td>
+                        </tr>
+                        <% } %>
+                            <% products.forEach(p=> { %>
+                                <tr>
+                                    <td>
+                                        <div
+                                            style="width: 50px; height: 50px; background: var(--gray-50); border-radius: 8px; display: flex; align-items: center; justify-content: center; border: 1px solid var(--gray-100); overflow: hidden;">
+                                            <% if(p.product_image) { %>
+                                                <img src="<%= p.product_image %>" alt="Product Image"
+                                                    style="width: 100%; height: 100%; object-fit: cover;">
+                                                <% } else { %>
+                                                    <i class="fas fa-box"
+                                                        style="color: var(--gray-300); font-size: 1.5rem;"></i>
+                                                    <% } %>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div>
+                                            <div style="font-weight: 700; color: var(--blue-darkest);">
+                                                <%= p.model %>
+                                            </div>
+                                            <span class="badge badge-primary"
+                                                style="font-size: 0.75rem; margin-top: 4px;">
+                                                <%= p.code %>
+                                            </span>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div style="font-size: 0.9rem;">
+                                            <strong>Reg:</strong>
+                                            <%= p.reg_no || '-' %>
+                                        </div>
+                                        <div style="font-size: 0.85rem; color: var(--gray-500); margin-top: 2px;">
+                                            <strong>MDA:</strong>
+                                            <%= p.mda_reg_no || '-' %>
+                                        </div>
+                                    </td>
+                                    <td style="color: var(--gray-600); font-size: 0.9rem;">
+                                        <%= p.description ? (p.description.length> 60 ? p.description.substring(0, 60) +
+                                            '...' : p.description) : '-' %>
+                                    </td>
+                                    <td>
+                                        <div style="display: flex; gap: 8px; justify-content: center;">
+                                            <a href="/admin/products/edit/<%= p.id %>" class="btn btn-secondary btn-sm"
+                                                title="Edit">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            <form action="/admin/products/delete/<%= p.id %>" method="POST"
+                                                style="display:inline;"
+                                                onsubmit="return confirm('Are you sure you want to delete this product?');">
+                                                <button type="submit" class="btn btn-danger btn-sm" title="Delete">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <% }) %>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination Placeholder -->
+        <div
+            style="padding-top: 1rem; border-top: 1px solid var(--gray-200); display: flex; justify-content: space-between; align-items: center; margin-top: 1rem;">
+            <span style="font-size: 0.9rem; color: var(--gray-500);">Showing <%= products.length %> results</span>
+            <div style="display: flex; gap: 0.5rem;">
+                <button class="btn btn-outline btn-sm" disabled><i class="fas fa-chevron-left"></i></button>
+                <button class="btn btn-outline btn-sm" disabled><i class="fas fa-chevron-right"></i></button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mobile Cards -->
+    <div class="mobile-category-cards">
+        <!-- Mobile Search -->
+        <!-- Mobile Search -->
+        <div
+            style="background: white; padding: 1rem; border-radius: 12px; border: 1px solid var(--gray-200); box-shadow: var(--shadow-sm); margin-bottom: 1rem;">
+            <form action="/admin/products" method="GET">
+                <div style="position: relative; margin-bottom: 0.75rem;">
+                    <i class="fas fa-search"
+                        style="position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: var(--gray-400);"></i>
+                    <input type="text" name="search" placeholder="Search products..."
+                        value="<%= typeof search !== 'undefined' ? search : '' %>"
+                        style="width: 100%; padding: 0.75rem 1rem 0.75rem 2.5rem; border: 1px solid var(--gray-300); border-radius: 6px;">
+                </div>
+                <select name="category" onchange="this.form.submit()"
+                    style="width: 100%; padding: 0.75rem 1rem; border: 1px solid var(--gray-300); border-radius: 6px;">
+                    <option value="">All Categories</option>
+                    <% if(typeof categories !=='undefined' ) { %>
+                        <% categories.forEach(c=> { %>
+                            <option value="<%= c.id %>" <%=(typeof selectedCategory !=='undefined' &&
+                                selectedCategory==c.id) ? 'selected' : '' %>>
+                                <%= c.name %>
+                            </option>
+                            <% }) %>
+                                <% } %>
+                </select>
+            </form>
+        </div>
+
+        <% products.forEach(p=> { %>
+            <div class="category-card">
+                <div class="category-card-header">
+                    <div class="category-card-name">
+                        <div
+                            style="width: 40px; height: 40px; background: var(--gray-50); border-radius: 6px; display: flex; align-items: center; justify-content: center; border: 1px solid var(--gray-100); margin-right: 10px; flex-shrink: 0; overflow: hidden;">
+                            <% if(p.product_image) { %>
+                                <img src="<%= p.product_image %>" alt="Product Image"
+                                    style="width: 100%; height: 100%; object-fit: cover;">
+                                <% } else { %>
+                                    <i class="fas fa-box" style="color: var(--gray-400);"></i>
+                                    <% } %>
+                        </div>
+                        <div>
+                            <div>
+                                <%= p.model %>
+                            </div>
+                            <span class="badge badge-primary"
+                                style="font-size: 0.65rem; padding: 2px 6px; margin-top: 2px;">
+                                <%= p.code %>
+                            </span>
+                        </div>
+                    </div>
+                    <div class="category-card-actions">
+                        <a href="/admin/products/edit/<%= p.id %>" class="btn btn-secondary btn-sm">
+                            <i class="fas fa-edit"></i>
+                        </a>
+                        <form action="/admin/products/delete/<%= p.id %>" method="POST" style="display:inline;"
+                            onsubmit="return confirm('Delete <%= p.model %>?');">
+                            <button type="submit" class="btn btn-danger btn-sm">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+                <div class="category-card-details" style="flex-direction: column; align-items: flex-start; gap: 8px;">
+                    <div style="font-size: 0.85rem;">
+                        <strong>Reg:</strong>
+                        <%= p.reg_no || 'N/A' %>
+                            <% if(p.mda_reg_no) { %>
+                                <span style="margin-left: 5px; color: var(--gray-400);">|</span> <strong>MDA:</strong>
+                                <%= p.mda_reg_no %>
+                                    <% } %>
+                    </div>
+                    <% if(p.description) { %>
+                        <div
+                            style="font-size: 0.85rem; color: var(--gray-600); display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
+                            <%= p.description %>
+                        </div>
+                        <% } %>
+                </div>
+            </div>
+            <% }) %>
+    </div>
+</div>

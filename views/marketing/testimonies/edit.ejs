@@ -1,0 +1,181 @@
+<div class="card-header marketing-header">
+    <h1>Edit Testimony</h1>
+    <a href="/admin/marketing" class="btn btn-secondary btn-sm" title="Go Back">
+        <i class="fas fa-arrow-left"></i>
+    </a>
+</div>
+
+<div class="card" style="max-width: 800px; margin: 20px auto;">
+    <form action="/admin/marketing/testimonies/edit/<%= testimony.id %>" method="POST" id="editTestimonyForm">
+        <div class="grid-2">
+            <div class="form-group">
+                <label>Client Name <span style="color: var(--danger);">*</span></label>
+                <input type="text" name="client_name" required value="<%= testimony.client_name %>">
+            </div>
+            <div class="form-group">
+                <label>Location</label>
+                <input type="text" name="location" value="<%= testimony.location %>">
+            </div>
+            <div class="form-group">
+                <label>Treatment Date</label>
+                <input type="date" name="start_date"
+                    value="<%= testimony.start_date ? new Date(testimony.start_date).toISOString().split('T')[0] : '' %>">
+            </div>
+            <div class="form-group">
+                <label>Treatment</label>
+                <input type="text" name="treatment" value="<%= testimony.treatment %>">
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label>Media Links (Video/Review)</label>
+            <div id="links-container">
+                <% if(testimony.links && testimony.links.length> 0) { %>
+                    <% testimony.links.forEach(link=> { %>
+                        <input type="text" name="links" value="<%= link %>" style="margin-bottom: 5px;">
+                        <% }) %>
+                            <% } else { %>
+                                <input type="text" name="links" placeholder="https://" style="margin-bottom: 5px;">
+                                <% } %>
+            </div>
+            <button type="button" class="btn btn-secondary btn-sm" onclick="addLinkInput()" style="margin-top: 5px;">+
+                Add Another Link</button>
+        </div>
+
+        <div class="form-group">
+            <label>Linked Products</label>
+            <div class="chip-wrapper" id="productChipWrapper">
+                <select id="productSelectInput">
+                    <option value="">Add Product...</option>
+                    <% products.forEach(p=> { %>
+                        <option value="<%= p.id %>">
+                            <%= p.code %> - <%= p.model %>
+                        </option>
+                        <% }) %>
+                </select>
+            </div>
+            <select name="product_ids" id="productHiddenSelect" multiple style="display:none;">
+                <% products.forEach(p=> { %>
+                    <option value="<%= p.id %>" <%=(testimony.product_ids || []).includes(p.id) ? 'selected' : '' %>>
+                        <%= p.code %> - <%= p.model %>
+                    </option>
+                    <% }) %>
+            </select>
+        </div>
+
+        <div style="margin-top: 2rem; padding-top: 1rem; border-top: 1px solid var(--gray-100);">
+            <button type="submit" class="btn btn-primary" style="width: 100%;">Update Testimony</button>
+        </div>
+    </form>
+</div>
+
+<style>
+    .chip-wrapper {
+        border: 1px solid var(--gray-300);
+        border-radius: 6px;
+        padding: 0.5rem;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        min-height: 45px;
+        background: white;
+        align-items: center;
+    }
+
+    .chip-wrapper:focus-within {
+        border-color: var(--blue-medium);
+        box-shadow: 0 0 0 3px rgba(0, 91, 150, 0.1);
+    }
+
+    .chip {
+        background: var(--blue-lightest);
+        color: var(--blue-dark);
+        padding: 4px 10px;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-weight: 500;
+        border: 1px solid var(--blue-light);
+    }
+
+    .chip-remove {
+        background: none;
+        border: none;
+        color: var(--blue-medium);
+        cursor: pointer;
+        padding: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.9rem;
+    }
+
+    .chip-remove:hover {
+        color: var(--danger);
+    }
+
+    .chip-wrapper select {
+        border: none;
+        outline: none;
+        padding: 4px;
+        flex: 1;
+        min-width: 150px;
+        font-size: 0.95rem;
+        background: transparent;
+    }
+</style>
+
+<script>
+    function addLinkInput() {
+        const container = document.getElementById('links-container');
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.name = 'links';
+        input.placeholder = 'https://';
+        input.style.marginBottom = '5px';
+        container.appendChild(input);
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        const wrapper = document.getElementById('productChipWrapper');
+        const selectInput = document.getElementById('productSelectInput');
+        const hiddenSelect = document.getElementById('productHiddenSelect');
+
+        function updateChips() {
+            wrapper.querySelectorAll('.chip').forEach(c => c.remove());
+            Array.from(hiddenSelect.options).forEach(opt => {
+                if (opt.selected) {
+                    const chip = document.createElement('div');
+                    chip.className = 'chip';
+                    chip.innerHTML = `${opt.text} <button type="button" class="chip-remove" data-value="${opt.value}"><i class="fas fa-times"></i></button>`;
+                    wrapper.insertBefore(chip, selectInput);
+                }
+            });
+            wrapper.querySelectorAll('.chip-remove').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const realVal = e.currentTarget.dataset.value;
+                    const opt = hiddenSelect.querySelector(`option[value="${realVal}"]`);
+                    if (opt) opt.selected = false;
+                    updateChips();
+                });
+            });
+            Array.from(hiddenSelect.options).forEach(opt => {
+                const inputOpt = selectInput.querySelector(`option[value="${opt.value}"]`);
+                if (inputOpt) {
+                    inputOpt.disabled = opt.selected;
+                    inputOpt.style.display = opt.selected ? 'none' : 'block';
+                }
+            });
+            selectInput.value = "";
+        }
+        selectInput.addEventListener('change', () => {
+            if (selectInput.value) {
+                hiddenSelect.querySelector(`option[value="${selectInput.value}"]`).selected = true;
+                updateChips();
+            }
+        });
+        updateChips();
+    });
+</script>

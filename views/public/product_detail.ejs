@@ -1,0 +1,249 @@
+<div class="container" style="padding-top: 2rem; padding-bottom: 4rem;">
+    <!-- Breadcrumb -->
+    <div style="margin-bottom: 1.5rem;">
+        <a href="/products" style="color: var(--gray-500); text-decoration: none;">
+            <i class="fa-solid fa-arrow-left"></i> Back to Products
+        </a>
+    </div>
+
+    <div class="card" style="padding: 0; overflow: hidden; margin-bottom: 2rem;">
+        <div class="grid grid-2" style="gap: 0;">
+            <!-- Left: Product Image Placeholder -->
+            <div
+                style="background-color: var(--gray-100); min-height: 400px; display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden;">
+                <% if (product.product_image) { %>
+                    <img src="<%= product.product_image %>" alt="<%= product.model %>"
+                        style="width: 100%; height: 100%; object-fit: contain;">
+                    <% } else { %>
+                        <i class="fa-solid fa-box-open" style="font-size: 8rem; color: var(--gray-300);"></i>
+                        <% } %>
+                            <% if (product.mda_cert) { %>
+                                <div style="position: absolute; bottom: 20px; right: 20px;">
+                                    <a href="<%= product.mda_cert %>" target="_blank" class="btn btn-secondary btn-sm">
+                                        <i class="fa-solid fa-certificate"></i> MDA Certificate
+                                    </a>
+                                </div>
+                                <% } %>
+            </div>
+
+            <!-- Right: Product Info -->
+            <div style="padding: 3rem;">
+                <div class="d-flex justify-between align-center mb-2">
+                    <span class="badge badge-primary">
+                        <%= product.code %>
+                    </span>
+                    <% if (product.mda_reg_no) { %>
+                        <span style="color: var(--gray-500); font-size: 0.9rem;">MDA Reg: <%= product.mda_reg_no %>
+                                </span>
+                        <% } %>
+                </div>
+
+                <h1 style="font-size: 2.5rem; margin-bottom: 0.5rem; color: var(--blue-darkest);">
+                    <%= product.model %>
+                </h1>
+
+                <% if (product.reg_no) { %>
+                    <p style="color: var(--gray-500); margin-bottom: 1.5rem;">Reg No: <%= product.reg_no %>
+                    </p>
+                    <% } %>
+
+                        <div style="margin-bottom: 2rem; line-height: 1.6; color: var(--gray-700);">
+                            <%= product.description %>
+                        </div>
+
+                        <div style="display: flex; gap: 1rem;">
+                            <a href="#contact" class="btn btn-primary">
+                                <i class="fa-solid fa-envelope"></i> Request Quote
+                            </a>
+                            <a href="#marketing" class="btn btn-outline">
+                                <i class="fa-solid fa-download"></i> Downloads
+                            </a>
+                        </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Product Details Tabs -->
+    <div class="card" style="padding: 0; min-height: 400px;">
+        <div class="tabs-header"
+            style="display: flex; border-bottom: 1px solid var(--gray-200); background-color: var(--gray-50);">
+            <button class="tab-btn active" onclick="switchTab(event, 'specs')"
+                style="padding: 1rem 2rem; border: none; background: none; font-weight: 600; color: var(--gray-600); cursor: pointer; border-bottom: 3px solid transparent;">
+                <i class="fa-solid fa-list-check" style="margin-right: 8px;"></i> Specifications
+            </button>
+            <button class="tab-btn" onclick="switchTab(event, 'marketing')"
+                style="padding: 1rem 2rem; border: none; background: none; font-weight: 600; color: var(--gray-600); cursor: pointer; border-bottom: 3px solid transparent;">
+                <i class="fa-solid fa-file-pdf" style="margin-right: 8px;"></i> Resources
+            </button>
+            <button class="tab-btn" onclick="switchTab(event, 'events')"
+                style="padding: 1rem 2rem; border: none; background: none; font-weight: 600; color: var(--gray-600); cursor: pointer; border-bottom: 3px solid transparent;">
+                <i class="fa-solid fa-calendar-check" style="margin-right: 8px;"></i> Events
+            </button>
+            <button class="tab-btn" onclick="switchTab(event, 'testimonies')"
+                style="padding: 1rem 2rem; border: none; background: none; font-weight: 600; color: var(--gray-600); cursor: pointer; border-bottom: 3px solid transparent;">
+                <i class="fa-solid fa-comments" style="margin-right: 8px;"></i> Testimonies
+            </button>
+        </div>
+
+        <div class="tab-content" id="specs" style="padding: 2rem;">
+            <% if (specs.length> 0) { %>
+                <div style="overflow-x: auto;">
+                    <table class="table" style="width: 100%; border-collapse: collapse;">
+                        <tbody>
+                            <% specs.forEach((s, index)=> { %>
+                                <tr
+                                    style="background-color: <%= index % 2 === 0 ? 'var(--white)' : 'var(--gray-50)' %>;">
+                                    <th
+                                        style="text-align: left; padding: 1rem; color: var(--blue-dark); width: 30%; border-bottom: 1px solid var(--gray-200);">
+                                        <%= s.spec_key %>
+                                    </th>
+                                    <td style="padding: 1rem; border-bottom: 1px solid var(--gray-200);">
+                                        <%= s.spec_value %>
+                                    </td>
+                                </tr>
+                                <% }) %>
+                        </tbody>
+                    </table>
+                </div>
+                <% } else { %>
+                    <div class="empty-state" style="text-align: center; padding: 3rem;">
+                        <i class="fa-solid fa-clipboard-list"
+                            style="font-size: 3rem; color: var(--gray-300); margin-bottom: 1rem;"></i>
+                        <p style="color: var(--gray-500);">No specifications available for this product.</p>
+                    </div>
+                    <% } %>
+        </div>
+
+        <div class="tab-content" id="marketing" style="display: none; padding: 2rem;">
+            <% if (materials.length> 0) { %>
+                <div class="grid grid-3">
+                    <% materials.forEach(m=> { %>
+                        <div
+                            style="border: 1px solid var(--gray-200); border-radius: 8px; padding: 1.5rem; display: flex; align-items: flex-start; gap: 1rem;">
+                            <div
+                                style="background-color: var(--red-light); color: var(--red); width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border-radius: 8px;">
+                                <i class="fa-solid fa-file-pdf"></i>
+                            </div>
+                            <div style="flex: 1;">
+                                <h4 style="margin-bottom: 0.25rem;">
+                                    <%= m.name %>
+                                </h4>
+                                <a href="<%= m.file_path %>" target="_blank"
+                                    style="font-size: 0.9rem; color: var(--blue-medium); text-decoration: none;">
+                                    Download <i class="fa-solid fa-download"></i>
+                                </a>
+                            </div>
+                        </div>
+                        <% }) %>
+                </div>
+                <% } else { %>
+                    <div class="empty-state" style="text-align: center; padding: 3rem;">
+                        <i class="fa-solid fa-folder-open"
+                            style="font-size: 3rem; color: var(--gray-300); margin-bottom: 1rem;"></i>
+                        <p style="color: var(--gray-500);">No marketing materials available.</p>
+                    </div>
+                    <% } %>
+        </div>
+
+        <div class="tab-content" id="events" style="display: none; padding: 2rem;">
+            <% if (events.length> 0) { %>
+                <div class="grid grid-2">
+                    <% events.forEach(e=> { %>
+                        <div class="card" style="padding: 1.5rem; border: 1px solid var(--gray-200); box-shadow: none;">
+                            <div class="d-flex gap-3">
+                                <div
+                                    style="background-color: var(--blue-lightest); color: var(--blue-dark); width: 60px; height: 60px; display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: 8px; text-align: center;">
+                                    <span style="font-size: 0.8rem; font-weight: bold;">
+                                        <%= e.start_date ? new Date(e.start_date).toLocaleString('default', {
+                                            month: 'short' }) : 'DATE' %>
+                                    </span>
+                                    <span style="font-size: 1.2rem; font-weight: bold;">
+                                        <%= e.start_date ? new Date(e.start_date).getDate() : '00' %>
+                                    </span>
+                                </div>
+                                <div>
+                                    <h4 style="margin-bottom: 0.5rem;">
+                                        <%= e.name %>
+                                    </h4>
+                                    <p style="color: var(--gray-600); font-size: 0.9rem; margin-bottom: 0.25rem;">
+                                        <i class="fa-solid fa-location-dot" style="width: 20px;"></i>
+                                        <%= e.location %>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        <% }) %>
+                </div>
+                <% } else { %>
+                    <div class="empty-state" style="text-align: center; padding: 3rem;">
+                        <i class="fa-solid fa-calendar-xmark"
+                            style="font-size: 3rem; color: var(--gray-300); margin-bottom: 1rem;"></i>
+                        <p style="color: var(--gray-500);">No upcoming events for this product.</p>
+                    </div>
+                    <% } %>
+        </div>
+
+        <div class="tab-content" id="testimonies" style="display: none; padding: 2rem;">
+            <% if (testimonies.length> 0) { %>
+                <div class="grid grid-2">
+                    <% testimonies.forEach(t=> { %>
+                        <div class="card"
+                            style="padding: 2rem; border: 1px solid var(--gray-200); box-shadow: none; position: relative;">
+                            <i class="fa-solid fa-quote-left"
+                                style="position: absolute; top: 1.5rem; left: 1.5rem; font-size: 2rem; color: var(--gray-200);"></i>
+                            <div style="position: relative; z-index: 1; padding-left: 1rem;">
+                                <p style="font-style: italic; color: var(--gray-700); margin-bottom: 1.5rem;">"<%=
+                                        t.content || 'Great product results.' %>"</p>
+                                <div class="d-flex align-center gap-3">
+                                    <div
+                                        style="width: 40px; height: 40px; background-color: var(--blue-medium); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold;">
+                                        <%= t.client_name.charAt(0) %>
+                                    </div>
+                                    <div>
+                                        <h5 style="margin: 0;">
+                                            <%= t.client_name %>
+                                        </h5>
+                                        <span style="font-size: 0.8rem; color: var(--gray-500);">
+                                            <%= t.treatment %>
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <% }) %>
+                </div>
+                <% } else { %>
+                    <div class="empty-state" style="text-align: center; padding: 3rem;">
+                        <i class="fa-regular fa-comment-dots"
+                            style="font-size: 3rem; color: var(--gray-300); margin-bottom: 1rem;"></i>
+                        <p style="color: var(--gray-500);">No testimonies yet.</p>
+                    </div>
+                    <% } %>
+        </div>
+    </div>
+</div>
+
+<script>
+    function switchTab(evt, tabName) {
+        // Hide all tab content
+        var i, tabcontent, tablinks;
+        tabcontent = document.getElementsByClassName("tab-content");
+        for (i = 0; i < tabcontent.length; i++) {
+            tabcontent[i].style.display = "none";
+        }
+
+        // Remove active class from all buttons
+        tablinks = document.getElementsByClassName("tab-btn");
+        for (i = 0; i < tablinks.length; i++) {
+            tablinks[i].className = tablinks[i].className.replace(" active", "");
+            tablinks[i].style.color = "var(--gray-600)";
+            tablinks[i].style.borderBottom = "3px solid transparent";
+        }
+
+        // Show the current tab and add active class
+        document.getElementById(tabName).style.display = "block";
+        evt.currentTarget.className += " active";
+        evt.currentTarget.style.color = "var(--blue-medium)";
+        evt.currentTarget.style.borderBottom = "3px solid var(--blue-medium)";
+    }
+</script>

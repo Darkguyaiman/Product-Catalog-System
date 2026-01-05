@@ -1,0 +1,496 @@
+<div class="companies-page">
+    <div class="card-header companies-header">
+        <h1>Register New Product</h1>
+        <a href="/admin/products" class="btn btn-secondary btn-sm" title="Go Back">
+            <i class="fas fa-arrow-left"></i>
+        </a>
+    </div>
+
+    <div class="card" style="max-width: 900px; margin: 0 auto;">
+        <form id="addProductForm" action="/admin/products/create" method="POST" enctype="multipart/form-data">
+
+            <h3
+                style="margin-bottom: 1.5rem; font-size: 1.1rem; color: var(--blue-dark); border-bottom: 1px solid var(--gray-200); padding-bottom: 0.5rem;">
+                Basic Information</h3>
+
+            <div class="form-group" style="margin-bottom: 2rem;">
+                <label>Product Image</label>
+                <div class="upload-zone" id="imageUploadZone">
+                    <div class="upload-content">
+                        <i class="fas fa-image upload-icon"></i>
+                        <p class="upload-text">Drag and drop product image here or <span
+                                class="browse-link">browse</span></p>
+                        <p class="upload-hint">PNG, JPG, WEBP (Max 5MB)</p>
+                    </div>
+                    <input type="file" name="product_image" id="imageInput" accept="image/*" style="display: none;">
+                    <div id="imagePreview" class="file-preview" style="display: none;">
+                        <img id="previewProductImg" src="" alt="Preview"
+                            style="max-width: 200px; max-height: 200px; object-fit: contain; border: 1px solid var(--gray-200); border-radius: 8px;">
+                        <div class="file-info" id="imageInfoChip" style="display: none;">
+                            <span id="imageName" class="file-name"></span>
+                            <button type="button" class="remove-file" id="removeImage" title="Remove File">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid-2">
+                <div class="form-group">
+                    <label>Product Code <span style="color: var(--danger);">*</span></label>
+                    <input type="text" name="code" placeholder="e.g. MD-2024-X" required>
+                </div>
+                <div class="form-group">
+                    <label>Product Model</label>
+                    <input type="text" name="model" placeholder="e.g. UltraScan 5000">
+                </div>
+                <div class="form-group">
+                    <label>Product Reg. No.</label>
+                    <input type="text" name="reg_no" placeholder="Registration Number">
+                </div>
+                <div class="form-group">
+                    <label>Product MDA Reg. No.</label>
+                    <input type="text" name="mda_reg_no" placeholder="MDA Registration Number">
+                </div>
+            </div>
+
+            <div class="grid-2">
+                <div class="form-group">
+                    <label>Product Types</label>
+                    <div class="chip-wrapper" id="typeChipWrapper">
+                        <select id="typeSelectInput">
+                            <option value="">Add Type...</option>
+                            <% types.forEach(t=> { %>
+                                <option value="<%= t.value %>">
+                                    <%= t.value %>
+                                </option>
+                                <% }) %>
+                        </select>
+                    </div>
+                    <select name="product_types" id="typeHiddenSelect" multiple style="display:none;">
+                        <% types.forEach(t=> { %>
+                            <option value="<%= t.value %>">
+                                <%= t.value %>
+                            </option>
+                            <% }) %>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Categories</label>
+                    <div class="chip-wrapper" id="categoryChipWrapper">
+                        <select id="categorySelectInput">
+                            <option value="">Add Category...</option>
+                            <% categories.forEach(c=> { %>
+                                <option value="<%= c.id %>">
+                                    <%= c.name %>
+                                </option>
+                                <% }) %>
+                        </select>
+                    </div>
+                    <select name="product_categories" id="categoryHiddenSelect" multiple style="display:none;">
+                        <% categories.forEach(c=> { %>
+                            <option value="<%= c.id %>">
+                                <%= c.name %>
+                            </option>
+                            <% }) %>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Description</label>
+                <textarea name="description" rows="4" placeholder="Enter detailed product description..."></textarea>
+            </div>
+
+            <div class="form-group">
+                <label>MDA Certificate Upload</label>
+                <div class="upload-zone" id="certUploadZone">
+                    <div class="upload-content">
+                        <i class="fas fa-cloud-upload-alt upload-icon"></i>
+                        <p class="upload-text">Drag and drop certificate here or <span class="browse-link">browse</span>
+                        </p>
+                        <p class="upload-hint">PDF, PNG, JPG (Max 5MB)</p>
+                    </div>
+                    <input type="file" name="mda_cert" id="certInput" accept=".pdf,image/*" style="display: none;">
+                    <div id="filePreview" class="file-preview" style="display: none;">
+                        <!-- Icon for PDF or Image preview -->
+                        <div id="previewIcon"
+                            style="font-size: 3rem; color: var(--blue-medium); margin-bottom: 0.5rem; display:none;">
+                            <i class="fas fa-file-pdf"></i>
+                        </div>
+                        <img id="previewImg" src="" alt="Preview"
+                            style="display:none; max-width: 200px; max-height: 200px; object-fit: contain; border: 1px solid var(--gray-200); border-radius: 8px;">
+
+                        <div class="file-info" id="fileInfoChip" style="display: none;">
+                            <span id="fileName" class="file-name"></span>
+                            <button type="button" class="remove-file" id="removeCert" title="Remove File">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <h3
+                style="margin-top: 2rem; margin-bottom: 1.5rem; font-size: 1.1rem; color: var(--blue-dark); border-bottom: 1px solid var(--gray-200); padding-bottom: 0.5rem;">
+                Technical Specifications</h3>
+
+            <div id="specs-container">
+                <!-- Javascript will add rows here -->
+                <div class="grid spec-row" style="grid-template-columns: 1fr 1fr auto; gap: 1rem; margin-bottom: 1rem;">
+                    <div>
+                        <input type="text" name="spec_key" placeholder="Specification Name (e.g. Dimensions)">
+                    </div>
+                    <div>
+                        <input type="text" name="spec_value" placeholder="Value (e.g. 10x10cm)">
+                    </div>
+                    <button type="button" class="btn btn-secondary btn-sm" disabled
+                        style="color: var(--gray-400); border-color: var(--gray-200);">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            </div>
+
+            <button type="button" class="btn btn-secondary btn-sm" onclick="addSpecRow()" style="margin-bottom: 2rem;">
+                <i class="fas fa-plus"></i> Add Specification
+            </button>
+
+            <div
+                style="display: flex; gap: 15px; margin-top: 2rem; border-top: 1px solid var(--gray-100); padding-top: 2rem;">
+                <button type="submit" class="btn btn-primary" id="submitBtn" style="flex: 2;">
+                    <i class="fas fa-save"></i> <span>Register Product</span>
+                </button>
+                <a href="/admin/products" class="btn btn-secondary" style="flex: 1;">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+    .upload-zone {
+        border: 2px dashed var(--gray-300);
+        border-radius: 12px;
+        padding: 2.5rem 1.5rem;
+        text-align: center;
+        background: var(--gray-50);
+        transition: all 0.2s ease;
+        cursor: pointer;
+        position: relative;
+    }
+
+    .upload-zone:hover,
+    .upload-zone.dragover {
+        border-color: var(--blue-medium);
+        background: rgba(0, 91, 150, 0.05);
+    }
+
+    .upload-icon {
+        font-size: 3rem;
+        color: var(--gray-400);
+        margin-bottom: 1rem;
+    }
+
+    .upload-text {
+        font-weight: 600;
+        color: var(--gray-700);
+        margin-bottom: 0.5rem;
+    }
+
+    .browse-link {
+        color: var(--blue-medium);
+        text-decoration: underline;
+    }
+
+    .upload-hint {
+        font-size: 0.85rem;
+        color: var(--gray-500);
+    }
+
+    .file-preview {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 15px;
+    }
+
+    .file-info {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        background: white;
+        padding: 8px 15px;
+        border-radius: 20px;
+        border: 1px solid var(--gray-200);
+        box-shadow: var(--shadow-sm);
+    }
+
+    .file-name {
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: var(--gray-700);
+        max-width: 200px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .remove-file {
+        background: #fff;
+        color: var(--danger);
+        border: 1px solid #fee2e2;
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.2s;
+        box-shadow: var(--shadow-sm);
+    }
+
+    .remove-file:hover {
+        background: var(--danger);
+        color: white;
+        border-color: var(--danger);
+        transform: scale(1.1);
+    }
+
+    /* Chips Styles */
+    .chip-wrapper {
+        border: 1px solid var(--gray-300);
+        border-radius: 6px;
+        padding: 0.5rem;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        min-height: 45px;
+        background: white;
+        align-items: center;
+    }
+
+    .chip-wrapper:focus-within {
+        border-color: var(--blue-medium);
+        box-shadow: 0 0 0 3px rgba(0, 91, 150, 0.1);
+    }
+
+    .chip {
+        background: var(--blue-lightest);
+        color: var(--blue-dark);
+        padding: 4px 10px;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-weight: 500;
+        border: 1px solid var(--blue-light);
+    }
+
+    .chip-remove {
+        background: none;
+        border: none;
+        color: var(--blue-medium);
+        cursor: pointer;
+        padding: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.9rem;
+    }
+
+    .chip-remove:hover {
+        color: var(--danger);
+    }
+
+    .chip-wrapper select {
+        border: none;
+        outline: none;
+        padding: 4px;
+        flex: 1;
+        min-width: 150px;
+        font-size: 0.95rem;
+        background: transparent;
+    }
+</style>
+
+<script>
+    function setupFileUpload(zoneId, inputId, contentSelector, previewId, hasIcon = true) {
+        const zone = document.getElementById(zoneId);
+        const input = document.getElementById(inputId);
+        const content = zone.querySelector('.upload-content');
+        const preview = document.getElementById(previewId);
+        const previewImg = preview.querySelector('img');
+        const previewIcon = preview.querySelector('#previewIcon'); // Only for cert
+        const fileName = preview.querySelector('.file-name');
+        const removeBtn = preview.querySelector('.remove-file');
+
+        zone.addEventListener('click', () => input.click());
+
+        zone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            zone.classList.add('dragover');
+        });
+
+        zone.addEventListener('dragleave', () => {
+            zone.classList.remove('dragover');
+        });
+
+        zone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            zone.classList.remove('dragover');
+            if (e.dataTransfer.files.length) {
+                input.files = e.dataTransfer.files;
+                handleFile(input.files[0]);
+            }
+        });
+
+        input.addEventListener('change', () => {
+            if (input.files.length) {
+                handleFile(input.files[0]);
+            }
+        });
+
+        function handleFile(file) {
+            content.style.display = 'none';
+            preview.style.display = 'flex';
+            preview.querySelector('.file-info').style.display = 'flex';
+            fileName.textContent = file.name;
+
+            if (file.type.startsWith('image/')) {
+                if (previewIcon) previewIcon.style.display = 'none';
+                previewImg.style.display = 'block';
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    previewImg.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            } else if (file.type === 'application/pdf') {
+                previewImg.style.display = 'none';
+                if (previewIcon) previewIcon.style.display = 'block';
+            } else {
+                // Default
+                previewImg.style.display = 'none';
+                if (previewIcon) {
+                    previewIcon.style.display = 'block';
+                    previewIcon.innerHTML = '<i class="fas fa-file"></i>';
+                }
+            }
+        }
+
+        removeBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            input.value = '';
+            content.style.display = 'block';
+            preview.style.display = 'none';
+            preview.querySelector('.file-info').style.display = 'none';
+        });
+    }
+
+    // Setup for Cert
+    setupFileUpload('certUploadZone', 'certInput', '.upload-content', 'filePreview', true);
+
+    // Setup for Product Image
+    setupFileUpload('imageUploadZone', 'imageInput', '.upload-content', 'imagePreview', false);
+
+    // Reusable Chips Logic
+    function setupChips(wrapperId, selectId, hiddenId) {
+        const wrapper = document.getElementById(wrapperId);
+        const selectInput = document.getElementById(selectId);
+        const hiddenSelect = document.getElementById(hiddenId);
+
+        function updateChips() {
+            // Remove existing chips (but keep the select input)
+            const chips = wrapper.querySelectorAll('.chip');
+            chips.forEach(c => c.remove());
+
+            // Add new chips based on hidden select
+            Array.from(hiddenSelect.options).forEach(opt => {
+                if (opt.selected) {
+                    const chip = document.createElement('div');
+                    chip.className = 'chip';
+                    chip.innerHTML = `
+                        ${opt.text}
+                        <button type="button" class="chip-remove" data-value="${opt.value}">
+                             <i class="fas fa-times"></i>
+                        </button>
+                    `;
+                    wrapper.insertBefore(chip, selectInput);
+                }
+            });
+
+            // Update chip remove listeners
+            wrapper.querySelectorAll('.chip-remove').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const val = e.currentTarget.dataset.value;
+                    const opt = hiddenSelect.querySelector(`option[value="${val}"]`);
+                    if (opt) opt.selected = false;
+                    updateChips();
+                });
+            });
+
+            // Hide selected options in dropdown
+            Array.from(hiddenSelect.options).forEach(opt => {
+                const inputOpt = selectInput.querySelector(`option[value="${opt.value}"]`);
+                if (inputOpt) {
+                    if (opt.selected) {
+                        inputOpt.setAttribute('disabled', 'disabled');
+                        inputOpt.style.display = 'none';
+                    } else {
+                        inputOpt.removeAttribute('disabled');
+                        inputOpt.style.display = 'block';
+                    }
+                }
+            });
+
+            selectInput.value = "";
+        }
+
+        selectInput.addEventListener('change', () => {
+            const val = selectInput.value;
+            if (val) {
+                const opt = hiddenSelect.querySelector(`option[value="${val}"]`);
+                if (opt) opt.selected = true;
+                updateChips();
+            }
+        });
+
+        // Initial build
+        updateChips();
+    }
+
+    // Initialize Chips
+    setupChips('typeChipWrapper', 'typeSelectInput', 'typeHiddenSelect');
+    setupChips('categoryChipWrapper', 'categorySelectInput', 'categoryHiddenSelect');
+
+
+    // Specifications Logic
+    function addSpecRow() {
+        const container = document.getElementById('specs-container');
+        const div = document.createElement('div');
+        div.className = 'grid spec-row';
+        div.style.gridTemplateColumns = '1fr 1fr auto';
+        div.style.gap = '1rem';
+        div.style.marginBottom = '1rem';
+        div.innerHTML = `
+            <div>
+                <input type="text" name="spec_key" placeholder="Specification Name" class="form-control">
+            </div>
+            <div>
+                <input type="text" name="spec_value" placeholder="Value" class="form-control">
+            </div>
+            <button type="button" class="btn btn-danger btn-sm" onclick="this.parentElement.remove()">
+                <i class="fas fa-trash"></i>
+            </button>
+        `;
+        container.appendChild(div);
+    }
+
+    document.getElementById('addProductForm').addEventListener('submit', function () {
+        const btn = document.getElementById('submitBtn');
+        btn.classList.add('btn-loading');
+        btn.disabled = true;
+        btn.querySelector('span').textContent = 'Saving...';
+    });
+</script>

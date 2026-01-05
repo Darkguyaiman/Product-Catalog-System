@@ -1,0 +1,200 @@
+<div class="marketing-page">
+    <div class="card-header marketing-header">
+        <h1>Marketing & Events</h1>
+    </div>
+
+    <div class="card">
+        <!-- Search and Filter -->
+        <form action="/admin/marketing" method="GET"
+            style="display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: 1.5rem; padding-bottom: 1.5rem; border-bottom: 1px solid var(--gray-200);">
+            <div style="flex: 1; min-width: 250px; position: relative;">
+                <i class="fas fa-search"
+                    style="position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: var(--gray-400);"></i>
+                <input type="text" name="search" placeholder="Search..."
+                    value="<%= typeof search !== 'undefined' ? search : '' %>"
+                    style="width: 100%; padding: 0.75rem 1rem 0.75rem 2.5rem; border: 1px solid var(--gray-300); border-radius: 6px;">
+            </div>
+            <div style="min-width: 200px;">
+                <select name="product_id" onchange="this.form.submit()"
+                    style="width: 100%; padding: 0.75rem 1rem; border: 1px solid var(--gray-300); border-radius: 6px;">
+                    <option value="">Filter by Product</option>
+                    <% products.forEach(p=> { %>
+                        <option value="<%= p.id %>" <%=(typeof selectedProduct !=='undefined' && selectedProduct==p.id)
+                            ? 'selected' : '' %>>
+                            <%= p.code %> - <%= p.model %>
+                        </option>
+                        <% }) %>
+                </select>
+            </div>
+        </form>
+
+        <div class="tabs">
+            <div class="tab active" onclick="showTab('marketing')">Brochures/Fliers</div>
+            <div class="tab" onclick="showTab('events')">Events</div>
+            <div class="tab" onclick="showTab('testimonies')">Testimonies</div>
+        </div>
+
+        <!-- Marketing Tab -->
+        <div id="marketing-tab" class="tab-content">
+            <div style="display: flex; justify-content: flex-end; margin-bottom: 1rem;">
+                <a href="/admin/marketing/materials/add" class="btn btn-primary btn-sm">
+                    <i class="fas fa-plus"></i> Add Material
+                </a>
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>File</th>
+                        <th style="width: 100px; text-align: center;">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% if(marketing.length===0) { %>
+                        <tr>
+                            <td colspan="3" style="text-align: center; color: var(--gray-500);">No materials found.</td>
+                        </tr>
+                        <% } %>
+                            <% marketing.forEach(m=> { %>
+                                <tr>
+                                    <td>
+                                        <%= m.name %>
+                                    </td>
+                                    <td><a href="<%= m.file_path %>" target="_blank">View File</a></td>
+                                    <td>
+                                        <div style="display: flex; gap: 5px; justify-content: center;">
+                                            <a href="/admin/marketing/materials/edit/<%= m.id %>"
+                                                class="btn btn-secondary btn-sm"><i class="fas fa-edit"></i></a>
+                                            <form action="/admin/marketing/materials/delete/<%= m.id %>" method="POST"
+                                                onsubmit="return confirm('Delete this item?');"
+                                                style="display: inline;">
+                                                <button class="btn btn-danger btn-sm"><i
+                                                        class="fas fa-trash"></i></button>
+                                            </form>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <% }) %>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Events Tab -->
+        <div id="events-tab" class="tab-content" style="display: none;">
+            <div style="display: flex; justify-content: flex-end; margin-bottom: 1rem;">
+                <a href="/admin/marketing/events/add" class="btn btn-primary btn-sm">
+                    <i class="fas fa-plus"></i> Add Event
+                </a>
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Location</th>
+                        <th>Date</th>
+                        <th style="width: 100px; text-align: center;">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% if(events.length===0) { %>
+                        <tr>
+                            <td colspan="4" style="text-align: center; color: var(--gray-500);">No events found.</td>
+                        </tr>
+                        <% } %>
+                            <% events.forEach(e=> { %>
+                                <tr>
+                                    <td>
+                                        <%= e.name %>
+                                    </td>
+                                    <td>
+                                        <%= e.location %>
+                                    </td>
+                                    <td>
+                                        <%= e.start_date ? new Date(e.start_date).toLocaleDateString() : '' %>
+                                    </td>
+                                    <td>
+                                        <div style="display: flex; gap: 5px; justify-content: center;">
+                                            <a href="/admin/marketing/events/edit/<%= e.id %>"
+                                                class="btn btn-secondary btn-sm"><i class="fas fa-edit"></i></a>
+                                            <form action="/admin/marketing/events/delete/<%= e.id %>" method="POST"
+                                                onsubmit="return confirm('Delete this event?');"
+                                                style="display: inline;">
+                                                <button class="btn btn-danger btn-sm"><i
+                                                        class="fas fa-trash"></i></button>
+                                            </form>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <% }) %>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Testimonies Tab -->
+        <div id="testimonies-tab" class="tab-content" style="display: none;">
+            <div style="display: flex; justify-content: flex-end; margin-bottom: 1rem;">
+                <a href="/admin/marketing/testimonies/add" class="btn btn-primary btn-sm">
+                    <i class="fas fa-plus"></i> Add Testimony
+                </a>
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Client</th>
+                        <th>Treatment</th>
+                        <th>Location</th>
+                        <th style="width: 100px; text-align: center;">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% if(testimonies.length===0) { %>
+                        <tr>
+                            <td colspan="4" style="text-align: center; color: var(--gray-500);">No testimonies found.
+                            </td>
+                        </tr>
+                        <% } %>
+                            <% testimonies.forEach(t=> { %>
+                                <tr>
+                                    <td>
+                                        <%= t.client_name %>
+                                    </td>
+                                    <td>
+                                        <%= t.treatment %>
+                                    </td>
+                                    <td>
+                                        <%= t.location %>
+                                    </td>
+                                    <td>
+                                        <div style="display: flex; gap: 5px; justify-content: center;">
+                                            <a href="/admin/marketing/testimonies/edit/<%= t.id %>"
+                                                class="btn btn-secondary btn-sm"><i class="fas fa-edit"></i></a>
+                                            <form action="/admin/marketing/testimonies/delete/<%= t.id %>" method="POST"
+                                                onsubmit="return confirm('Delete this testimony?');"
+                                                style="display: inline;">
+                                                <button class="btn btn-danger btn-sm"><i
+                                                        class="fas fa-trash"></i></button>
+                                            </form>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <% }) %>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+    function showTab(tabName) {
+        document.querySelectorAll('.tab-content').forEach(el => el.style.display = 'none');
+        document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
+        document.getElementById(tabName + '-tab').style.display = 'block';
+
+        const tabs = document.querySelectorAll('.tab');
+        if (tabName === 'marketing') tabs[0].classList.add('active');
+        if (tabName === 'events') tabs[1].classList.add('active');
+        if (tabName === 'testimonies') tabs[2].classList.add('active');
+
+        // Persist tab selection in URL or session storage if needed, but simple toggle for now
+    }
+</script>

@@ -1,0 +1,148 @@
+<div class="hero">
+    <div class="container">
+        <h1>Innovating Healthcare Through Advanced Medical Solutions</h1>
+        <p>Explore our comprehensive catalog of high-quality medical products and equipment designed for healthcare
+            professionals.</p>
+        <a href="/products" class="btn btn-secondary" style="font-size: 1.1rem; padding: 0.75rem 2rem;">
+            Browse Catalog <i class="fa-solid fa-arrow-right" style="margin-left: 8px;"></i>
+        </a>
+    </div>
+</div>
+
+<div class="container">
+    <div class="d-flex justify-between align-center mb-4">
+        <h2>Latest Additions</h2>
+        <a href="/products">View All Products</a>
+    </div>
+
+    <div class="grid grid-3">
+        <% if (products && products.length> 0) { %>
+            <% products.forEach(p=> { %>
+                <div class="card" style="padding: 0; overflow: hidden; border: none; box-shadow: var(--shadow);">
+                    <div
+                        style="height: 200px; background-color: var(--gray-100); display: flex; align-items: center; justify-content: center; overflow: hidden;">
+                        <% if (p.product_image) { %>
+                            <img src="<%= p.product_image %>" alt="<%= p.model %>"
+                                style="width: 100%; height: 100%; object-fit: cover;">
+                            <% } else { %>
+                                <i class="fa-solid fa-box-open" style="font-size: 4rem; color: var(--gray-300);"></i>
+                                <% } %>
+                    </div>
+                    <div style="padding: 1.5rem;">
+                        <div class="d-flex justify-between align-center mb-2">
+                            <span class="badge badge-primary">
+                                <%= p.code %>
+                            </span>
+                        </div>
+                        <h3 style="font-size: 1.25rem; margin-bottom: 0.5rem;">
+                            <%= p.model %>
+                        </h3>
+                        <p
+                            style="color: var(--gray-500); font-size: 0.9rem; margin-bottom: 1.5rem; display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
+                            <%= p.description || 'No description available.' %>
+                        </p>
+                        <a href="/product/<%= p.id %>" class="btn btn-secondary w-100">
+                            View Details
+                        </a>
+                    </div>
+                </div>
+                <% }) %>
+                    <% } else { %>
+                        <div class="card"
+                            style="grid-column: 1 / -1; padding: 3rem; text-align: center; background-color: var(--white); border: 2px dashed var(--gray-200);">
+                            <i class="fa-solid fa-boxes-packing mb-3"
+                                style="font-size: 4rem; color: var(--gray-300);"></i>
+                            <h3 style="margin-top: 1rem; color: var(--gray-600);">No Products Available</h3>
+                            <p style="color: var(--gray-500); margin-bottom: 0;">Our catalog is being updated. Please
+                                check back later.</p>
+                        </div>
+                        <% } %>
+    </div>
+
+    <div style="margin-top: 8rem; padding-bottom: 6rem;">
+        <div style="max-width: 800px; margin: 0 auto 5rem; text-align: center;">
+            <h2 style="font-size: 2.5rem; color: var(--blue-darkest); margin-bottom: 1.5rem; letter-spacing: -0.5px;">
+                Core Commitments to Excellence</h2>
+            <p style="color: var(--gray-600); font-size: 1.15rem; line-height: 1.7;">QSS Healthcare bridge the gap
+                between innovation and patient care by providing world-class medical solutions built on trust and
+                quality.</p>
+        </div>
+
+        <div class="grid grid-3" style="gap: 3rem;">
+            <!-- Certified Quality -->
+            <div class="feature-card-minimal">
+                <div class="feature-icon-box">
+                    <i class="fa-solid fa-certificate"></i>
+                </div>
+                <h3>Certified Quality</h3>
+                <p>Every product undergoes stringent validation to meet MDA regulations and international medical
+                    standards.</p>
+            </div>
+
+            <!-- Trusted Partners -->
+            <div class="feature-card-minimal">
+                <div class="feature-icon-box">
+                    <i class="fa-solid fa-handshake"></i>
+                </div>
+                <h3>Trusted Partners</h3>
+                <p>Strategic alliances with global manufacturers ensure access to the most advanced medical technology
+                    available.</p>
+            </div>
+
+            <!-- Expert Support -->
+            <div class="feature-card-minimal">
+                <div class="feature-icon-box">
+                    <i class="fa-solid fa-headset"></i>
+                </div>
+                <h3>Expert Support</h3>
+                <p>Our clinical specialists and technical teams provide comprehensive support for seamless operation and
+                    maintenance.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Professional Styles -->
+    <style>
+        .feature-card-minimal {
+            padding: 1.5rem;
+            transition: transform 0.3s ease;
+        }
+
+        .feature-card-minimal:hover {
+            transform: translateY(-5px);
+        }
+
+        .feature-icon-box {
+            width: 54px;
+            height: 54px;
+            background-color: var(--blue-lightest);
+            color: var(--blue-dark);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        .feature-card-minimal:hover .feature-icon-box {
+            background-color: var(--blue-dark);
+            color: var(--blue-lightest);
+        }
+
+        .feature-card-minimal h3 {
+            font-size: 1.25rem;
+            color: var(--blue-darkest);
+            margin-bottom: 1rem;
+            font-weight: 600;
+        }
+
+        .feature-card-minimal p {
+            color: var(--gray-500);
+            line-height: 1.7;
+            font-size: 0.95rem;
+            margin: 0;
+        }
+    </style>
+</div>

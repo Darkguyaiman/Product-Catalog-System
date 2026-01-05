@@ -1,0 +1,87 @@
+<div class="login-container"
+    style="min-height: 100vh; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, var(--blue-darkest) 0%, var(--blue-medium) 100%);">
+    <div class="card"
+        style="width: 100%; max-width: 400px; padding: 2rem; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.2);">
+        <div style="text-align: center; margin-bottom: 1.5rem;">
+            <div
+                style="width: 50px; height: 50px; background-color: var(--blue-lightest); color: var(--blue-dark); border-radius: 12px; display: flex; align-items: center; justify-content: center; margin: 0 auto 0.75rem; font-size: 1.25rem;">
+                <i class="fa-solid fa-lock"></i>
+            </div>
+            <h2 style="color: var(--blue-darkest); margin-bottom: 0.25rem; font-size: 1.75rem;">Login</h2>
+            <p style="color: var(--gray-500); font-size: 0.95rem;">Enter your credentials to access your account.</p>
+        </div>
+
+        <% if (error) { %>
+            <div
+                style="background-color: #fee2e2; border: 1px solid #fecaca; color: #991b1b; padding: 0.75rem; border-radius: 6px; margin-bottom: 1.25rem; font-size: 0.85rem; display: flex; align-items: center; gap: 0.5rem;">
+                <i class="fa-solid fa-circle-exclamation"></i>
+                <%= error %>
+            </div>
+            <% } %>
+
+                <form action="/auth/login" method="POST">
+                    <div class="form-group" style="margin-bottom: 1rem;">
+                        <label
+                            style="display: block; font-weight: 500; color: var(--gray-700); margin-bottom: 0.4rem; font-size: 0.85rem;">Email
+                            Address</label>
+                        <div style="position: relative;">
+                            <i class="fa-solid fa-envelope"
+                                style="position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: var(--gray-400); font-size: 0.9rem;"></i>
+                            <input type="email" name="email" required class="form-control"
+                                placeholder="name@company.com"
+                                style="width: 100%; padding: 0.7rem 1rem 0.7rem 2.5rem; border: 1px solid var(--gray-300); border-radius: 6px; font-size: 0.95rem;">
+                        </div>
+                    </div>
+
+                    <div class="form-group" style="margin-bottom: 1.25rem;">
+                        <label
+                            style="display: block; font-weight: 500; color: var(--gray-700); margin-bottom: 0.4rem; font-size: 0.85rem;">Password</label>
+                        <div style="position: relative;">
+                            <i class="fa-solid fa-key"
+                                style="position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: var(--gray-400); font-size: 0.9rem;"></i>
+                            <input type="password" name="password" id="password" required class="form-control"
+                                placeholder="••••••••"
+                                style="width: 100%; padding: 0.7rem 2.5rem 0.7rem 2.5rem; border: 1px solid var(--gray-300); border-radius: 6px; font-size: 0.95rem;">
+                            <button type="button" id="togglePassword"
+                                style="position: absolute; right: 1rem; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: var(--gray-400); padding: 0; display: flex; align-items: center; justify-content: center;">
+                                <i class="fa-solid fa-eye" id="eyeIcon" style="font-size: 0.9rem;"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary"
+                        style="width: 100%; padding: 0.75rem; font-size: 1rem; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
+                        Sign In <i class="fa-solid fa-arrow-right-to-bracket"></i>
+                    </button>
+                </form>
+
+                <div style="text-align: center; margin-top: 1.5rem;">
+                    <a href="/"
+                        style="color: var(--gray-500); text-decoration: none; font-size: 0.85rem; display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
+                        <i class="fa-solid fa-arrow-left"></i> Back to Home
+                    </a>
+                </div>
+    </div>
+
+</div>
+
+<script>
+    const togglePassword = document.querySelector('#togglePassword');
+    const password = document.querySelector('#password');
+    const eyeIcon = document.querySelector('#eyeIcon');
+
+    togglePassword.addEventListener('click', function (e) {
+        // toggle the type attribute
+        const type = password.getAttribute('type') === 'password' ? 'text' : 'password';
+        password.setAttribute('type', type);
+
+        // toggle the eye icon
+        if (type === 'password') {
+            eyeIcon.classList.remove('fa-eye-slash');
+            eyeIcon.classList.add('fa-eye');
+        } else {
+            eyeIcon.classList.remove('fa-eye');
+            eyeIcon.classList.add('fa-eye-slash');
+        }
+    });
+</script>

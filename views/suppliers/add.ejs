@@ -1,0 +1,118 @@
+<div class="card-header suppliers-header">
+    <h1>Add New Supplier</h1>
+    <a href="/admin/suppliers" class="btn btn-secondary btn-sm" title="Go Back">
+        <i class="fas fa-arrow-left"></i>
+    </a>
+</div>
+
+<div class="card" style="margin-top: 20px;">
+    <h3>Supplier Details</h3>
+    <form action="/admin/suppliers/add" method="POST">
+        <div class="grid">
+            <div class="form-group">
+                <label>Supplier Name</label>
+                <input type="text" name="name" required>
+            </div>
+            <div class="form-group">
+                <label>Country of Origin</label>
+                <select name="country">
+                    <option value="">-- Select Country --</option>
+                    <% countries.forEach(c=> { %>
+                        <option value="<%= c.value %>">
+                            <%= c.value %>
+                        </option>
+                        <% }) %>
+                </select>
+            </div>
+        </div>
+        <div class="form-group">
+            <label>Affiliated Companies</label>
+            <div class="chip-wrapper" id="companyChipWrapper">
+                <select id="companySelectInput">
+                    <option value="">Add Company...</option>
+                    <% companies.forEach(c=> { %>
+                        <option value="<%= c.id %>">
+                            <%= c.name %>
+                        </option>
+                        <% }) %>
+                </select>
+            </div>
+            <!-- Hidden select for form submission -->
+            <select name="company_ids" id="companyHiddenSelect" multiple style="display:none;">
+                <% companies.forEach(c=> { %>
+                    <option value="<%= c.id %>">
+                        <%= c.name %>
+                    </option>
+                    <% }) %>
+            </select>
+        </div>
+        <button type="submit" class="btn btn-primary">Add Supplier</button>
+    </form>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const wrapper = document.getElementById('companyChipWrapper');
+        const selectInput = document.getElementById('companySelectInput');
+        const hiddenSelect = document.getElementById('companyHiddenSelect');
+
+        function updateChips() {
+            // Remove existing chips (but keep the select input)
+            const chips = wrapper.querySelectorAll('.chip');
+            chips.forEach(c => c.remove());
+
+            // Add new chips based on hidden select
+            Array.from(hiddenSelect.options).forEach(opt => {
+                if (opt.selected) {
+                    const chip = document.createElement('div');
+                    chip.className = 'chip';
+                    chip.innerHTML = `
+                        ${opt.text}
+                        <button type="button" class="chip-remove" data-value="${opt.value}">
+                             <i class="fa-solid fa-xmark"></i>
+                        </button>
+                    `;
+                    wrapper.insertBefore(chip, selectInput);
+                }
+            });
+
+            // Update chip remove listeners
+            wrapper.querySelectorAll('.chip-remove').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const val = e.currentTarget.dataset.value;
+                    const opt = hiddenSelect.querySelector(`option[value="${val}"]`);
+                    if (opt) opt.selected = false;
+                    updateChips();
+                });
+            });
+
+            // Hide selected options in dropdown
+            Array.from(hiddenSelect.options).forEach(opt => {
+                const inputOpt = selectInput.querySelector(`option[value="${opt.value}"]`);
+                if (inputOpt) {
+                    if (opt.selected) {
+                        inputOpt.setAttribute('disabled', 'disabled');
+                        inputOpt.style.display = 'none';
+                    } else {
+                        inputOpt.removeAttribute('disabled');
+                        inputOpt.style.display = 'block';
+                    }
+                }
+            });
+
+            selectInput.value = "";
+        }
+
+        selectInput.addEventListener('change', () => {
+            const val = selectInput.value;
+            if (val) {
+                const opt = hiddenSelect.querySelector(`option[value="${val}"]`);
+                if (opt) opt.selected = true;
+                updateChips();
+            }
+        });
+
+        // Initial build
+        updateChips();
+    });
+</script>
