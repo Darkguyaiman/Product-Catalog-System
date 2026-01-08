@@ -1,43 +1,54 @@
-<div class="card-header marketing-header">
-    <h1>Add Marketing Material</h1>
-    <a href="/admin/marketing" class="btn btn-secondary btn-sm" title="Go Back">
-        <i class="fas fa-arrow-left"></i>
-    </a>
-</div>
+<div class="companies-page">
+    <div class="card-header companies-header">
+        <h1>Add Marketing Material</h1>
+        <a href="/admin/marketing/materials" class="btn btn-secondary btn-sm" title="Go Back">
+            <i class="fas fa-arrow-left"></i>
+        </a>
+    </div>
 
-<div class="card" style="max-width: 800px; margin: 20px auto;">
-    <form action="/admin/marketing/materials/add" method="POST" enctype="multipart/form-data" id="addMaterialForm">
-        <div class="form-group">
-            <label>Title/Name <span style="color: var(--danger);">*</span></label>
-            <input type="text" name="name" required placeholder="e.g. Q4 Product Catalog">
-        </div>
+    <div class="card" style="max-width: 900px; margin: 0 auto;">
+        <form action="/admin/marketing/materials/add" method="POST" enctype="multipart/form-data" id="addMaterialForm">
+            <div class="form-group">
+                <label>Title/Name <span style="color: var(--danger);">*</span></label>
+                <input type="text" name="name" required placeholder="e.g. Q4 Product Catalog">
+            </div>
 
-        <div class="form-group">
-            <label>Upload File (Image/PDF) <span style="color: var(--danger);">*</span></label>
-            <div class="upload-zone" id="fileUploadZone">
-                <div class="upload-content">
-                    <i class="fas fa-cloud-upload-alt upload-icon"></i>
-                    <p class="upload-text">Drag and drop file here or <span class="browse-link">browse</span></p>
-                    <p class="upload-hint">PDF, JPG, PNG (Max 10MB)</p>
-                </div>
-                <input type="file" name="file" id="fileInput" required style="display: none;">
-                <div id="filePreview" class="file-preview" style="display: none;">
-                    <div id="previewIcon" style="font-size: 3rem; color: var(--blue-medium); margin-bottom: 0.5rem;">
-                        <i class="fas fa-file-alt"></i>
+            <div class="form-group">
+                <label>Upload File (Image/PDF) <span style="color: var(--danger);">*</span></label>
+                <div class="upload-zone" id="fileUploadZone">
+                    <div class="upload-content">
+                        <i class="fas fa-cloud-upload-alt upload-icon"></i>
+                        <p class="upload-text">Drag and drop file here or <span class="browse-link">browse</span></p>
+                        <p class="upload-hint">PDF, JPG, PNG (Max 10MB)</p>
                     </div>
-                    <div class="file-info" id="fileInfoChip">
-                        <span id="fileName" class="file-name"></span>
-                        <button type="button" class="remove-file" id="removeFile"><i class="fas fa-times"></i></button>
+                    <input type="file" name="file" id="fileInput" required style="display: none;">
+                    <div id="filePreview" class="file-preview" style="display: none;">
+                        <div id="previewIcon"
+                            style="font-size: 3rem; color: var(--blue-medium); margin-bottom: 0.5rem;">
+                            <i class="fas fa-file-alt"></i>
+                        </div>
+                        <div class="file-info" id="fileInfoChip">
+                            <span id="fileName" class="file-name"></span>
+                            <button type="button" class="remove-file" id="removeFile"><i
+                                    class="fas fa-times"></i></button>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
 
-        <div class="form-group">
-            <label>Linked Products</label>
-            <div class="chip-wrapper" id="productChipWrapper">
-                <select id="productSelectInput">
-                    <option value="">Add Product...</option>
+            <div class="form-group">
+                <label>Linked Products</label>
+                <div class="chip-wrapper" id="productChipWrapper">
+                    <select id="productSelectInput">
+                        <option value="">Add Product...</option>
+                        <% products.forEach(p=> { %>
+                            <option value="<%= p.id %>">
+                                <%= p.code %> - <%= p.model %>
+                            </option>
+                            <% }) %>
+                    </select>
+                </div>
+                <select name="product_ids" id="productHiddenSelect" multiple style="display:none;">
                     <% products.forEach(p=> { %>
                         <option value="<%= p.id %>">
                             <%= p.code %> - <%= p.model %>
@@ -45,136 +56,21 @@
                         <% }) %>
                 </select>
             </div>
-            <select name="product_ids" id="productHiddenSelect" multiple style="display:none;">
-                <% products.forEach(p=> { %>
-                    <option value="<%= p.id %>">
-                        <%= p.code %> - <%= p.model %>
-                    </option>
-                    <% }) %>
-            </select>
-        </div>
 
-        <div style="margin-top: 2rem; padding-top: 1rem; border-top: 1px solid var(--gray-100);">
-            <button type="submit" class="btn btn-primary" style="width: 100%;">Upload Material</button>
-        </div>
-    </form>
+            <div
+                style="display: flex; gap: 15px; margin-top: 2rem; border-top: 1px solid var(--gray-100); padding-top: 2rem;">
+                <button type="submit" class="btn btn-primary" id="submitBtn" style="flex: 2;">
+                    <i class="fas fa-save"></i> <span>Upload Material</span>
+                </button>
+                <a href="/admin/marketing/materials" class="btn btn-secondary" style="flex: 1;">Cancel</a>
+            </div>
+        </form>
+    </div>
 </div>
 
-<style>
-    /* Paste reuse CSS if needed or rely on existing style.css */
-    /* Minimal styles for this view */
-    .chip-wrapper {
-        border: 1px solid var(--gray-300);
-        border-radius: 6px;
-        padding: 0.5rem;
-        display: flex;
-        flex-wrap: wrap;
-        gap: 0.5rem;
-        min-height: 45px;
-        background: white;
-        align-items: center;
-    }
-
-    .chip-wrapper:focus-within {
-        border-color: var(--blue-medium);
-        box-shadow: 0 0 0 3px rgba(0, 91, 150, 0.1);
-    }
-
-    .chip {
-        background: var(--blue-lightest);
-        color: var(--blue-dark);
-        padding: 4px 10px;
-        border-radius: 20px;
-        font-size: 0.85rem;
-        display: flex;
-        align-items: center;
-        gap: 6px;
-        font-weight: 500;
-        border: 1px solid var(--blue-light);
-    }
-
-    .chip-remove {
-        background: none;
-        border: none;
-        color: var(--blue-medium);
-        cursor: pointer;
-        padding: 0;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 0.9rem;
-    }
-
-    .chip-remove:hover {
-        color: var(--danger);
-    }
-
-    .chip-wrapper select {
-        border: none;
-        outline: none;
-        padding: 4px;
-        flex: 1;
-        min-width: 150px;
-        font-size: 0.95rem;
-        background: transparent;
-    }
-
-    .upload-zone {
-        border: 2px dashed var(--gray-300);
-        border-radius: 12px;
-        padding: 2.5rem 1.5rem;
-        text-align: center;
-        background: var(--gray-50);
-        transition: all 0.2s;
-        cursor: pointer;
-    }
-
-    .upload-zone:hover {
-        border-color: var(--blue-medium);
-        background: rgba(0, 91, 150, 0.05);
-    }
-
-    .upload-icon {
-        font-size: 3rem;
-        color: var(--gray-400);
-        margin-bottom: 1rem;
-    }
-
-    .file-preview {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 10px;
-    }
-
-    .file-info {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        background: white;
-        padding: 8px 15px;
-        border-radius: 20px;
-        border: 1px solid var(--gray-200);
-        box-shadow: var(--shadow-sm);
-    }
-
-    .remove-file {
-        background: #fee2e2;
-        color: var(--danger);
-        border: none;
-        width: 24px;
-        height: 24px;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        cursor: pointer;
-    }
-</style>
-
 <script>
-    // Chip Logic
     document.addEventListener('DOMContentLoaded', () => {
+        // Chip Logic
         const wrapper = document.getElementById('productChipWrapper');
         const selectInput = document.getElementById('productSelectInput');
         const hiddenSelect = document.getElementById('productHiddenSelect');
@@ -191,8 +87,6 @@
             });
             wrapper.querySelectorAll('.chip-remove').forEach(btn => {
                 btn.addEventListener('click', (e) => {
-                    const val = "value" in e.currentTarget.dataset ? e.currentTarget.dataset.value : e.currentTarget.parentElement.dataset.value;
-                    /* Fix dataset lookup if icon clicked */
                     const realVal = e.currentTarget.dataset.value;
                     const opt = hiddenSelect.querySelector(`option[value="${realVal}"]`);
                     if (opt) opt.selected = false;
@@ -242,6 +136,14 @@
             input.value = '';
             content.style.display = 'block';
             preview.style.display = 'none';
+        });
+
+        // Submit loading state
+        document.getElementById('addMaterialForm').addEventListener('submit', function () {
+            const btn = document.getElementById('submitBtn');
+            btn.classList.add('btn-loading');
+            btn.disabled = true;
+            btn.querySelector('span').textContent = 'Uploading...';
         });
     });
 </script>

@@ -41,9 +41,17 @@
                     <a href="/admin" class="sidebar-link <%= path === '/admin' ? 'active' : '' %>">
                         <i class="fa-solid fa-chart-line"></i> Dashboard
                     </a>
-                    <a href="/admin/marketing"
-                        class="sidebar-link <%= path.startsWith('/admin/marketing') ? 'active' : '' %>">
-                        <i class="fa-solid fa-bullhorn"></i> Marketing
+                    <a href="/admin/marketing/materials"
+                        class="sidebar-link <%= path.startsWith('/admin/marketing/materials') ? 'active' : '' %>">
+                        <i class="fa-solid fa-file-pdf"></i> Materials
+                    </a>
+                    <a href="/admin/marketing/events"
+                        class="sidebar-link <%= path.startsWith('/admin/marketing/events') ? 'active' : '' %>">
+                        <i class="fa-solid fa-calendar-days"></i> Events
+                    </a>
+                    <a href="/admin/marketing/testimonies"
+                        class="sidebar-link <%= path.startsWith('/admin/marketing/testimonies') ? 'active' : '' %>">
+                        <i class="fa-solid fa-comment-dots"></i> Testimonies
                     </a>
                     <a href="/admin/products"
                         class="sidebar-link <%= path.startsWith('/admin/products') ? 'active' : '' %>">
@@ -90,14 +98,9 @@
                             <span>Product Catalog</span>
                         </a>
                         <div class="nav-links">
-                            <a href="/home" class="nav-link <%= path === '/home' || path === '/' ? 'active' : '' %>">
-                                <i class="fa-solid fa-house"></i>
-                                <span>Home</span>
-                            </a>
-                            <a href="/products"
-                                class="nav-link <%= path.startsWith('/products') || path.startsWith('/product/') ? 'active' : '' %>">
+                            <a href="/home" class="nav-link <%= path === '/home' || path === '/' || path.startsWith('/products') || path.startsWith('/product/') ? 'active' : '' %>">
                                 <i class="fa-solid fa-boxes-stacked"></i>
-                                <span>Products</span>
+                                <span>Home</span>
                             </a>
                             <a href="/auth/login" class="nav-link <%= path === '/auth/login' ? 'active' : '' %>">
                                 <i class="fa-solid fa-user-shield"></i>

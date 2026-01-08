@@ -1,200 +1,469 @@
-<div class="marketing-page">
-    <div class="card-header marketing-header">
-        <h1>Marketing & Events</h1>
-    </div>
+<% const getProductNames=(idsString, productsList)=> {
+    if (!idsString) return '<span style="color: var(--gray-400);">None</span>';
+    const ids = idsString.split(',').map(Number);
+    return productsList
+    .filter(p => ids.includes(p.id))
+    .map(p => `<span class="chip-static" style="font-size: 0.75rem; padding: 2px 8px; border-radius: 4px;">${p.code} -
+        ${p.model}</span>`)
+    .join(' ');
+    };
 
-    <div class="card">
-        <!-- Search and Filter -->
-        <form action="/admin/marketing" method="GET"
-            style="display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: 1.5rem; padding-bottom: 1.5rem; border-bottom: 1px solid var(--gray-200);">
-            <div style="flex: 1; min-width: 250px; position: relative;">
-                <i class="fas fa-search"
-                    style="position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: var(--gray-400);"></i>
-                <input type="text" name="search" placeholder="Search..."
-                    value="<%= typeof search !== 'undefined' ? search : '' %>"
-                    style="width: 100%; padding: 0.75rem 1rem 0.75rem 2.5rem; border: 1px solid var(--gray-300); border-radius: 6px;">
-            </div>
-            <div style="min-width: 200px;">
-                <select name="product_id" onchange="this.form.submit()"
-                    style="width: 100%; padding: 0.75rem 1rem; border: 1px solid var(--gray-300); border-radius: 6px;">
-                    <option value="">Filter by Product</option>
-                    <% products.forEach(p=> { %>
-                        <option value="<%= p.id %>" <%=(typeof selectedProduct !=='undefined' && selectedProduct==p.id)
-                            ? 'selected' : '' %>>
-                            <%= p.code %> - <%= p.model %>
-                        </option>
-                        <% }) %>
-                </select>
-            </div>
-        </form>
-
-        <div class="tabs">
-            <div class="tab active" onclick="showTab('marketing')">Brochures/Fliers</div>
-            <div class="tab" onclick="showTab('events')">Events</div>
-            <div class="tab" onclick="showTab('testimonies')">Testimonies</div>
+    const renderLinks = (linksString) => {
+    if (!linksString) return '<span style="color: var(--gray-400);">-</span>';
+    const links = linksString.split('||').filter(l => l.trim() !== '');
+    if (links.length === 0) return '<span style="color: var(--gray-400);">-</span>';
+    return links
+    .map((l, i) => {
+    const parts = l.split('::');
+    const title = parts[0];
+    const url = parts.slice(1).join('::'); // Handle URLs containing :: just in case
+    const displayTitle = title && title.trim() !== '' ? title : `Link ${i + 1}`;
+    return `<a href="${url}" target="_blank" class="btn btn-outline btn-sm" title="${url}"
+        style="padding: 2px 6px; font-size: 0.75rem;">
+        <i class="fas fa-external-link-alt"></i> ${displayTitle}
+    </a>`;
+    })
+    .join(' ');
+    };
+    %>
+    <div class="companies-page">
+        <div class="card-header marketing-header"
+            style="justify-content: space-between; align-items: center; border-bottom: none; margin-bottom: 1rem; padding-bottom: 2rem; margin-top: 2rem;">
+            <h1 style="margin: 0;">
+                <% if (activeTab==='materials' ) { %> Materials & Brochures <% } %>
+                        <% if (activeTab==='events' ) { %> Events <% } %>
+                                <% if (activeTab==='testimonies' ) { %> Testimonies <% } %>
+            </h1>
+            <a href="/admin/marketing/<%= activeTab === 'materials' ? 'materials' : (activeTab === 'events' ? 'events' : 'testimonies') %>/add"
+                class="btn btn-primary add-company-btn">
+                <i class="fas fa-plus"></i>
+                <span>
+                    Add <% if (activeTab==='materials' ) { %> Material <% } %>
+                            <% if (activeTab==='events' ) { %> Event <% } %>
+                                    <% if (activeTab==='testimonies' ) { %> Testimony <% } %>
+                </span>
+            </a>
         </div>
 
-        <!-- Marketing Tab -->
-        <div id="marketing-tab" class="tab-content">
-            <div style="display: flex; justify-content: flex-end; margin-bottom: 1rem;">
-                <a href="/admin/marketing/materials/add" class="btn btn-primary btn-sm">
-                    <i class="fas fa-plus"></i> Add Material
-                </a>
-            </div>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Name</th>
-                        <th>File</th>
-                        <th style="width: 100px; text-align: center;">Action</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <% if(marketing.length===0) { %>
-                        <tr>
-                            <td colspan="3" style="text-align: center; color: var(--gray-500);">No materials found.</td>
-                        </tr>
-                        <% } %>
-                            <% marketing.forEach(m=> { %>
+        <!-- Desktop View -->
+        <div class="card desktop-only">
+            <!-- Search and Filter -->
+            <form
+                action="<%= activeTab === 'materials' ? '/admin/marketing/materials' : (activeTab === 'events' ? '/admin/marketing/events' : '/admin/marketing/testimonies') %>"
+                method="GET"
+                style="display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: 1.5rem; padding-bottom: 1.5rem; border-bottom: 1px solid var(--gray-200);">
+                <div style="flex: 1; min-width: 250px; position: relative;">
+                    <i class="fas fa-search"
+                        style="position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: var(--gray-400);"></i>
+                    <input type="text" name="search" placeholder="Search..."
+                        value="<%= typeof search !== 'undefined' ? search : '' %>"
+                        style="width: 100%; padding: 0.75rem 1rem 0.75rem 2.5rem; border: 1px solid var(--gray-300); border-radius: 6px;">
+                </div>
+                <div style="min-width: 200px;">
+                    <select name="product_id" onchange="this.form.submit()"
+                        style="width: 100%; padding: 0.75rem 1rem; border: 1px solid var(--gray-300); border-radius: 6px;">
+                        <option value="">Filter by Product</option>
+                        <% products.forEach(p=> { %>
+                            <option value="<%= p.id %>" <%=(typeof selectedProduct !=='undefined' &&
+                                selectedProduct==p.id) ? 'selected' : '' %>>
+                                <%= p.code %> - <%= p.model %>
+                            </option>
+                            <% }) %>
+                    </select>
+                </div>
+            </form>
+
+            <% if (activeTab==='materials' ) { %>
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Linked Products</th>
+                                <th>File</th>
+                                <th style="width: 100px; text-align: center;">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% if(marketing.length===0) { %>
                                 <tr>
-                                    <td>
+                                    <td colspan="4" style="text-align: center; color: var(--gray-500);">No materials
+                                        found.
+                                    </td>
+                                </tr>
+                                <% } %>
+                                    <% marketing.forEach(m=> { %>
+                                        <tr>
+                                            <td><strong>
+                                                    <%= m.name %>
+                                                </strong></td>
+                                            <td><%- getProductNames(m.product_ids, products) %></td>
+                                            <td><a href="<%= m.file_path %>" target="_blank"
+                                                    class="btn btn-outline btn-sm"><i
+                                                        class="fas fa-external-link-alt"></i>
+                                                    View File</a></td>
+                                            <td>
+                                                <div style="display: flex; gap: 8px; justify-content: center;">
+                                                    <a href="/admin/marketing/materials/edit/<%= m.id %>"
+                                                        class="btn btn-secondary btn-sm"><i class="fas fa-edit"></i></a>
+                                                    <form action="/admin/marketing/materials/delete/<%= m.id %>"
+                                                        method="POST" onsubmit="return confirm('Delete this item?');">
+                                                        <button class="btn btn-danger btn-sm"><i
+                                                                class="fas fa-trash"></i></button>
+                                                    </form>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        <% }) %>
+                        </tbody>
+                    </table>
+                </div>
+                <% } %>
+
+                    <% if (activeTab==='events' ) { %>
+                        <div class="table-responsive">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Event Name</th>
+                                        <th>Location</th>
+                                        <th>Dates</th>
+                                        <th>Media Links</th>
+                                        <th>Products</th>
+                                        <th style="width: 100px; text-align: center;">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <% if(events.length===0) { %>
+                                        <tr>
+                                            <td colspan="6" style="text-align: center; color: var(--gray-500);">No
+                                                events
+                                                found.</td>
+                                        </tr>
+                                        <% } %>
+                                            <% events.forEach(e=> { %>
+                                                <tr>
+                                                    <td><strong>
+                                                            <%= e.name %>
+                                                        </strong></td>
+                                                    <td>
+                                                        <%= e.location || '-' %>
+                                                    </td>
+                                                    <td style="font-size: 0.85rem;">
+                                                        <div style="white-space: nowrap;">
+                                                            <%= e.start_date ? new
+                                                                Date(e.start_date).toLocaleDateString() : '-' %>
+                                                        </div>
+                                                        <% if(e.end_date) { %>
+                                                            <div style="font-size: 0.75rem; color: var(--gray-500);">to
+                                                                <%= new Date(e.end_date).toLocaleDateString() %>
+                                                            </div>
+                                                            <% } %>
+                                                    </td>
+                                                    <td><%- renderLinks(e.links) %></td>
+                                                    <td><%- getProductNames(e.product_ids, products) %></td>
+                                                    <td>
+                                                        <div style="display: flex; gap: 8px; justify-content: center;">
+                                                            <a href="/admin/marketing/events/edit/<%= e.id %>"
+                                                                class="btn btn-secondary btn-sm"><i
+                                                                    class="fas fa-edit"></i></a>
+                                                            <form action="/admin/marketing/events/delete/<%= e.id %>"
+                                                                method="POST"
+                                                                onsubmit="return confirm('Delete this event?');">
+                                                                <button class="btn btn-danger btn-sm"><i
+                                                                        class="fas fa-trash"></i></button>
+                                                            </form>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                                <% }) %>
+                                </tbody>
+                            </table>
+                        </div>
+                        <% } %>
+
+                            <% if (activeTab==='testimonies' ) { %>
+                                <div class="table-responsive">
+                                    <table>
+                                        <thead>
+                                            <tr>
+                                                <th>Client</th>
+                                                <th>Treatment</th>
+                                                <th>Location</th>
+                                                <th>Date</th>
+                                                <th>Links</th>
+                                                <th>Products</th>
+                                                <th style="width: 100px; text-align: center;">Action</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <% if(testimonies.length===0) { %>
+                                                <tr>
+                                                    <td colspan="7" style="text-align: center; color: var(--gray-500);">
+                                                        No
+                                                        testimonies found.</td>
+                                                </tr>
+                                                <% } %>
+                                                    <% testimonies.forEach(t=> { %>
+                                                        <tr>
+                                                            <td><strong>
+                                                                    <%= t.client_name %>
+                                                                </strong></td>
+                                                            <td>
+                                                                <%= t.treatment %>
+                                                            </td>
+                                                            <td>
+                                                                <%= t.location %>
+                                                            </td>
+                                                            <td style="font-size: 0.85rem;">
+                                                                <%= t.start_date ? new
+                                                                    Date(t.start_date).toLocaleDateString() : '-' %>
+                                                            </td>
+                                                            <td><%- renderLinks(t.links) %></td>
+                                                            <td><%- getProductNames(t.product_ids, products) %></td>
+                                                            <td>
+                                                                <div
+                                                                    style="display: flex; gap: 8px; justify-content: center;">
+                                                                    <a href="/admin/marketing/testimonies/edit/<%= t.id %>"
+                                                                        class="btn btn-secondary btn-sm"><i
+                                                                            class="fas fa-edit"></i></a>
+                                                                    <form
+                                                                        action="/admin/marketing/testimonies/delete/<%= t.id %>"
+                                                                        method="POST"
+                                                                        onsubmit="return confirm('Delete this testimony?');">
+                                                                        <button class="btn btn-danger btn-sm"><i
+                                                                                class="fas fa-trash"></i></button>
+                                                                    </form>
+                                                                </div>
+                                                            </td>
+                                                        </tr>
+                                                        <% }) %>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <% } %>
+        </div>
+
+        <!-- Mobile View -->
+        <div class="mobile-category-cards">
+            <!-- Mobile Search and Filter -->
+            <div
+                style="background: white; padding: 1rem; border-radius: 12px; border: 1px solid var(--gray-200); box-shadow: var(--shadow-sm); margin-bottom: 1rem;">
+                <form
+                    action="<%= activeTab === 'materials' ? '/admin/marketing/materials' : (activeTab === 'events' ? '/admin/marketing/events' : '/admin/marketing/testimonies') %>"
+                    method="GET">
+                    <div style="position: relative; margin-bottom: 0.75rem;">
+                        <i class="fas fa-search"
+                            style="position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: var(--gray-400);"></i>
+                        <input type="text" name="search" placeholder="Search..."
+                            value="<%= typeof search !== 'undefined' ? search : '' %>"
+                            style="width: 100%; padding: 0.75rem 1rem 0.75rem 2.5rem; border: 1px solid var(--gray-300); border-radius: 6px;">
+                    </div>
+                    <select name="product_id" onchange="this.form.submit()"
+                        style="width: 100%; padding: 0.75rem 1rem; border: 1px solid var(--gray-300); border-radius: 6px;">
+                        <option value="">Filter by Product</option>
+                        <% products.forEach(p=> { %>
+                            <option value="<%= p.id %>" <%=(typeof selectedProduct !=='undefined' &&
+                                selectedProduct==p.id) ? 'selected' : '' %>>
+                                <%= p.code %> - <%= p.model %>
+                            </option>
+                            <% }) %>
+                    </select>
+                </form>
+            </div>
+
+            <% if (activeTab==='materials' ) { %>
+                <% marketing.forEach(m=> { %>
+                    <div class="category-card">
+                        <div class="category-card-header">
+                            <div class="category-card-name">
+                                <div
+                                    style="width: 40px; height: 40px; background: var(--gray-50); border-radius: 6px; display: flex; align-items: center; justify-content: center; border: 1px solid var(--gray-100); margin-right: 10px; flex-shrink: 0;">
+                                    <i class="fas fa-file-alt"
+                                        style="color: var(--blue-medium); font-size: 1.25rem;"></i>
+                                </div>
+                                <div>
+                                    <div>
                                         <%= m.name %>
-                                    </td>
-                                    <td><a href="<%= m.file_path %>" target="_blank">View File</a></td>
-                                    <td>
-                                        <div style="display: flex; gap: 5px; justify-content: center;">
-                                            <a href="/admin/marketing/materials/edit/<%= m.id %>"
-                                                class="btn btn-secondary btn-sm"><i class="fas fa-edit"></i></a>
-                                            <form action="/admin/marketing/materials/delete/<%= m.id %>" method="POST"
-                                                onsubmit="return confirm('Delete this item?');"
-                                                style="display: inline;">
-                                                <button class="btn btn-danger btn-sm"><i
-                                                        class="fas fa-trash"></i></button>
-                                            </form>
-                                        </div>
-                                    </td>
-                                </tr>
-                                <% }) %>
-                </tbody>
-            </table>
-        </div>
-
-        <!-- Events Tab -->
-        <div id="events-tab" class="tab-content" style="display: none;">
-            <div style="display: flex; justify-content: flex-end; margin-bottom: 1rem;">
-                <a href="/admin/marketing/events/add" class="btn btn-primary btn-sm">
-                    <i class="fas fa-plus"></i> Add Event
-                </a>
-            </div>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Name</th>
-                        <th>Location</th>
-                        <th>Date</th>
-                        <th style="width: 100px; text-align: center;">Action</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <% if(events.length===0) { %>
-                        <tr>
-                            <td colspan="4" style="text-align: center; color: var(--gray-500);">No events found.</td>
-                        </tr>
+                                    </div>
+                                    <span class="badge badge-primary"
+                                        style="font-size: 0.65rem; padding: 2px 6px; margin-top: 2px;">Material</span>
+                                </div>
+                            </div>
+                            <div class="category-card-actions">
+                                <a href="/admin/marketing/materials/edit/<%= m.id %>"
+                                    class="btn btn-secondary btn-sm"><i class="fas fa-edit"></i></a>
+                                <form action="/admin/marketing/materials/delete/<%= m.id %>" method="POST"
+                                    onsubmit="return confirm('Delete this?');">
+                                    <button class="btn btn-danger btn-sm"><i class="fas fa-trash"></i></button>
+                                </form>
+                            </div>
+                        </div>
+                        <div class="category-card-details"
+                            style="flex-direction: column; align-items: flex-start; gap: 8px;">
+                            <a href="<%= m.file_path %>" target="_blank"
+                                style="font-weight: 600; color: var(--blue-medium);">
+                                <i class="fas fa-external-link-alt" style="margin-right: 5px;"></i> View Document
+                            </a>
+                            <div style="padding-top: 8px; border-top: 1px solid var(--gray-100); width: 100%;">
+                                <div style="font-size: 0.75rem; color: var(--gray-500); margin-bottom: 4px;">Linked
+                                    Products</div>
+                                <div style="display: flex; flex-wrap: wrap; gap: 4px;">
+                                    <%- getProductNames(m.product_ids, products) %>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <% }) %>
                         <% } %>
-                            <% events.forEach(e=> { %>
-                                <tr>
-                                    <td>
-                                        <%= e.name %>
-                                    </td>
-                                    <td>
-                                        <%= e.location %>
-                                    </td>
-                                    <td>
-                                        <%= e.start_date ? new Date(e.start_date).toLocaleDateString() : '' %>
-                                    </td>
-                                    <td>
-                                        <div style="display: flex; gap: 5px; justify-content: center;">
-                                            <a href="/admin/marketing/events/edit/<%= e.id %>"
-                                                class="btn btn-secondary btn-sm"><i class="fas fa-edit"></i></a>
-                                            <form action="/admin/marketing/events/delete/<%= e.id %>" method="POST"
-                                                onsubmit="return confirm('Delete this event?');"
-                                                style="display: inline;">
-                                                <button class="btn btn-danger btn-sm"><i
-                                                        class="fas fa-trash"></i></button>
-                                            </form>
-                                        </div>
-                                    </td>
-                                </tr>
-                                <% }) %>
-                </tbody>
-            </table>
-        </div>
 
-        <!-- Testimonies Tab -->
-        <div id="testimonies-tab" class="tab-content" style="display: none;">
-            <div style="display: flex; justify-content: flex-end; margin-bottom: 1rem;">
-                <a href="/admin/marketing/testimonies/add" class="btn btn-primary btn-sm">
-                    <i class="fas fa-plus"></i> Add Testimony
-                </a>
-            </div>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Client</th>
-                        <th>Treatment</th>
-                        <th>Location</th>
-                        <th style="width: 100px; text-align: center;">Action</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <% if(testimonies.length===0) { %>
-                        <tr>
-                            <td colspan="4" style="text-align: center; color: var(--gray-500);">No testimonies found.
-                            </td>
-                        </tr>
-                        <% } %>
-                            <% testimonies.forEach(t=> { %>
-                                <tr>
-                                    <td>
-                                        <%= t.client_name %>
-                                    </td>
-                                    <td>
-                                        <%= t.treatment %>
-                                    </td>
-                                    <td>
-                                        <%= t.location %>
-                                    </td>
-                                    <td>
-                                        <div style="display: flex; gap: 5px; justify-content: center;">
-                                            <a href="/admin/marketing/testimonies/edit/<%= t.id %>"
-                                                class="btn btn-secondary btn-sm"><i class="fas fa-edit"></i></a>
-                                            <form action="/admin/marketing/testimonies/delete/<%= t.id %>" method="POST"
-                                                onsubmit="return confirm('Delete this testimony?');"
-                                                style="display: inline;">
-                                                <button class="btn btn-danger btn-sm"><i
-                                                        class="fas fa-trash"></i></button>
-                                            </form>
+                            <% if (activeTab==='events' ) { %>
+                                <% events.forEach(e=> { %>
+                                    <div class="category-card">
+                                        <div class="category-card-header">
+                                            <div class="category-card-name">
+                                                <div
+                                                    style="width: 40px; height: 40px; background: var(--gray-50); border-radius: 6px; display: flex; align-items: center; justify-content: center; border: 1px solid var(--gray-100); margin-right: 10px; flex-shrink: 0;">
+                                                    <i class="fas fa-calendar-check"
+                                                        style="color: var(--blue-medium); font-size: 1.25rem;"></i>
+                                                </div>
+                                                <div>
+                                                    <div>
+                                                        <%= e.name %>
+                                                    </div>
+                                                    <span class="badge badge-primary"
+                                                        style="font-size: 0.65rem; padding: 2px 6px; margin-top: 2px;">Event</span>
+                                                </div>
+                                            </div>
+                                            <div class="category-card-actions">
+                                                <a href="/admin/marketing/events/edit/<%= e.id %>"
+                                                    class="btn btn-secondary btn-sm"><i class="fas fa-edit"></i></a>
+                                                <form action="/admin/marketing/events/delete/<%= e.id %>" method="POST"
+                                                    onsubmit="return confirm('Delete event?');">
+                                                    <button class="btn btn-danger btn-sm"><i
+                                                            class="fas fa-trash"></i></button>
+                                                </form>
+                                            </div>
                                         </div>
-                                    </td>
-                                </tr>
-                                <% }) %>
-                </tbody>
-            </table>
+                                        <div class="category-card-details"
+                                            style="flex-direction: column; align-items: flex-start; gap: 8px;">
+                                            <div style="display: flex; align-items: center; gap: 8px;">
+                                                <i class="fas fa-map-marker-alt"
+                                                    style="width: 14px; color: var(--gray-400);"></i>
+                                                <span>
+                                                    <%= e.location || 'No location set' %>
+                                                </span>
+                                            </div>
+                                            <div style="display: flex; align-items: center; gap: 8px;">
+                                                <i class="fas fa-calendar-alt"
+                                                    style="width: 14px; color: var(--gray-400);"></i>
+                                                <span>
+                                                    <%= e.start_date ? new Date(e.start_date).toLocaleDateString() : '-'
+                                                        %>
+                                                        <% if(e.end_date) { %> - <%= new
+                                                                Date(e.end_date).toLocaleDateString() %>
+                                                                <% } %>
+                                                </span>
+                                            </div>
+                                            <div
+                                                style="width: 100%; padding-top: 8px; border-top: 1px solid var(--gray-50);">
+                                                <div
+                                                    style="font-size: 0.75rem; color: var(--gray-500); margin-bottom: 5px;">
+                                                    Media Links</div>
+                                                <div style="display: flex; flex-wrap: wrap; gap: 5px;">
+                                                    <%- renderLinks(e.links) %>
+                                                </div>
+                                            </div>
+                                            <div
+                                                style="width: 100%; padding-top: 8px; border-top: 1px solid var(--gray-50);">
+                                                <div
+                                                    style="font-size: 0.75rem; color: var(--gray-500); margin-bottom: 5px;">
+                                                    Linked Products</div>
+                                                <div style="display: flex; flex-wrap: wrap; gap: 4px;">
+                                                    <%- getProductNames(e.product_ids, products) %>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <% }) %>
+                                        <% } %>
+
+                                            <% if (activeTab==='testimonies' ) { %>
+                                                <% testimonies.forEach(t=> { %>
+                                                    <div class="category-card">
+                                                        <div class="category-card-header">
+                                                            <div class="category-card-name">
+                                                                <div
+                                                                    style="width: 40px; height: 40px; background: var(--gray-50); border-radius: 6px; display: flex; align-items: center; justify-content: center; border: 1px solid var(--gray-100); margin-right: 10px; flex-shrink: 0;">
+                                                                    <i class="fas fa-quote-left"
+                                                                        style="color: var(--blue-medium); font-size: 1.25rem;"></i>
+                                                                </div>
+                                                                <div>
+                                                                    <div>
+                                                                        <%= t.client_name %>
+                                                                    </div>
+                                                                    <span class="badge badge-primary"
+                                                                        style="font-size: 0.65rem; padding: 2px 6px; margin-top: 2px;">Testimony</span>
+                                                                </div>
+                                                            </div>
+                                                            <div class="category-card-actions">
+                                                                <a href="/admin/marketing/testimonies/edit/<%= t.id %>"
+                                                                    class="btn btn-secondary btn-sm"><i
+                                                                        class="fas fa-edit"></i></a>
+                                                                <form
+                                                                    action="/admin/marketing/testimonies/delete/<%= t.id %>"
+                                                                    method="POST"
+                                                                    onsubmit="return confirm('Delete testimony?');">
+                                                                    <button class="btn btn-danger btn-sm"><i
+                                                                            class="fas fa-trash"></i></button>
+                                                                </form>
+                                                            </div>
+                                                        </div>
+                                                        <div class="category-card-details"
+                                                            style="flex-direction: column; align-items: flex-start; gap: 8px;">
+                                                            <div style="display: flex; align-items: center; gap: 8px;">
+                                                                <i class="fas fa-stethoscope"
+                                                                    style="width: 14px; color: var(--gray-400);"></i>
+                                                                <span>
+                                                                    <%= t.treatment %>
+                                                                </span>
+                                                            </div>
+                                                            <div style="display: flex; align-items: center; gap: 8px;">
+                                                                <i class="fas fa-map-marker-alt"
+                                                                    style="width: 14px; color: var(--gray-400);"></i>
+                                                                <span>
+                                                                    <%= t.location %>
+                                                                </span>
+                                                            </div>
+                                                            <div style="display: flex; align-items: center; gap: 8px;">
+                                                                <i class="fas fa-calendar-check"
+                                                                    style="width: 14px; color: var(--gray-400);"></i>
+                                                                <span>
+                                                                    <%= t.start_date ? new
+                                                                        Date(t.start_date).toLocaleDateString() : '-' %>
+                                                                </span>
+                                                            </div>
+                                                            <div
+                                                                style="width: 100%; padding-top: 8px; border-top: 1px solid var(--gray-50);">
+                                                                <div
+                                                                    style="font-size: 0.75rem; color: var(--gray-500); margin-bottom: 5px;">
+                                                                    Media Links</div>
+                                                                <div style="display: flex; flex-wrap: wrap; gap: 5px;">
+                                                                    <%- renderLinks(t.links) %>
+                                                                </div>
+                                                            </div>
+                                                            <div
+                                                                style="width: 100%; padding-top: 8px; border-top: 1px solid var(--gray-50);">
+                                                                <div
+                                                                    style="font-size: 0.75rem; color: var(--gray-500); margin-bottom: 5px;">
+                                                                    Linked Products</div>
+                                                                <div style="display: flex; flex-wrap: wrap; gap: 4px;">
+                                                                    <%- getProductNames(t.product_ids, products) %>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <% }) %>
+                                                        <% } %>
         </div>
     </div>
-</div>
-
-<script>
-    function showTab(tabName) {
-        document.querySelectorAll('.tab-content').forEach(el => el.style.display = 'none');
-        document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
-        document.getElementById(tabName + '-tab').style.display = 'block';
-
-        const tabs = document.querySelectorAll('.tab');
-        if (tabName === 'marketing') tabs[0].classList.add('active');
-        if (tabName === 'events') tabs[1].classList.add('active');
-        if (tabName === 'testimonies') tabs[2].classList.add('active');
-
-        // Persist tab selection in URL or session storage if needed, but simple toggle for now
-    }
-</script>

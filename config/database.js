@@ -1,4 +1,5 @@
 const mysql = require('mysql2/promise');
+const mysqlSync = require('mysql2');
 require('dotenv').config();
 const bcrypt = require('bcrypt');
 
@@ -7,6 +8,29 @@ const dbConfig = {
     user: process.env.DB_USER || 'root',
     password: process.env.DB_PASSWORD || '',
     multipleStatements: true
+};
+
+// Session store configuration (uses synchronous mysql2 connection)
+const sessionStoreConfig = {
+    host: process.env.DB_HOST || 'localhost',
+    user: process.env.DB_USER || 'root',
+    password: process.env.DB_PASSWORD || '',
+    database: process.env.DB_NAME || 'product_catalog',
+    clearExpired: true,
+    checkExpirationInterval: 900000, // 15 minutes
+    expiration: 86400000, // 24 hours
+    createDatabaseTable: true,
+    connectionLimit: 1,
+    endConnectionOnClose: true,
+    charset: 'utf8mb4_bin',
+    schema: {
+        tableName: 'sessions',
+        columnNames: {
+            session_id: 'session_id',
+            expires: 'expires',
+            data: 'data'
+        }
+    }
 };
 
 async function initializeDatabase() {
@@ -77,6 +101,8 @@ async function initializeDatabase() {
                 description TEXT,
                 product_image VARCHAR(255),
                 mda_cert VARCHAR(255),
+                supplier_id INT DEFAULT NULL,
+                FOREIGN KEY (supplier_id) REFERENCES suppliers(id) ON DELETE SET NULL,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             );
 
@@ -103,11 +129,21 @@ async function initializeDatabase() {
                 FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE
             );
 
+            CREATE TABLE IF NOT EXISTS product_images (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                product_id INT NOT NULL,
+                image_path VARCHAR(255) NOT NULL,
+                is_main BOOLEAN DEFAULT FALSE,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE,
+                INDEX idx_product_main (product_id, is_main)
+            );
+
             CREATE TABLE IF NOT EXISTS marketing_materials (
                 id INT AUTO_INCREMENT PRIMARY KEY,
                 name VARCHAR(255),
                 file_path VARCHAR(255) NOT NULL,
-                file_type VARCHAR(50),
+                file_type VARCHAR(255),
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             );
 
@@ -131,6 +167,7 @@ async function initializeDatabase() {
             CREATE TABLE IF NOT EXISTS event_links (
                 id INT AUTO_INCREMENT PRIMARY KEY,
                 event_id INT,
+                title VARCHAR(255),
                 url TEXT,
                 FOREIGN KEY (event_id) REFERENCES events(id) ON DELETE CASCADE
             );
@@ -156,6 +193,7 @@ async function initializeDatabase() {
             CREATE TABLE IF NOT EXISTS testimony_links (
                 id INT AUTO_INCREMENT PRIMARY KEY,
                 testimony_id INT,
+                title VARCHAR(255),
                 url TEXT,
                 FOREIGN KEY (testimony_id) REFERENCES testimonies(id) ON DELETE CASCADE
             );
@@ -170,6 +208,40 @@ async function initializeDatabase() {
         `;
 
         await connection.query(createTablesSql);
+
+        // Migration: Update file_type column size if it exists and is too small
+        try {
+            const [columns] = await connection.query(`
+                SELECT COLUMN_TYPE FROM INFORMATION_SCHEMA.COLUMNS 
+                WHERE TABLE_SCHEMA = ? AND TABLE_NAME = 'marketing_materials' AND COLUMN_NAME = 'file_type'
+            `, [process.env.DB_NAME || 'product_catalog']);
+            
+            if (columns.length > 0 && columns[0].COLUMN_TYPE.includes('varchar(50)')) {
+                await connection.query('ALTER TABLE marketing_materials MODIFY COLUMN file_type VARCHAR(255)');
+                console.log('✓ Updated marketing_materials.file_type column size');
+            }
+        } catch (migrationError) {
+            console.log('Migration check skipped (table may not exist yet)');
+        }
+
+        // Migration: Add supplier_id column to products table if it doesn't exist
+        try {
+            const [supplierColumns] = await connection.query(`
+                SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS 
+                WHERE TABLE_SCHEMA = ? AND TABLE_NAME = 'products' AND COLUMN_NAME = 'supplier_id'
+            `, [process.env.DB_NAME || 'product_catalog']);
+            
+            if (supplierColumns.length === 0) {
+                await connection.query(`
+                    ALTER TABLE products 
+                    ADD COLUMN supplier_id INT DEFAULT NULL,
+                    ADD FOREIGN KEY (supplier_id) REFERENCES suppliers(id) ON DELETE SET NULL
+                `);
+                console.log('✓ Added supplier_id column to products table');
+            }
+        } catch (migrationError) {
+            console.log('Migration check for supplier_id skipped (table may not exist yet)');
+        }
 
         const [rows] = await connection.query('SELECT * FROM users WHERE email = ?', ['admin@admin.com']);
         if (rows.length === 0) {
@@ -198,5 +270,6 @@ const pool = mysql.createPool({
 
 module.exports = {
     initializeDatabase,
-    pool
+    pool,
+    sessionStoreConfig
 };

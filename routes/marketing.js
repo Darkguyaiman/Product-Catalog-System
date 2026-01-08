@@ -63,25 +63,65 @@ const buildTestimonyWhere = (search, productId) => {
     return { where: conditions.length ? 'WHERE ' + conditions.join(' AND ') : '', params };
 };
 
-router.get('/', async (req, res) => {
+const getMarketingData = async (req) => {
+    const { search, product_id } = req.query;
+
+    // Materials
+    const mQ = buildWhere(search, product_id, 'product_marketing', 'material_id');
+    const [marketing] = await pool.query(`
+        SELECT m.*, 
+        (SELECT GROUP_CONCAT(product_id) FROM product_marketing WHERE material_id = m.id) as product_ids 
+        FROM marketing_materials m ${mQ.where} ORDER BY m.id DESC`, mQ.params);
+
+    // Events
+    const eQ = buildWhere(search, product_id, 'product_events', 'event_id');
+    const [events] = await pool.query(`
+        SELECT e.*, 
+        (SELECT GROUP_CONCAT(product_id) FROM product_events WHERE event_id = e.id) as product_ids,
+        (SELECT GROUP_CONCAT(CONCAT(IFNULL(title, ''), '::', url) SEPARATOR '||') FROM event_links WHERE event_id = e.id) as links 
+        FROM events e ${eQ.where} ORDER BY e.start_date DESC`, eQ.params);
+
+    // Testimonies
+    const tQ = buildTestimonyWhere(search, product_id);
+    const [testimonies] = await pool.query(`
+        SELECT t.*, 
+        (SELECT GROUP_CONCAT(product_id) FROM product_testimonies WHERE testimony_id = t.id) as product_ids,
+        (SELECT GROUP_CONCAT(CONCAT(IFNULL(title, ''), '::', url) SEPARATOR '||') FROM testimony_links WHERE testimony_id = t.id) as links
+        FROM testimonies t ${tQ.where} ORDER BY t.start_date DESC`, tQ.params);
+
+    const [products] = await pool.query("SELECT id, code, model FROM products ORDER BY code ASC");
+
+    return { marketing, events, testimonies, products, search: search || '', selectedProduct: product_id || '' };
+};
+
+router.get('/', (req, res) => {
+    res.redirect('/admin/marketing/materials');
+});
+
+router.get('/materials', async (req, res) => {
     try {
-        const { search, product_id } = req.query;
+        const data = await getMarketingData(req);
+        res.render('marketing/index', { ...data, activeTab: 'materials' });
+    } catch (err) {
+        console.error(err);
+        res.status(500).send('Server Error');
+    }
+});
 
-        // Materials
-        const mQ = buildWhere(search, product_id, 'product_marketing', 'material_id');
-        const [marketing] = await pool.query(`SELECT * FROM marketing_materials ${mQ.where} ORDER BY id DESC`, mQ.params);
+router.get('/events', async (req, res) => {
+    try {
+        const data = await getMarketingData(req);
+        res.render('marketing/index', { ...data, activeTab: 'events' });
+    } catch (err) {
+        console.error(err);
+        res.status(500).send('Server Error');
+    }
+});
 
-        // Events
-        const eQ = buildWhere(search, product_id, 'product_events', 'event_id');
-        const [events] = await pool.query(`SELECT * FROM events ${eQ.where} ORDER BY start_date DESC`, eQ.params);
-
-        // Testimonies
-        const tQ = buildTestimonyWhere(search, product_id);
-        const [testimonies] = await pool.query(`SELECT * FROM testimonies ${tQ.where} ORDER BY start_date DESC`, tQ.params);
-
-        const [products] = await pool.query("SELECT id, code, model FROM products ORDER BY code ASC");
-
-        res.render('marketing/index', { marketing, events, testimonies, products, search: search || '', selectedProduct: product_id || '' });
+router.get('/testimonies', async (req, res) => {
+    try {
+        const data = await getMarketingData(req);
+        res.render('marketing/index', { ...data, activeTab: 'testimonies' });
     } catch (err) {
         console.error(err);
         res.status(500).send('Server Error');
@@ -128,7 +168,7 @@ router.post('/materials/add', upload.single('file'), async (req, res) => {
         }
 
         await connection.commit();
-        res.redirect('/admin/marketing');
+        res.redirect('/admin/marketing/materials');
     } catch (err) {
         if (connection) await connection.rollback();
         console.error(err);
@@ -141,7 +181,7 @@ router.post('/materials/add', upload.single('file'), async (req, res) => {
 router.get('/materials/edit/:id', async (req, res) => {
     try {
         const [rows] = await pool.query("SELECT * FROM marketing_materials WHERE id = ?", [req.params.id]);
-        if (rows.length === 0) return res.redirect('/admin/marketing');
+        if (rows.length === 0) return res.redirect('/admin/marketing/materials');
 
         const [products] = await pool.query("SELECT id, code, model FROM products ORDER BY code ASC");
         const [related] = await pool.query("SELECT product_id FROM product_marketing WHERE material_id = ?", [req.params.id]);
@@ -152,7 +192,7 @@ router.get('/materials/edit/:id', async (req, res) => {
         res.render('marketing/materials/edit', { material, products });
     } catch (err) {
         console.error(err);
-        res.redirect('/admin/marketing');
+        res.redirect('/admin/marketing/materials');
     }
 });
 
@@ -204,11 +244,11 @@ router.post('/materials/edit/:id', upload.single('file'), async (req, res) => {
         }
 
         await connection.commit();
-        res.redirect('/admin/marketing');
+        res.redirect('/admin/marketing/materials');
     } catch (err) {
         if (connection) await connection.rollback();
         console.error(err);
-        res.redirect('/admin/marketing');
+        res.redirect('/admin/marketing/materials');
     } finally {
         if (connection) connection.release();
     }
@@ -224,7 +264,7 @@ router.get('/events/add', async (req, res) => {
 });
 
 router.post('/events/add', async (req, res) => {
-    const { name, location, start_date, end_date, links, product_ids } = req.body;
+    const { name, location, start_date, end_date, link_titles, link_urls, product_ids } = req.body;
     let connection;
     try {
         connection = await pool.getConnection();
@@ -233,10 +273,13 @@ router.post('/events/add', async (req, res) => {
         const [result] = await connection.query("INSERT INTO events (name, location, start_date, end_date) VALUES (?, ?, ?, ?)", [name, location, start_date, end_date]);
         const eventId = result.insertId;
 
-        if (links) {
-            const linkArr = Array.isArray(links) ? links : [links];
-            const linkValues = linkArr.filter(l => l.trim() !== '').map(l => [eventId, l]);
-            if (linkValues.length > 0) await connection.query("INSERT INTO event_links (event_id, url) VALUES ?", [linkValues]);
+        if (link_urls) {
+            const urls = Array.isArray(link_urls) ? link_urls : [link_urls];
+            const titles = Array.isArray(link_titles) ? link_titles : [link_titles];
+            const linkValues = urls
+                .map((url, i) => [eventId, titles[i], url])
+                .filter(l => l[2].trim() !== '');
+            if (linkValues.length > 0) await connection.query("INSERT INTO event_links (event_id, title, url) VALUES ?", [linkValues]);
         }
 
         if (product_ids) {
@@ -248,7 +291,7 @@ router.post('/events/add', async (req, res) => {
         }
 
         await connection.commit();
-        res.redirect('/admin/marketing');
+        res.redirect('/admin/marketing/events');
     } catch (err) {
         if (connection) await connection.rollback();
         console.error(err);
@@ -261,38 +304,41 @@ router.post('/events/add', async (req, res) => {
 router.get('/events/edit/:id', async (req, res) => {
     try {
         const [events] = await pool.query("SELECT * FROM events WHERE id = ?", [req.params.id]);
-        if (events.length === 0) return res.redirect('/admin/marketing');
+        if (events.length === 0) return res.redirect('/admin/marketing/events');
         const event = events[0];
 
         const [products] = await pool.query("SELECT id, code, model FROM products ORDER BY code ASC");
         const [related] = await pool.query("SELECT product_id FROM product_events WHERE event_id = ?", [event.id]);
-        const [links] = await pool.query("SELECT url FROM event_links WHERE event_id = ?", [event.id]);
+        const [links] = await pool.query("SELECT title, url FROM event_links WHERE event_id = ?", [event.id]);
 
         event.product_ids = related.map(r => r.product_id);
-        event.links = links.map(l => l.url);
+        event.links = links; // Now contains {title, url}
 
         res.render('marketing/events/edit', { event, products });
     } catch (err) {
         console.error(err);
-        res.redirect('/admin/marketing');
+        res.redirect('/admin/marketing/events');
     }
 });
 
 router.post('/events/edit/:id', async (req, res) => {
-    const { name, location, start_date, end_date, links, product_ids } = req.body;
+    const { name, location, start_date, end_date, link_titles, link_urls, product_ids } = req.body;
     let connection;
     try {
         connection = await pool.getConnection();
         await connection.beginTransaction();
 
-        await connection.query("UPDATE events SET name=?, location=?, start_date=?, end_date=? WHERE id=?", [name, location, start_date, end_date, req.params.id]);
+        await connection.query("UPDATE events SET name = ?, location = ?, start_date = ?, end_date = ? WHERE id = ?", [name, location, start_date, end_date, req.params.id]);
 
-        // Links
+        // Update Links
         await connection.query("DELETE FROM event_links WHERE event_id = ?", [req.params.id]);
-        if (links) {
-            const linkArr = Array.isArray(links) ? links : [links];
-            const linkValues = linkArr.filter(l => l.trim() !== '').map(l => [req.params.id, l]);
-            if (linkValues.length > 0) await connection.query("INSERT INTO event_links (event_id, url) VALUES ?", [linkValues]);
+        if (link_urls) {
+            const urls = Array.isArray(link_urls) ? link_urls : [link_urls];
+            const titles = Array.isArray(link_titles) ? link_titles : [link_titles];
+            const linkValues = urls
+                .map((url, i) => [req.params.id, titles[i], url])
+                .filter(l => l[2].trim() !== '');
+            if (linkValues.length > 0) await connection.query("INSERT INTO event_links (event_id, title, url) VALUES ?", [linkValues]);
         }
 
         // Products
@@ -306,11 +352,11 @@ router.post('/events/edit/:id', async (req, res) => {
         }
 
         await connection.commit();
-        res.redirect('/admin/marketing');
+        res.redirect('/admin/marketing/events');
     } catch (err) {
         if (connection) await connection.rollback();
         console.error(err);
-        res.redirect('/admin/marketing');
+        res.redirect('/admin/marketing/events');
     } finally {
         if (connection) connection.release();
     }
@@ -326,19 +372,22 @@ router.get('/testimonies/add', async (req, res) => {
 });
 
 router.post('/testimonies/add', async (req, res) => {
-    const { client_name, location, start_date, end_date, treatment, links, product_ids } = req.body;
+    const { client_name, location, start_date, treatment, link_titles, link_urls, product_ids } = req.body;
     let connection;
     try {
         connection = await pool.getConnection();
         await connection.beginTransaction();
 
-        const [result] = await connection.query("INSERT INTO testimonies (client_name, location, start_date, end_date, treatment) VALUES (?, ?, ?, ?, ?)", [client_name, location, start_date, end_date, treatment]);
+        const [result] = await connection.query("INSERT INTO testimonies (client_name, location, start_date, treatment) VALUES (?, ?, ?, ?)", [client_name, location, start_date, treatment]);
         const testimonyId = result.insertId;
 
-        if (links) {
-            const linkArr = Array.isArray(links) ? links : [links];
-            const linkValues = linkArr.filter(l => l.trim() !== '').map(l => [testimonyId, l]);
-            if (linkValues.length > 0) await connection.query("INSERT INTO testimony_links (testimony_id, url) VALUES ?", [linkValues]);
+        if (link_urls) {
+            const urls = Array.isArray(link_urls) ? link_urls : [link_urls];
+            const titles = Array.isArray(link_titles) ? link_titles : [link_titles];
+            const linkValues = urls
+                .map((url, i) => [testimonyId, titles[i], url])
+                .filter(l => l[2].trim() !== '');
+            if (linkValues.length > 0) await connection.query("INSERT INTO testimony_links (testimony_id, title, url) VALUES ?", [linkValues]);
         }
 
         if (product_ids) {
@@ -350,7 +399,7 @@ router.post('/testimonies/add', async (req, res) => {
         }
 
         await connection.commit();
-        res.redirect('/admin/marketing');
+        res.redirect('/admin/marketing/testimonies');
     } catch (err) {
         if (connection) await connection.rollback();
         console.error(err);
@@ -363,38 +412,41 @@ router.post('/testimonies/add', async (req, res) => {
 router.get('/testimonies/edit/:id', async (req, res) => {
     try {
         const [testimonies] = await pool.query("SELECT * FROM testimonies WHERE id = ?", [req.params.id]);
-        if (testimonies.length === 0) return res.redirect('/admin/marketing');
+        if (testimonies.length === 0) return res.redirect('/admin/marketing/testimonies');
         const testimony = testimonies[0];
 
         const [products] = await pool.query("SELECT id, code, model FROM products ORDER BY code ASC");
         const [related] = await pool.query("SELECT product_id FROM product_testimonies WHERE testimony_id = ?", [testimony.id]);
-        const [links] = await pool.query("SELECT url FROM testimony_links WHERE testimony_id = ?", [testimony.id]);
+        const [links] = await pool.query("SELECT title, url FROM testimony_links WHERE testimony_id = ?", [testimony.id]);
 
         testimony.product_ids = related.map(r => r.product_id);
-        testimony.links = links.map(l => l.url);
+        testimony.links = links;
 
         res.render('marketing/testimonies/edit', { testimony, products });
     } catch (err) {
         console.error(err);
-        res.redirect('/admin/marketing');
+        res.redirect('/admin/marketing/testimonies');
     }
 });
 
 router.post('/testimonies/edit/:id', async (req, res) => {
-    const { client_name, location, start_date, end_date, treatment, links, product_ids } = req.body;
+    const { client_name, location, start_date, treatment, link_titles, link_urls, product_ids } = req.body;
     let connection;
     try {
         connection = await pool.getConnection();
         await connection.beginTransaction();
 
-        await connection.query("UPDATE testimonies SET client_name=?, location=?, start_date=?, end_date=?, treatment=? WHERE id=?", [client_name, location, start_date, end_date, treatment, req.params.id]);
+        await connection.query("UPDATE testimonies SET client_name = ?, location = ?, start_date = ?, treatment = ? WHERE id = ?", [client_name, location, start_date, treatment, req.params.id]);
 
-        // Links
+        // Update Links
         await connection.query("DELETE FROM testimony_links WHERE testimony_id = ?", [req.params.id]);
-        if (links) {
-            const linkArr = Array.isArray(links) ? links : [links];
-            const linkValues = linkArr.filter(l => l.trim() !== '').map(l => [req.params.id, l]);
-            if (linkValues.length > 0) await connection.query("INSERT INTO testimony_links (testimony_id, url) VALUES ?", [linkValues]);
+        if (link_urls) {
+            const urls = Array.isArray(link_urls) ? link_urls : [link_urls];
+            const titles = Array.isArray(link_titles) ? link_titles : [link_titles];
+            const linkValues = urls
+                .map((url, i) => [req.params.id, titles[i], url])
+                .filter(l => l[2].trim() !== '');
+            if (linkValues.length > 0) await connection.query("INSERT INTO testimony_links (testimony_id, title, url) VALUES ?", [linkValues]);
         }
 
         // Products
@@ -408,11 +460,11 @@ router.post('/testimonies/edit/:id', async (req, res) => {
         }
 
         await connection.commit();
-        res.redirect('/admin/marketing');
+        res.redirect('/admin/marketing/testimonies');
     } catch (err) {
         if (connection) await connection.rollback();
         console.error(err);
-        res.redirect('/admin/marketing');
+        res.redirect('/admin/marketing/testimonies');
     } finally {
         if (connection) connection.release();
     }
@@ -421,22 +473,22 @@ router.post('/testimonies/edit/:id', async (req, res) => {
 router.post('/materials/delete/:id', async (req, res) => {
     try {
         await pool.query("DELETE FROM marketing_materials WHERE id = ?", [req.params.id]);
-        res.redirect('/admin/marketing');
-    } catch (e) { console.error(e); res.redirect('/admin/marketing'); }
+        res.redirect('/admin/marketing/materials');
+    } catch (e) { console.error(e); res.redirect('/admin/marketing/materials'); }
 });
 
 router.post('/events/delete/:id', async (req, res) => {
     try {
         await pool.query("DELETE FROM events WHERE id = ?", [req.params.id]);
-        res.redirect('/admin/marketing');
-    } catch (e) { console.error(e); res.redirect('/admin/marketing'); }
+        res.redirect('/admin/marketing/events');
+    } catch (e) { console.error(e); res.redirect('/admin/marketing/events'); }
 });
 
 router.post('/testimonies/delete/:id', async (req, res) => {
     try {
         await pool.query("DELETE FROM testimonies WHERE id = ?", [req.params.id]);
-        res.redirect('/admin/marketing');
-    } catch (e) { console.error(e); res.redirect('/admin/marketing'); }
+        res.redirect('/admin/marketing/testimonies');
+    } catch (e) { console.error(e); res.redirect('/admin/marketing/testimonies'); }
 });
 
 module.exports = router;

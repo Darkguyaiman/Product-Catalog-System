@@ -15,7 +15,7 @@ const upload = multer({
 
 const handleUploads = upload.fields([
     { name: 'mda_cert', maxCount: 1 },
-    { name: 'product_image', maxCount: 1 }
+    { name: 'product_images', maxCount: 10 } // Allow up to 10 images
 ]);
 
 router.use((req, res, next) => {
@@ -87,7 +87,8 @@ router.get('/create', async (req, res) => {
     try {
         const [types] = await pool.query("SELECT * FROM settings WHERE type = 'product_type'");
         const [categories] = await pool.query("SELECT * FROM categories");
-        res.render('products/create', { types, categories });
+        const [suppliers] = await pool.query("SELECT * FROM suppliers ORDER BY name ASC");
+        res.render('products/create', { types, categories, suppliers });
     } catch (err) {
         console.error(err);
         res.status(500).send('Server Error');
@@ -104,15 +105,18 @@ router.get('/edit/:id', async (req, res) => {
         // Fetch related data
         const [types] = await pool.query("SELECT * FROM settings WHERE type = 'product_type'");
         const [categories] = await pool.query("SELECT * FROM categories");
+        const [suppliers] = await pool.query("SELECT * FROM suppliers ORDER BY name ASC");
         const [prodTypes] = await pool.query("SELECT type_value FROM product_types WHERE product_id = ?", [product.id]);
         const [prodCats] = await pool.query("SELECT category_id FROM product_categories WHERE product_id = ?", [product.id]);
         const [specs] = await pool.query("SELECT spec_key as `key`, spec_value as `value` FROM product_specifications WHERE product_id = ?", [product.id]);
+        const [productImages] = await pool.query("SELECT * FROM product_images WHERE product_id = ? ORDER BY is_main DESC, id ASC", [product.id]);
 
         product.product_types = prodTypes.map(t => t.type_value);
         product.categories = prodCats.map(c => c.category_id);
         product.specs = specs;
+        product.images = productImages;
 
-        res.render('products/edit', { product, types, categories });
+        res.render('products/edit', { product, types, categories, suppliers });
     } catch (err) {
         console.error(err);
         res.redirect('/admin/products');
@@ -122,7 +126,7 @@ router.get('/edit/:id', async (req, res) => {
 // Helper function to process files
 async function processFiles(files) {
     let mda_cert_path = null;
-    let product_image_path = null;
+    let product_images = [];
 
     // Handle MDA Cert (PDF or Image - Save directly if PDF, resize if Image?)
     if (files['mda_cert']) {
@@ -149,33 +153,36 @@ async function processFiles(files) {
         }
     }
 
-    // Handle Product Image (Strictly Image - Process like Companies)
-    if (files['product_image']) {
-        const file = files['product_image'][0];
-        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    // Handle Product Images (Multiple images)
+    if (files['product_images']) {
         const uploadDir = path.join(__dirname, '../public/uploads/products');
         if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
 
-        const filename = `prod-${uniqueSuffix}.webp`;
-        try {
-            await sharp(file.buffer)
-                .resize({ width: 800, height: 800, fit: 'inside', withoutEnlargement: true })
-                .webp({ quality: 80, effort: 2 })
-                .toFile(path.join(uploadDir, filename));
-            product_image_path = '/uploads/products/' + filename;
-        } catch (e) {
-            console.error('Sharp error processing product image:', e);
+        for (const file of files['product_images']) {
+            const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+            const filename = `prod-${uniqueSuffix}.webp`;
+            try {
+                await sharp(file.buffer)
+                    .resize({ width: 800, height: 800, fit: 'inside', withoutEnlargement: true })
+                    .webp({ quality: 80, effort: 2 })
+                    .toFile(path.join(uploadDir, filename));
+                product_images.push('/uploads/products/' + filename);
+            } catch (e) {
+                console.error('Sharp error processing product image:', e);
+            }
         }
     }
 
-    return { mda_cert_path, product_image_path };
+    return { mda_cert_path, product_images };
 }
 
 router.post('/create', handleUploads, async (req, res) => {
     const {
         code, model, reg_no, mda_reg_no, description,
         product_types, product_categories,
-        spec_key, spec_value
+        spec_key, spec_value,
+        main_image_index,
+        supplier_id
     } = req.body;
 
     let connection;
@@ -185,12 +192,30 @@ router.post('/create', handleUploads, async (req, res) => {
         connection = await pool.getConnection();
         await connection.beginTransaction();
 
+        // Determine main image path (for backward compatibility)
+        let mainImagePath = null;
+        if (paths.product_images && paths.product_images.length > 0) {
+            const mainIndex = main_image_index ? parseInt(main_image_index) : 0;
+            mainImagePath = paths.product_images[mainIndex] || paths.product_images[0];
+        }
+
         // Insert Product
         const [result] = await connection.query(
-            "INSERT INTO products (code, model, reg_no, mda_reg_no, description, mda_cert, product_image) VALUES (?, ?, ?, ?, ?, ?, ?)",
-            [code, model, reg_no, mda_reg_no, description, paths.mda_cert_path, paths.product_image_path]
+            "INSERT INTO products (code, model, reg_no, mda_reg_no, description, mda_cert, product_image, supplier_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+            [code, model, reg_no, mda_reg_no, description, paths.mda_cert_path, mainImagePath, supplier_id || null]
         );
         const productId = result.insertId;
+
+        // Insert Product Images
+        if (paths.product_images && paths.product_images.length > 0) {
+            const mainIndex = main_image_index ? parseInt(main_image_index) : 0;
+            const imageValues = paths.product_images.map((imgPath, index) => [
+                productId,
+                imgPath,
+                index === mainIndex ? 1 : 0
+            ]);
+            await connection.query("INSERT INTO product_images (product_id, image_path, is_main) VALUES ?", [imageValues]);
+        }
 
         // Insert Types
         if (product_types) {
@@ -239,40 +264,82 @@ router.post('/edit/:id', handleUploads, async (req, res) => {
         product_types, product_categories,
         spec_key, spec_value,
         existing_mda_cert, mda_cert_removed,
-        existing_product_image, product_image_removed
+        existing_images, deleted_images, main_image_id,
+        supplier_id
     } = req.body;
 
     let connection;
     try {
         const paths = await processFiles(req.files || {});
 
-        // Determine final paths
+        // Determine final cert path
         let finalCertPath = paths.mda_cert_path || existing_mda_cert;
         if (mda_cert_removed === 'true' && !paths.mda_cert_path) finalCertPath = null;
 
-        let finalImagePath = paths.product_image_path || existing_product_image;
-        if (product_image_removed === 'true' && !paths.product_image_path) finalImagePath = null;
-
-        // Cleanup old files if replaced/removed
+        // Cleanup old cert file if replaced/removed
         if ((paths.mda_cert_path || mda_cert_removed === 'true') && existing_mda_cert) {
             const oldPath = path.join(__dirname, '../public', existing_mda_cert);
-            if (fs.existsSync(oldPath)) fs.unlinkSync(oldPath);
-        }
-        if ((paths.product_image_path || product_image_removed === 'true') && existing_product_image) {
-            const oldPath = path.join(__dirname, '../public', existing_product_image);
             if (fs.existsSync(oldPath)) fs.unlinkSync(oldPath);
         }
 
         connection = await pool.getConnection();
         await connection.beginTransaction();
 
+        const productId = req.params.id;
+
+        // Handle image deletions
+        if (deleted_images) {
+            const deletedIds = Array.isArray(deleted_images) ? deleted_images : [deleted_images];
+            if (deletedIds.length > 0) {
+                // Get image paths before deletion
+                const [imagesToDelete] = await connection.query(
+                    "SELECT image_path FROM product_images WHERE id IN (?)",
+                    [deletedIds]
+                );
+                
+                // Delete from database
+                await connection.query("DELETE FROM product_images WHERE id IN (?)", [deletedIds]);
+                
+                // Delete files
+                imagesToDelete.forEach(img => {
+                    const filePath = path.join(__dirname, '../public', img.image_path);
+                    if (fs.existsSync(filePath)) {
+                        try {
+                            fs.unlinkSync(filePath);
+                        } catch (e) {
+                            console.error('Error deleting image file:', e);
+                        }
+                    }
+                });
+            }
+        }
+
+        // Add new images
+        if (paths.product_images && paths.product_images.length > 0) {
+            const imageValues = paths.product_images.map(imgPath => [productId, imgPath, 0]);
+            await connection.query("INSERT INTO product_images (product_id, image_path, is_main) VALUES ?", [imageValues]);
+        }
+
+        // Update main image
+        if (main_image_id) {
+            // Set all to not main first
+            await connection.query("UPDATE product_images SET is_main = 0 WHERE product_id = ?", [productId]);
+            // Set selected one as main
+            await connection.query("UPDATE product_images SET is_main = 1 WHERE id = ? AND product_id = ?", [main_image_id, productId]);
+        }
+
+        // Get main image for backward compatibility
+        const [mainImageResult] = await connection.query(
+            "SELECT image_path FROM product_images WHERE product_id = ? AND is_main = 1 LIMIT 1",
+            [productId]
+        );
+        const mainImagePath = mainImageResult.length > 0 ? mainImageResult[0].image_path : null;
+
         // Update Product
         await connection.query(
-            "UPDATE products SET code=?, model=?, reg_no=?, mda_reg_no=?, description=?, mda_cert=?, product_image=? WHERE id=?",
-            [code, model, reg_no, mda_reg_no, description, finalCertPath, finalImagePath, req.params.id]
+            "UPDATE products SET code=?, model=?, reg_no=?, mda_reg_no=?, description=?, mda_cert=?, product_image=?, supplier_id=? WHERE id=?",
+            [code, model, reg_no, mda_reg_no, description, finalCertPath, mainImagePath, supplier_id || null, productId]
         );
-
-        const productId = req.params.id;
 
         // Reset Relations
         await connection.query("DELETE FROM product_types WHERE product_id = ?", [productId]);
@@ -331,12 +398,22 @@ router.post('/delete/:id', async (req, res) => {
                 const p = path.join(__dirname, '../public', rows[0].mda_cert);
                 if (fs.existsSync(p)) fs.unlinkSync(p);
             }
-            if (rows[0].product_image) {
-                const p = path.join(__dirname, '../public', rows[0].product_image);
-                if (fs.existsSync(p)) fs.unlinkSync(p);
-            }
         }
 
+        // Delete all product images
+        const [productImages] = await pool.query("SELECT image_path FROM product_images WHERE product_id = ?", [req.params.id]);
+        productImages.forEach(img => {
+            const p = path.join(__dirname, '../public', img.image_path);
+            if (fs.existsSync(p)) {
+                try {
+                    fs.unlinkSync(p);
+                } catch (e) {
+                    console.error('Error deleting product image:', e);
+                }
+            }
+        });
+
+        // Delete product (cascade will delete product_images records)
         await pool.query("DELETE FROM products WHERE id = ?", [req.params.id]);
         res.redirect('/admin/products');
     } catch (err) {

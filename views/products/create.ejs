@@ -14,26 +14,18 @@
                 Basic Information</h3>
 
             <div class="form-group" style="margin-bottom: 2rem;">
-                <label>Product Image</label>
+                <label>Product Images <span style="color: var(--gray-500); font-size: 0.85rem; font-weight: normal;">(Select main image with star)</span></label>
                 <div class="upload-zone" id="imageUploadZone">
                     <div class="upload-content">
-                        <i class="fas fa-image upload-icon"></i>
-                        <p class="upload-text">Drag and drop product image here or <span
+                        <i class="fas fa-images upload-icon"></i>
+                        <p class="upload-text">Drag and drop product images here or <span
                                 class="browse-link">browse</span></p>
-                        <p class="upload-hint">PNG, JPG, WEBP (Max 5MB)</p>
+                        <p class="upload-hint">PNG, JPG, WEBP (Max 5MB each, up to 10 images)</p>
                     </div>
-                    <input type="file" name="product_image" id="imageInput" accept="image/*" style="display: none;">
-                    <div id="imagePreview" class="file-preview" style="display: none;">
-                        <img id="previewProductImg" src="" alt="Preview"
-                            style="max-width: 200px; max-height: 200px; object-fit: contain; border: 1px solid var(--gray-200); border-radius: 8px;">
-                        <div class="file-info" id="imageInfoChip" style="display: none;">
-                            <span id="imageName" class="file-name"></span>
-                            <button type="button" class="remove-file" id="removeImage" title="Remove File">
-                                <i class="fas fa-times"></i>
-                            </button>
-                        </div>
-                    </div>
+                    <input type="file" name="product_images" id="imageInput" accept="image/*" multiple style="display: none;">
                 </div>
+                <div id="imagesPreviewContainer" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 1rem; margin-top: 1rem;"></div>
+                <input type="hidden" name="main_image_index" id="mainImageIndex" value="0">
             </div>
 
             <div class="grid-2">
@@ -52,6 +44,22 @@
                 <div class="form-group">
                     <label>Product MDA Reg. No.</label>
                     <input type="text" name="mda_reg_no" placeholder="MDA Registration Number">
+                </div>
+            </div>
+
+            <div class="grid-2">
+                <div class="form-group">
+                    <label>Supplier</label>
+                    <select name="supplier_id">
+                        <option value="">Select Supplier...</option>
+                        <% if (suppliers && suppliers.length > 0) { %>
+                            <% suppliers.forEach(supplier => { %>
+                                <option value="<%= supplier.id %>">
+                                    <%= supplier.name %><% if (supplier.country) { %> - <%= supplier.country %><% } %>
+                                </option>
+                            <% }) %>
+                        <% } %>
+                    </select>
                 </div>
             </div>
 
@@ -223,6 +231,8 @@
         border-radius: 20px;
         border: 1px solid var(--gray-200);
         box-shadow: var(--shadow-sm);
+        flex-shrink: 0;
+        min-width: 0;
     }
 
     .file-name {
@@ -238,23 +248,33 @@
     .remove-file {
         background: #fff;
         color: var(--danger);
-        border: 1px solid #fee2e2;
-        width: 32px;
-        height: 32px;
+        border: 2px solid #fee2e2;
+        width: 36px;
+        height: 36px;
+        min-width: 36px;
+        min-height: 36px;
         border-radius: 50%;
         display: flex;
         align-items: center;
         justify-content: center;
         cursor: pointer;
         transition: all 0.2s;
-        box-shadow: var(--shadow-sm);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        flex-shrink: 0;
+        font-size: 0.9rem;
+        font-weight: 600;
     }
 
     .remove-file:hover {
         background: var(--danger);
         color: white;
         border-color: var(--danger);
-        transform: scale(1.1);
+        transform: scale(1.05);
+        box-shadow: 0 3px 6px rgba(220, 38, 38, 0.3);
+    }
+
+    .remove-file:active {
+        transform: scale(0.95);
     }
 
     /* Chips Styles */
@@ -312,6 +332,64 @@
         min-width: 150px;
         font-size: 0.95rem;
         background: transparent;
+    }
+
+    /* Mobile Responsive Styles for Buttons */
+    @media (max-width: 768px) {
+        .remove-file {
+            width: 44px;
+            height: 44px;
+            min-width: 44px;
+            min-height: 44px;
+            font-size: 1.1rem;
+            border-width: 2px;
+            box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);
+        }
+
+        .remove-img-btn {
+            width: 44px !important;
+            height: 44px !important;
+            font-size: 1.1rem !important;
+            border-width: 2px !important;
+        }
+
+        .star-btn {
+            width: 44px !important;
+            height: 44px !important;
+            font-size: 1.1rem !important;
+        }
+
+        .image-preview-card > div[style*="position: absolute; top: 8px"] {
+            gap: 8px !important;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .remove-file {
+            width: 48px;
+            height: 48px;
+            min-width: 48px;
+            min-height: 48px;
+            font-size: 1.2rem;
+            border-width: 2.5px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .remove-img-btn {
+            width: 48px !important;
+            height: 48px !important;
+            font-size: 1.2rem !important;
+        }
+
+        .star-btn {
+            width: 48px !important;
+            height: 48px !important;
+            font-size: 1.2rem !important;
+        }
+
+        .file-info {
+            padding: 10px 18px;
+        }
     }
 </style>
 
@@ -391,8 +469,129 @@
     // Setup for Cert
     setupFileUpload('certUploadZone', 'certInput', '.upload-content', 'filePreview', true);
 
-    // Setup for Product Image
-    setupFileUpload('imageUploadZone', 'imageInput', '.upload-content', 'imagePreview', false);
+    // Multiple Images Upload Handler
+    let uploadedImages = [];
+    const imageInput = document.getElementById('imageInput');
+    const imageUploadZone = document.getElementById('imageUploadZone');
+    const imagesPreviewContainer = document.getElementById('imagesPreviewContainer');
+    const mainImageIndexInput = document.getElementById('mainImageIndex');
+
+    imageUploadZone.addEventListener('click', () => imageInput.click());
+
+    imageUploadZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        imageUploadZone.classList.add('dragover');
+    });
+
+    imageUploadZone.addEventListener('dragleave', () => {
+        imageUploadZone.classList.remove('dragover');
+    });
+
+    imageUploadZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        imageUploadZone.classList.remove('dragover');
+        if (e.dataTransfer.files.length) {
+            handleImageFiles(Array.from(e.dataTransfer.files));
+        }
+    });
+
+    imageInput.addEventListener('change', () => {
+        if (imageInput.files.length) {
+            handleImageFiles(Array.from(imageInput.files));
+        }
+    });
+
+    function handleImageFiles(files) {
+        files.forEach(file => {
+            if (file.type.startsWith('image/') && uploadedImages.length < 10) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const imageData = {
+                        id: Date.now() + Math.random(),
+                        file: file,
+                        preview: e.target.result
+                    };
+                    uploadedImages.push(imageData);
+                    updateImagesPreview();
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+    }
+
+    function updateImagesPreview() {
+        imagesPreviewContainer.innerHTML = '';
+        const mainIndex = parseInt(mainImageIndexInput.value) || 0;
+        
+        if (uploadedImages.length > 0) {
+            imagesPreviewContainer.style.display = 'grid';
+            // Keep upload zone visible for adding more images
+            imageUploadZone.querySelector('.upload-content').style.display = 'block';
+        } else {
+            imagesPreviewContainer.style.display = 'none';
+            imageUploadZone.querySelector('.upload-content').style.display = 'block';
+        }
+
+        uploadedImages.forEach((img, index) => {
+            const isMain = index === mainIndex;
+            const imgCard = document.createElement('div');
+            imgCard.className = 'image-preview-card';
+            imgCard.style.cssText = `position: relative; border: 2px solid ${isMain ? 'var(--blue-medium)' : 'var(--gray-200)'}; border-radius: 8px; overflow: hidden; background: var(--gray-50);`;
+            imgCard.innerHTML = `
+                <img src="${img.preview}" alt="Preview" style="width: 100%; height: 150px; object-fit: cover; display: block;">
+                <div style="position: absolute; top: 8px; right: 8px; display: flex; gap: 4px;">
+                    <button type="button" class="star-btn ${isMain ? 'active' : ''}" 
+                        data-index="${index}" style="background: rgba(255,255,255,0.9); border: none; border-radius: 50%; width: 32px; height: 32px; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                        <i class="fas fa-star" style="color: ${isMain ? '#FFD700' : '#ccc'};"></i>
+                    </button>
+                    <button type="button" class="remove-img-btn" data-index="${index}" 
+                        style="background: rgba(220,38,38,0.9); border: none; border-radius: 50%; width: 32px; height: 32px; cursor: pointer; display: flex; align-items: center; justify-content: center; color: white; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            `;
+            
+            // Add main image label only if this is the main image
+            if (isMain) {
+                const mainLabel = document.createElement('div');
+                mainLabel.className = 'main-image-label';
+                mainLabel.style.cssText = 'position: absolute; bottom: 0; left: 0; right: 0; background: rgba(0,91,150,0.9); color: white; padding: 4px; text-align: center; font-size: 0.75rem; font-weight: 600;';
+                mainLabel.textContent = 'Main Image';
+                imgCard.appendChild(mainLabel);
+            }
+            
+            imagesPreviewContainer.appendChild(imgCard);
+        });
+
+        // Add event listeners
+        document.querySelectorAll('.star-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const index = parseInt(e.currentTarget.dataset.index);
+                mainImageIndexInput.value = index;
+                updateImagesPreview();
+            });
+        });
+
+        document.querySelectorAll('.remove-img-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const index = parseInt(e.currentTarget.dataset.index);
+                uploadedImages.splice(index, 1);
+                if (parseInt(mainImageIndexInput.value) >= uploadedImages.length) {
+                    mainImageIndexInput.value = Math.max(0, uploadedImages.length - 1);
+                }
+                updateImagesPreview();
+                updateFileInput();
+            });
+        });
+    }
+
+    function updateFileInput() {
+        const dt = new DataTransfer();
+        uploadedImages.forEach(img => {
+            dt.items.add(img.file);
+        });
+        imageInput.files = dt.files;
+    }
 
     // Reusable Chips Logic
     function setupChips(wrapperId, selectId, hiddenId) {

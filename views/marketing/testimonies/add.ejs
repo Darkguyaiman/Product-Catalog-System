@@ -1,45 +1,64 @@
-<div class="card-header marketing-header">
-    <h1>Add New Testimony</h1>
-    <a href="/admin/marketing" class="btn btn-secondary btn-sm" title="Go Back">
-        <i class="fas fa-arrow-left"></i>
-    </a>
-</div>
+<div class="companies-page">
+    <div class="card-header companies-header">
+        <h1>Add New Testimony</h1>
+        <a href="/admin/marketing/testimonies" class="btn btn-secondary btn-sm" title="Go Back">
+            <i class="fas fa-arrow-left"></i>
+        </a>
+    </div>
 
-<div class="card" style="max-width: 800px; margin: 20px auto;">
-    <form action="/admin/marketing/testimonies/add" method="POST" id="addTestimonyForm">
-        <div class="grid-2">
-            <div class="form-group">
-                <label>Client Name <span style="color: var(--danger);">*</span></label>
-                <input type="text" name="client_name" required placeholder="e.g. John Doe">
+    <div class="card" style="max-width: 900px; margin: 0 auto;">
+        <form action="/admin/marketing/testimonies/add" method="POST" id="addTestimonyForm">
+            <div class="grid-2">
+                <div class="form-group">
+                    <label>Client Name <span style="color: var(--danger);">*</span></label>
+                    <input type="text" name="client_name" required placeholder="e.g. John Doe">
+                </div>
+                <div class="form-group">
+                    <label>Location</label>
+                    <input type="text" name="location" placeholder="e.g. Hospital Kuala Lumpur">
+                </div>
+                <div class="form-group">
+                    <label>Treatment Date</label>
+                    <input type="date" name="start_date">
+                </div>
+                <div class="form-group">
+                    <label>Treatment</label>
+                    <input type="text" name="treatment" placeholder="e.g. Laser Surgery">
+                </div>
             </div>
-            <div class="form-group">
-                <label>Location</label>
-                <input type="text" name="location" placeholder="e.g. Hospital Kuala Lumpur">
-            </div>
-            <div class="form-group">
-                <label>Treatment Date</label>
-                <input type="date" name="start_date">
-            </div>
-            <div class="form-group">
-                <label>Treatment</label>
-                <input type="text" name="treatment" placeholder="e.g. Laser Surgery">
-            </div>
-        </div>
 
-        <div class="form-group">
-            <label>Media Links (Video/Review)</label>
-            <div id="links-container">
-                <input type="text" name="links" placeholder="https://" style="margin-bottom: 5px;">
+            <div class="form-group">
+                <label>Media Links (Video/Review)</label>
+                <div id="links-container">
+                    <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+                        <input type="text" name="link_titles" placeholder="Link Name (e.g. Video Review)"
+                            style="flex: 1;">
+                        <input type="url" name="link_urls" placeholder="https://" style="flex: 2;">
+                        <button type="button" class="btn btn-secondary btn-sm" disabled
+                            style="color: var(--gray-400); border-color: var(--gray-200);">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+                <button type="button" class="btn btn-secondary btn-sm" onclick="addLinkInput()"
+                    style="margin-top: 5px;">
+                    <i class="fas fa-plus"></i> Add Another Link
+                </button>
             </div>
-            <button type="button" class="btn btn-secondary btn-sm" onclick="addLinkInput()" style="margin-top: 5px;">+
-                Add Another Link</button>
-        </div>
 
-        <div class="form-group">
-            <label>Linked Products</label>
-            <div class="chip-wrapper" id="productChipWrapper">
-                <select id="productSelectInput">
-                    <option value="">Add Product...</option>
+            <div class="form-group">
+                <label>Linked Products</label>
+                <div class="chip-wrapper" id="productChipWrapper">
+                    <select id="productSelectInput">
+                        <option value="">Add Product...</option>
+                        <% products.forEach(p=> { %>
+                            <option value="<%= p.id %>">
+                                <%= p.code %> - <%= p.model %>
+                            </option>
+                            <% }) %>
+                    </select>
+                </div>
+                <select name="product_ids" id="productHiddenSelect" multiple style="display:none;">
                     <% products.forEach(p=> { %>
                         <option value="<%= p.id %>">
                             <%= p.code %> - <%= p.model %>
@@ -47,88 +66,33 @@
                         <% }) %>
                 </select>
             </div>
-            <select name="product_ids" id="productHiddenSelect" multiple style="display:none;">
-                <% products.forEach(p=> { %>
-                    <option value="<%= p.id %>">
-                        <%= p.code %> - <%= p.model %>
-                    </option>
-                    <% }) %>
-            </select>
-        </div>
 
-        <div style="margin-top: 2rem; padding-top: 1rem; border-top: 1px solid var(--gray-100);">
-            <button type="submit" class="btn btn-primary" style="width: 100%;">Save Testimony</button>
-        </div>
-    </form>
+            <div
+                style="display: flex; gap: 15px; margin-top: 2rem; border-top: 1px solid var(--gray-100); padding-top: 2rem;">
+                <button type="submit" class="btn btn-primary" id="submitBtn" style="flex: 2;">
+                    <i class="fas fa-save"></i> <span>Save Testimony</span>
+                </button>
+                <a href="/admin/marketing/testimonies" class="btn btn-secondary" style="flex: 1;">Cancel</a>
+            </div>
+        </form>
+    </div>
 </div>
-
-<style>
-    .chip-wrapper {
-        border: 1px solid var(--gray-300);
-        border-radius: 6px;
-        padding: 0.5rem;
-        display: flex;
-        flex-wrap: wrap;
-        gap: 0.5rem;
-        min-height: 45px;
-        background: white;
-        align-items: center;
-    }
-
-    .chip-wrapper:focus-within {
-        border-color: var(--blue-medium);
-        box-shadow: 0 0 0 3px rgba(0, 91, 150, 0.1);
-    }
-
-    .chip {
-        background: var(--blue-lightest);
-        color: var(--blue-dark);
-        padding: 4px 10px;
-        border-radius: 20px;
-        font-size: 0.85rem;
-        display: flex;
-        align-items: center;
-        gap: 6px;
-        font-weight: 500;
-        border: 1px solid var(--blue-light);
-    }
-
-    .chip-remove {
-        background: none;
-        border: none;
-        color: var(--blue-medium);
-        cursor: pointer;
-        padding: 0;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 0.9rem;
-    }
-
-    .chip-remove:hover {
-        color: var(--danger);
-    }
-
-    .chip-wrapper select {
-        border: none;
-        outline: none;
-        padding: 4px;
-        flex: 1;
-        min-width: 150px;
-        font-size: 0.95rem;
-        background: transparent;
-    }
-</style>
 
 <script>
     function addLinkInput() {
         const container = document.getElementById('links-container');
-        const input = document.createElement('input');
-        input.type = 'text';
-        input.name = 'links';
-        input.placeholder = 'https://';
-        input.style.marginBottom = '5px';
-        container.appendChild(input);
+        const div = document.createElement('div');
+        div.style.display = 'flex';
+        div.style.gap = '10px';
+        div.style.marginBottom = '10px';
+        div.innerHTML = `
+            <input type="text" name="link_titles" placeholder="Link Name" style="flex: 1;">
+            <input type="url" name="link_urls" placeholder="https://" style="flex: 2;">
+            <button type="button" class="btn btn-danger btn-sm" onclick="this.parentElement.remove()">
+                <i class="fas fa-trash"></i>
+            </button>
+        `;
+        container.appendChild(div);
     }
 
     document.addEventListener('DOMContentLoaded', () => {
@@ -170,5 +134,13 @@
             }
         });
         updateChips();
+
+        // Submit loading state
+        document.getElementById('addTestimonyForm').addEventListener('submit', function () {
+            const btn = document.getElementById('submitBtn');
+            btn.classList.add('btn-loading');
+            btn.disabled = true;
+            btn.querySelector('span').textContent = 'Saving...';
+        });
     });
 </script>

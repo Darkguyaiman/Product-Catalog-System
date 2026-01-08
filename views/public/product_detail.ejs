@@ -1,229 +1,2045 @@
-<div class="container" style="padding-top: 2rem; padding-bottom: 4rem;">
-    <!-- Breadcrumb -->
-    <div style="margin-bottom: 1.5rem;">
-        <a href="/products" style="color: var(--gray-500); text-decoration: none;">
-            <i class="fa-solid fa-arrow-left"></i> Back to Products
+<div class="container product-detail-container" style="padding-top: 3rem; padding-bottom: 5rem;">
+    <!-- Modern Breadcrumb -->
+    <nav class="breadcrumb-nav mb-4">
+        <a href="/products" class="back-link">
+            <i class="fa-solid fa-arrow-left"></i> <span>Back to Catalog</span>
         </a>
-    </div>
+    </nav>
 
-    <div class="card" style="padding: 0; overflow: hidden; margin-bottom: 2rem;">
-        <div class="grid grid-2" style="gap: 0;">
-            <!-- Left: Product Image Placeholder -->
-            <div
-                style="background-color: var(--gray-100); min-height: 400px; display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden;">
-                <% if (product.product_image) { %>
-                    <img src="<%= product.product_image %>" alt="<%= product.model %>"
-                        style="width: 100%; height: 100%; object-fit: contain;">
-                    <% } else { %>
-                        <i class="fa-solid fa-box-open" style="font-size: 8rem; color: var(--gray-300);"></i>
-                        <% } %>
-                            <% if (product.mda_cert) { %>
-                                <div style="position: absolute; bottom: 20px; right: 20px;">
-                                    <a href="<%= product.mda_cert %>" target="_blank" class="btn btn-secondary btn-sm">
-                                        <i class="fa-solid fa-certificate"></i> MDA Certificate
-                                    </a>
-                                </div>
-                                <% } %>
-            </div>
-
-            <!-- Right: Product Info -->
-            <div style="padding: 3rem;">
-                <div class="d-flex justify-between align-center mb-2">
-                    <span class="badge badge-primary">
-                        <%= product.code %>
-                    </span>
-                    <% if (product.mda_reg_no) { %>
-                        <span style="color: var(--gray-500); font-size: 0.9rem;">MDA Reg: <%= product.mda_reg_no %>
-                                </span>
-                        <% } %>
-                </div>
-
-                <h1 style="font-size: 2.5rem; margin-bottom: 0.5rem; color: var(--blue-darkest);">
-                    <%= product.model %>
-                </h1>
-
-                <% if (product.reg_no) { %>
-                    <p style="color: var(--gray-500); margin-bottom: 1.5rem;">Reg No: <%= product.reg_no %>
-                    </p>
-                    <% } %>
-
-                        <div style="margin-bottom: 2rem; line-height: 1.6; color: var(--gray-700);">
-                            <%= product.description %>
-                        </div>
-
-                        <div style="display: flex; gap: 1rem;">
-                            <a href="#contact" class="btn btn-primary">
-                                <i class="fa-solid fa-envelope"></i> Request Quote
-                            </a>
-                            <a href="#marketing" class="btn btn-outline">
-                                <i class="fa-solid fa-download"></i> Downloads
-                            </a>
-                        </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Product Details Tabs -->
-    <div class="card" style="padding: 0; min-height: 400px;">
-        <div class="tabs-header"
-            style="display: flex; border-bottom: 1px solid var(--gray-200); background-color: var(--gray-50);">
-            <button class="tab-btn active" onclick="switchTab(event, 'specs')"
-                style="padding: 1rem 2rem; border: none; background: none; font-weight: 600; color: var(--gray-600); cursor: pointer; border-bottom: 3px solid transparent;">
-                <i class="fa-solid fa-list-check" style="margin-right: 8px;"></i> Specifications
-            </button>
-            <button class="tab-btn" onclick="switchTab(event, 'marketing')"
-                style="padding: 1rem 2rem; border: none; background: none; font-weight: 600; color: var(--gray-600); cursor: pointer; border-bottom: 3px solid transparent;">
-                <i class="fa-solid fa-file-pdf" style="margin-right: 8px;"></i> Resources
-            </button>
-            <button class="tab-btn" onclick="switchTab(event, 'events')"
-                style="padding: 1rem 2rem; border: none; background: none; font-weight: 600; color: var(--gray-600); cursor: pointer; border-bottom: 3px solid transparent;">
-                <i class="fa-solid fa-calendar-check" style="margin-right: 8px;"></i> Events
-            </button>
-            <button class="tab-btn" onclick="switchTab(event, 'testimonies')"
-                style="padding: 1rem 2rem; border: none; background: none; font-weight: 600; color: var(--gray-600); cursor: pointer; border-bottom: 3px solid transparent;">
-                <i class="fa-solid fa-comments" style="margin-right: 8px;"></i> Testimonies
-            </button>
-        </div>
-
-        <div class="tab-content" id="specs" style="padding: 2rem;">
-            <% if (specs.length> 0) { %>
-                <div style="overflow-x: auto;">
-                    <table class="table" style="width: 100%; border-collapse: collapse;">
-                        <tbody>
-                            <% specs.forEach((s, index)=> { %>
-                                <tr
-                                    style="background-color: <%= index % 2 === 0 ? 'var(--white)' : 'var(--gray-50)' %>;">
-                                    <th
-                                        style="text-align: left; padding: 1rem; color: var(--blue-dark); width: 30%; border-bottom: 1px solid var(--gray-200);">
-                                        <%= s.spec_key %>
-                                    </th>
-                                    <td style="padding: 1rem; border-bottom: 1px solid var(--gray-200);">
-                                        <%= s.spec_value %>
-                                    </td>
-                                </tr>
+    <div class="product-main-card card mb-5">
+        <div class="product-detail-flex">
+            <!-- Left: Premium Image Gallery -->
+            <div class="product-gallery">
+                <div class="gallery-container">
+                    <div class="main-image-wrapper" id="mainImageWrapper">
+                        <div class="image-slider">
+                            <% if (productImages && productImages.length > 0) { %>
+                                <% productImages.forEach((img, index) => { %>
+                                    <div class="slide <%= index === 0 ? 'active' : '' %>" data-index="<%= index %>">
+                                        <img src="<%= img.image_path %>" alt="<%= product.model %>" class="main-product-image">
+                                    </div>
                                 <% }) %>
-                        </tbody>
-                    </table>
-                </div>
-                <% } else { %>
-                    <div class="empty-state" style="text-align: center; padding: 3rem;">
-                        <i class="fa-solid fa-clipboard-list"
-                            style="font-size: 3rem; color: var(--gray-300); margin-bottom: 1rem;"></i>
-                        <p style="color: var(--gray-500);">No specifications available for this product.</p>
-                    </div>
-                    <% } %>
-        </div>
+                            <% } else if (product.product_image) { %>
+                                <div class="slide active" data-index="0">
+                                    <img src="<%= product.product_image %>" alt="<%= product.model %>" class="main-product-image">
+                                </div>
+                            <% } else { %>
+                                <div class="slide active" data-index="0">
+                                    <div class="detail-image-placeholder">
+                                        <i class="fa-solid fa-box-open"></i>
+                                    </div>
+                                </div>
+                            <% } %>
+                        </div>
 
-        <div class="tab-content" id="marketing" style="display: none; padding: 2rem;">
-            <% if (materials.length> 0) { %>
-                <div class="grid grid-3">
-                    <% materials.forEach(m=> { %>
-                        <div
-                            style="border: 1px solid var(--gray-200); border-radius: 8px; padding: 1.5rem; display: flex; align-items: flex-start; gap: 1rem;">
-                            <div
-                                style="background-color: var(--red-light); color: var(--red); width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border-radius: 8px;">
-                                <i class="fa-solid fa-file-pdf"></i>
+                        <% if (productImages && productImages.length > 1) { %>
+                            <button class="gallery-nav-btn gallery-prev" id="prevBtn" aria-label="Previous image">
+                                <i class="fa-solid fa-chevron-left"></i>
+                            </button>
+                            <button class="gallery-nav-btn gallery-next" id="nextBtn" aria-label="Next image">
+                                <i class="fa-solid fa-chevron-right"></i>
+                            </button>
+                            <div class="gallery-indicator">
+                                <span id="currentImageIndex">1</span> / <span id="totalImages"><%= productImages.length %></span>
                             </div>
-                            <div style="flex: 1;">
-                                <h4 style="margin-bottom: 0.25rem;">
-                                    <%= m.name %>
-                                </h4>
-                                <a href="<%= m.file_path %>" target="_blank"
-                                    style="font-size: 0.9rem; color: var(--blue-medium); text-decoration: none;">
-                                    Download <i class="fa-solid fa-download"></i>
+                        <% } %>
+
+                        <% if (product.mda_cert) { %>
+                            <div class="mda-cert-overlay">
+                                <a href="<%= product.mda_cert %>" target="_blank" class="badge badge-success">
+                                    <i class="fa-solid fa-certificate"></i> MDA Certified
                                 </a>
                             </div>
-                        </div>
-                        <% }) %>
-                </div>
-                <% } else { %>
-                    <div class="empty-state" style="text-align: center; padding: 3rem;">
-                        <i class="fa-solid fa-folder-open"
-                            style="font-size: 3rem; color: var(--gray-300); margin-bottom: 1rem;"></i>
-                        <p style="color: var(--gray-500);">No marketing materials available.</p>
+                        <% } %>
                     </div>
+                    
+                    <% if (productImages && productImages.length > 1) { %>
+                        <div class="image-thumbnails">
+                            <% productImages.forEach((img, index) => { %>
+                                <div class="thumbnail-item <%= index === 0 ? 'active' : '' %>" 
+                                    data-image-index="<%= index %>"
+                                    data-image-src="<%= img.image_path %>">
+                                    <img src="<%= img.image_path %>" alt="Thumbnail <%= index + 1 %>">
+                                    <div class="thumbnail-overlay"></div>
+                                </div>
+                            <% }) %>
+                        </div>
                     <% } %>
+                </div>
+            </div>
+
+            <!-- Right: Product Information -->
+            <div class="product-essentials">
+                <div class="essential-header mb-4">
+                    <div class="d-flex align-center gap-2 mb-3 flex-wrap">
+                        <span class="badge badge-primary">
+                            <i class="fa-solid fa-barcode"></i>
+                            Code: <%= product.code %>
+                        </span>                        
+                        <% if (product.mda_reg_no) { %>
+                            <a href="/product/<%= product.id %>/mda-cert" target="_blank" class="badge badge-outline" style="text-decoration: none; cursor: pointer;">
+                                <i class="fa-solid fa-shield-halved mr-1"></i> MDA: <%= product.mda_reg_no %>
+                            </a>
+                        <% } %>
+                    </div>
+                    <h1 class="detail-title">
+                        <%= product.model %>
+                    </h1>
+                    <% if (product.reg_no) { %>
+                        <p class="reg-number text-muted">Registration Number: <strong>
+                                <%= product.reg_no %>
+                            </strong></p>
+                        <% } %>
+                    
+                    <!-- Category and Subcategory -->
+                    <% if (category || subcategory) { %>
+                        <div class="product-categories-wrapper mb-3">
+                            <div class="category-path">
+                                <% if (category) { %>
+                                    <div class="category-item main-category">
+                                        <div class="category-icon">
+                                            <i class="fa-solid fa-layer-group"></i>
+                                        </div>
+                                        <div class="category-content">
+                                            <span class="category-label">Category</span>
+                                            <span class="category-name"><%= category.name %></span>
+                                        </div>
+                                    </div>
+                                <% } %>
+                                <% if (subcategory) { %>
+                                    <div class="category-connector">
+                                        <i class="fa-solid fa-chevron-right"></i>
+                                    </div>
+                                    <div class="category-item sub-category">
+                                        <div class="category-icon">
+                                            <i class="fa-solid fa-tags"></i>
+                                        </div>
+                                        <div class="category-content">
+                                            <span class="category-label">Subcategory</span>
+                                            <span class="category-name"><%= subcategory.name %></span>
+                                        </div>
+                                    </div>
+                                <% } %>
+                            </div>
+                        </div>
+                    <% } %>
+
+                    <!-- Supplier Information -->
+                    <% if (supplier) { %>
+                        <div class="supplier-info mb-3">
+                            <div class="supplier-detail">
+                                <i class="fa-solid fa-truck"></i>
+                                <span class="supplier-label">Supplier:</span>
+                                <strong><%= supplier.name %></strong>
+                            </div>
+                            <% if (supplier.country) { %>
+                                <div class="supplier-detail">
+                                    <i class="fa-solid fa-globe"></i>
+                                    <span class="supplier-label">Origin:</span>
+                                    <strong><%= supplier.country %></strong>
+                                </div>
+                            <% } %>
+                        </div>
+                    <% } %>
+                </div>
+
+                <div class="detail-description mb-4">
+                    <p>
+                        <%= product.description %>
+                    </p>
+                </div>
+
+                <div class="detail-actions">
+                    <a href="https://wa.me/01121194948?text=Hello,%20I%20would%20like%20to%20get%20a%20quote%20for%20<%= encodeURIComponent(product.model || product.code) %>" target="_blank" class="btn btn-primary btn-lg px-5">
+                        <i class="fa-solid fa-paper-plane"></i> Get a Quote
+                    </a>
+                    <button class="btn btn-secondary btn-lg" id="shareButton">
+                        <i class="fa-solid fa-share-nodes"></i> Share
+                    </button>
+                </div>
+
+                <div class="trust-indicators mt-5">
+                    <div class="trust-item">
+                        <i class="fa-solid fa-truck-fast"></i>
+                        <span>Reliable Logistics</span>
+                    </div>
+                    <div class="trust-item">
+                        <i class="fa-solid fa-screwdriver-wrench"></i>
+                        <span>Technical Support</span>
+                    </div>
+                    <div class="trust-item">
+                        <i class="fa-solid fa-check-double"></i>
+                        <span>Quality Assured</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Interactive Content Tabs -->
+    <div class="detail-tabs-section card">
+        <div class="tabs-nav">
+            <button class="tab-trigger active" data-tab="specs">
+                <i class="fa-solid fa-list-check"></i> Specifications
+            </button>
+            <button class="tab-trigger" data-tab="marketing">
+                <i class="fa-solid fa-file"></i> Resources
+            </button>
+            <button class="tab-trigger" data-tab="events">
+                <i class="fa-solid fa-calendar-days"></i> Events
+            </button>
+            <button class="tab-trigger" data-tab="testimonies">
+                <i class="fa-solid fa-star"></i> Testimonies
+            </button>
         </div>
 
-        <div class="tab-content" id="events" style="display: none; padding: 2rem;">
-            <% if (events.length> 0) { %>
-                <div class="grid grid-2">
-                    <% events.forEach(e=> { %>
-                        <div class="card" style="padding: 1.5rem; border: 1px solid var(--gray-200); box-shadow: none;">
-                            <div class="d-flex gap-3">
-                                <div
-                                    style="background-color: var(--blue-lightest); color: var(--blue-dark); width: 60px; height: 60px; display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: 8px; text-align: center;">
-                                    <span style="font-size: 0.8rem; font-weight: bold;">
-                                        <%= e.start_date ? new Date(e.start_date).toLocaleString('default', {
-                                            month: 'short' }) : 'DATE' %>
-                                    </span>
-                                    <span style="font-size: 1.2rem; font-weight: bold;">
-                                        <%= e.start_date ? new Date(e.start_date).getDate() : '00' %>
+        <div class="tab-content-container">
+            <!-- Specifications -->
+            <div class="tab-pane active" id="specs">
+                <% if (specs.length> 0) { %>
+                    <div class="specs-table-wrapper">
+                        <table class="specs-table">
+                            <thead>
+                                <tr>
+                                    <th class="spec-header">Specification</th>
+                                    <th class="spec-header"><%= product.model || product.code %></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <% specs.forEach((s)=> { %>
+                                    <tr class="spec-row">
+                                        <td class="spec-label">
+                                            <%= s.spec_key %>
+                                        </td>
+                                        <td class="spec-value">
+                                            <%= s.spec_value %>
+                                        </td>
+                                    </tr>
+                                <% }) %>
+                            </tbody>
+                        </table>
+                    </div>
+                    <% } else { %>
+                        <div class="pane-empty">
+                            <i class="fa-solid fa-clipboard-question"></i>
+                            <p>No technical specifications listed for this product yet.</p>
+                        </div>
+                        <% } %>
+            </div>
+
+            <!-- Marketing Materials -->
+            <div class="tab-pane" id="marketing">
+                <% if (materials.length> 0) { %>
+                    <div class="grid grid-3">
+                        <% materials.forEach(m=> { %>
+                            <a href="<%= m.file_path %>" target="_blank" class="resource-card">
+                                <div class="resource-icon">
+                                    <% 
+                                        const fileExt = m.file_path ? m.file_path.split('.').pop().toLowerCase() : '';
+                                        let iconClass = 'fa-file';
+                                        if (fileExt === 'pdf') iconClass = 'fa-file-pdf';
+                                        else if (['doc', 'docx'].includes(fileExt)) iconClass = 'fa-file-word';
+                                        else if (['xls', 'xlsx'].includes(fileExt)) iconClass = 'fa-file-excel';
+                                        else if (['ppt', 'pptx'].includes(fileExt)) iconClass = 'fa-file-powerpoint';
+                                        else if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(fileExt)) iconClass = 'fa-file-image';
+                                    %>
+                                    <i class="fa-solid <%= iconClass %>"></i>
+                                </div>
+                                <div class="resource-info">
+                                    <h4 class="resource-title">
+                                        <%= m.name %>
+                                    </h4>
+                                    <span class="resource-action">
+                                        Read <%= m.name %> <i class="fa-solid fa-arrow-right"></i>
                                     </span>
                                 </div>
-                                <div>
-                                    <h4 style="margin-bottom: 0.5rem;">
+                            </a>
+                            <% }) %>
+                    </div>
+                    <% } else { %>
+                        <div class="pane-empty">
+                            <i class="fa-solid fa-folder-open"></i>
+                            <p>Brochures and user manuals will be available soon.</p>
+                        </div>
+                        <% } %>
+            </div>
+
+            <!-- Events -->
+            <div class="tab-pane" id="events">
+                <% if (events.length> 0) { %>
+                    <div class="grid grid-2">
+                        <% events.forEach(e=> { %>
+                            <a href="<%= e.link || '#' %>" class="event-capsule" <%= e.link ? 'target="_blank"' : '' %>>
+                                <div class="event-date">
+                                    <span class="month">
+                                        <%= e.start_date ? new Date(e.start_date).toLocaleString('default', {
+                                            month: 'short' }) : '---' %>
+                                    </span>
+                                    <span class="day">
+                                        <%= e.start_date ? new Date(e.start_date).getDate() : '--' %>
+                                    </span>
+                                    <span class="year">
+                                        <%= e.start_date ? new Date(e.start_date).getFullYear() : '----' %>
+                                    </span>
+                                </div>
+                                <div class="event-body">
+                                    <h4>
                                         <%= e.name %>
                                     </h4>
-                                    <p style="color: var(--gray-600); font-size: 0.9rem; margin-bottom: 0.25rem;">
-                                        <i class="fa-solid fa-location-dot" style="width: 20px;"></i>
+                                    <p class="location"><i class="fa-solid fa-location-dot"></i>
                                         <%= e.location %>
                                     </p>
                                 </div>
-                            </div>
-                        </div>
-                        <% }) %>
-                </div>
-                <% } else { %>
-                    <div class="empty-state" style="text-align: center; padding: 3rem;">
-                        <i class="fa-solid fa-calendar-xmark"
-                            style="font-size: 3rem; color: var(--gray-300); margin-bottom: 1rem;"></i>
-                        <p style="color: var(--gray-500);">No upcoming events for this product.</p>
+                                <div class="event-link">
+                                    <i class="fa-solid fa-chevron-right"></i>
+                                </div>
+                            </a>
+                            <% }) %>
                     </div>
-                    <% } %>
-        </div>
+                    <% } else { %>
+                        <div class="pane-empty">
+                            <i class="fa-solid fa-calendar-xmark"></i>
+                            <p>No upcoming events or workshops for this product.</p>
+                        </div>
+                        <% } %>
+            </div>
 
-        <div class="tab-content" id="testimonies" style="display: none; padding: 2rem;">
-            <% if (testimonies.length> 0) { %>
-                <div class="grid grid-2">
-                    <% testimonies.forEach(t=> { %>
-                        <div class="card"
-                            style="padding: 2rem; border: 1px solid var(--gray-200); box-shadow: none; position: relative;">
-                            <i class="fa-solid fa-quote-left"
-                                style="position: absolute; top: 1.5rem; left: 1.5rem; font-size: 2rem; color: var(--gray-200);"></i>
-                            <div style="position: relative; z-index: 1; padding-left: 1rem;">
-                                <p style="font-style: italic; color: var(--gray-700); margin-bottom: 1.5rem;">"<%=
-                                        t.content || 'Great product results.' %>"</p>
-                                <div class="d-flex align-center gap-3">
-                                    <div
-                                        style="width: 40px; height: 40px; background-color: var(--blue-medium); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold;">
+            <!-- Testimonies -->
+            <div class="tab-pane" id="testimonies">
+                <% if (testimonies.length> 0) { %>
+                    <div class="grid grid-2">
+                        <% testimonies.forEach(t=> { %>
+                            <div class="testimony-card">
+                                <div class="testimony-quote">
+                                    <i class="fa-solid fa-quote-right"></i>
+                                    <p>"<%= t.content || 'Exceptional precision and reliability in clinical settings.'
+                                            %>"</p>
+                                </div>
+                                <div class="testimony-author">
+                                    <div class="author-avatar">
                                         <%= t.client_name.charAt(0) %>
                                     </div>
-                                    <div>
-                                        <h5 style="margin: 0;">
+                                    <div class="author-info">
+                                        <h5>
                                             <%= t.client_name %>
                                         </h5>
-                                        <span style="font-size: 0.8rem; color: var(--gray-500);">
-                                            <%= t.treatment %>
-                                        </span>
+                                        <% if (t.treatment) { %>
+                                            <span class="treatment-info">
+                                                <em>Treatment: <%= t.treatment %></em>
+                                            </span>
+                                        <% } else { %>
+                                            <span>Healthcare Professional</span>
+                                        <% } %>
                                     </div>
                                 </div>
                             </div>
-                        </div>
-                        <% }) %>
-                </div>
-                <% } else { %>
-                    <div class="empty-state" style="text-align: center; padding: 3rem;">
-                        <i class="fa-regular fa-comment-dots"
-                            style="font-size: 3rem; color: var(--gray-300); margin-bottom: 1rem;"></i>
-                        <p style="color: var(--gray-500);">No testimonies yet.</p>
+                            <% }) %>
                     </div>
-                    <% } %>
+                    <% } else { %>
+                        <div class="pane-empty">
+                            <i class="fa-solid fa-comment-slash"></i>
+                            <p>Be the first to share your experience with this product.</p>
+                        </div>
+                        <% } %>
+            </div>
         </div>
     </div>
 </div>
 
+<style>
+    .back-link {
+        color: var(--gray-500);
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: var(--transition-base);
+    }
+
+    .back-link:hover {
+        color: var(--blue-medium);
+        transform: translateX(-5px);
+    }
+
+    .badge-outline {
+        transition: all 0.2s ease;
+    }
+
+    .badge-outline:hover {
+        background: var(--blue-medium);
+        color: var(--white);
+        transform: translateY(-2px);
+        box-shadow: 0 2px 8px rgba(0, 91, 150, 0.3);
+    }
+
+    .product-detail-flex {
+        display: flex;
+        gap: 0;
+    }
+
+    .product-gallery {
+        flex: 1;
+        background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: flex-start;
+        padding: 3rem;
+        border-right: 1px solid var(--gray-100);
+        position: relative;
+    }
+
+    .gallery-container {
+        width: 100%;
+        max-width: 100%;
+    }
+
+    .main-image-wrapper {
+        position: relative;
+        width: 100%;
+        max-width: 100%;
+        aspect-ratio: 1;
+        background: var(--white);
+        border-radius: 16px;
+        overflow: hidden;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        margin-bottom: 1rem;
+        touch-action: pan-y pinch-zoom;
+    }
+
+    .image-slider {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        display: block;
+    }
+
+    .slide {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        opacity: 0;
+        transform: translateX(30px) scale(0.95);
+        transition: opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1), 
+                    transform 0.5s cubic-bezier(0.4, 0, 0.2, 1),
+                    visibility 0s 0.5s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 2rem;
+        pointer-events: none;
+        visibility: hidden;
+        z-index: 0;
+    }
+
+    .slide.active {
+        opacity: 1 !important;
+        transform: translateX(0) scale(1) !important;
+        z-index: 2 !important;
+        pointer-events: auto;
+        visibility: visible !important;
+        transition: opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1), 
+                    transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    /* Ensure at least one slide is visible on page load */
+    .slide:first-child.active,
+    .slide[data-index="0"].active {
+        opacity: 1 !important;
+        visibility: visible !important;
+        transform: translateX(0) scale(1) !important;
+        z-index: 2 !important;
+    }
+
+    .slide.prev {
+        transform: translateX(-30px) scale(0.95);
+        z-index: 0;
+    }
+
+    .slide.next {
+        z-index: 0;
+    }
+
+    .main-product-image {
+        max-width: 100%;
+        max-height: 100%;
+        width: auto;
+        height: auto;
+        object-fit: contain;
+        border-radius: 8px;
+        user-select: none;
+        -webkit-user-drag: none;
+    }
+
+    .gallery-nav-btn {
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        background: rgba(255, 255, 255, 0.95);
+        border: 2px solid var(--gray-200);
+        border-radius: 50%;
+        width: 48px;
+        height: 48px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        z-index: 10;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        color: var(--blue-dark);
+        font-size: 1.1rem;
+        opacity: 0.9;
+    }
+
+    .gallery-nav-btn:hover {
+        background: var(--white);
+        border-color: var(--blue-medium);
+        box-shadow: 0 4px 16px rgba(0, 91, 150, 0.25);
+        transform: translateY(-50%) scale(1.15);
+        opacity: 1;
+    }
+
+    .gallery-nav-btn:active {
+        transform: translateY(-50%) scale(0.9);
+    }
+
+    .main-image-wrapper:hover .gallery-nav-btn {
+        opacity: 1;
+    }
+
+    .gallery-prev {
+        left: 1rem;
+    }
+
+    .gallery-next {
+        right: 1rem;
+    }
+
+    .gallery-indicator {
+        position: absolute;
+        bottom: 1rem;
+        left: 50%;
+        transform: translateX(-50%);
+        background: rgba(0, 0, 0, 0.6);
+        color: var(--white);
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        z-index: 10;
+        backdrop-filter: blur(10px);
+    }
+
+    .mda-cert-overlay {
+        position: absolute;
+        bottom: 1rem;
+        right: 1rem;
+        z-index: 10;
+    }
+    
+    .image-thumbnails {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
+        gap: 0.6rem;
+        width: 100%;
+        max-width: 100%;
+        padding: 0.5rem;
+    }
+    
+    .thumbnail-item {
+        position: relative;
+        width: 100%;
+        aspect-ratio: 1;
+        border: 3px solid var(--gray-200);
+        border-radius: 12px;
+        overflow: hidden;
+        cursor: pointer;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        background: var(--white);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    }
+
+    .thumbnail-item:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 4px 16px rgba(0, 91, 150, 0.15);
+        border-color: var(--blue-light);
+    }
+    
+    .thumbnail-item.active {
+        border-color: var(--blue-medium);
+        box-shadow: 0 4px 16px rgba(0, 91, 150, 0.25);
+        transform: translateY(-2px) scale(1.05);
+    }
+
+    .thumbnail-item.active .thumbnail-overlay {
+        opacity: 0;
+    }
+    
+    .thumbnail-item img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .thumbnail-item:hover img {
+        transform: scale(1.1);
+    }
+
+    .thumbnail-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.1);
+        opacity: 1;
+        transition: opacity 0.3s ease;
+        pointer-events: none;
+    }
+
+    .detail-image-placeholder {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--gray-400);
+        font-size: 4rem;
+    }
+
+    .product-essentials {
+        flex: 1;
+        padding: 3.5rem;
+    }
+
+    .detail-title {
+        font-size: 3rem;
+        font-weight: 800;
+        color: var(--blue-darkest);
+        line-height: 1.1;
+        margin-bottom: 1rem;
+    }
+
+    .reg-number {
+        font-size: 0.95rem;
+    }
+
+    .product-categories-wrapper {
+        margin-top: 0.5rem;
+    }
+
+    .category-path {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+    }
+
+    .category-item {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem 0.875rem;
+        background: var(--white);
+        border-radius: 8px;
+        border: 1.5px solid var(--gray-200);
+        transition: all 0.2s ease;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    }
+
+    .category-item:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 2px 6px rgba(0, 91, 150, 0.12);
+    }
+
+    .category-item.main-category {
+        border-color: var(--blue-medium);
+        background: rgba(0, 91, 150, 0.04);
+    }
+
+    .category-item.sub-category {
+        border-color: var(--blue-light);
+        background: rgba(0, 91, 150, 0.02);
+    }
+
+    .category-icon {
+        width: 28px;
+        height: 28px;
+        border-radius: 6px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.85rem;
+        flex-shrink: 0;
+    }
+
+    .category-item.main-category .category-icon {
+        background: var(--blue-medium);
+        color: var(--white);
+    }
+
+    .category-item.sub-category .category-icon {
+        background: var(--blue-light);
+        color: var(--white);
+    }
+
+    .category-content {
+        display: flex;
+        flex-direction: column;
+        gap: 0.15rem;
+    }
+
+    .category-label {
+        font-size: 0.65rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+        color: var(--gray-500);
+        line-height: 1;
+    }
+
+    .category-item.main-category .category-label {
+        color: var(--blue-medium);
+    }
+
+    .category-item.sub-category .category-label {
+        color: var(--blue-light);
+    }
+
+    .category-name {
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: var(--blue-darkest);
+        line-height: 1.2;
+    }
+
+    .category-connector {
+        display: flex;
+        align-items: center;
+        color: var(--blue-medium);
+        font-size: 0.75rem;
+        opacity: 0.5;
+    }
+
+    /* Single category (no subcategory) styling */
+    .category-path:has(.main-category:only-child) .category-item {
+        border-color: var(--blue-medium);
+    }
+
+    .supplier-info {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        margin-top: 0.75rem;
+        padding: 1rem;
+        background: var(--gray-50);
+        border-radius: 8px;
+        border-left: 3px solid var(--blue-medium);
+    }
+
+    .supplier-detail {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.95rem;
+        color: var(--gray-700);
+    }
+
+    .supplier-detail i {
+        color: var(--blue-medium);
+        font-size: 1rem;
+    }
+
+    .supplier-label {
+        font-weight: 600;
+        color: var(--gray-600);
+    }
+
+    .detail-description {
+        font-size: 1.1rem;
+        line-height: 1.7;
+        color: var(--gray-600);
+    }
+
+    .detail-actions {
+        display: flex;
+        gap: 1.25rem;
+        flex-wrap: wrap;
+    }
+
+    .detail-actions .btn {
+        flex: 1;
+        min-width: 160px;
+    }
+
+    .trust-indicators {
+        display: flex;
+        flex-direction: row;
+        gap: 2rem;
+        border-top: 1px solid var(--gray-100);
+        padding-top: 2rem;
+        flex-wrap: nowrap;
+    }
+
+    .trust-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.5rem;
+        color: var(--gray-500);
+        font-size: 0.8rem;
+        font-weight: 600;
+        flex: 1;
+        min-width: 0;
+        text-align: center;
+    }
+
+    .trust-item span {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 100%;
+    }
+
+    .trust-item i {
+        font-size: 1.5rem;
+        color: var(--blue-light);
+    }
+
+    /* Tabs Styling */
+    .tabs-nav {
+        display: flex;
+        background-color: var(--gray-50);
+        border-bottom: 1px solid var(--gray-200);
+        padding: 0 2rem;
+    }
+
+    .tab-trigger {
+        padding: 1.5rem 2rem;
+        background: none;
+        border: none;
+        font-weight: 700;
+        color: var(--gray-500);
+        cursor: pointer;
+        transition: var(--transition-base);
+        position: relative;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .tab-trigger::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: 3px;
+        background-color: var(--blue-medium);
+        transform: scaleX(0);
+        transition: var(--transition-base);
+    }
+
+    .tab-trigger.active {
+        color: var(--blue-medium);
+    }
+
+    .tab-trigger.active::after {
+        transform: scaleX(1);
+    }
+
+    .tab-pane {
+        display: none;
+        padding: 3rem;
+    }
+
+    .tab-pane.active {
+        display: block;
+        animation: fadeIn 0.4s ease;
+    }
+
+    /* Specifications */
+    .specs-table-wrapper {
+        width: 100%;
+        overflow-x: auto;
+        border-radius: var(--border-radius);
+        border: 1px solid var(--gray-200);
+    }
+
+    .specs-table {
+        width: 100%;
+        border-collapse: collapse;
+        background: var(--white);
+    }
+
+    .specs-table thead {
+        background: var(--blue-darkest);
+        color: var(--white);
+    }
+
+    .spec-header {
+        padding: 1.25rem 1.5rem;
+        text-align: center;
+        font-weight: 700;
+        font-size: 1rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        border-bottom: 2px solid var(--blue-medium);
+    }
+
+    .spec-header:first-child {
+        border-right: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .spec-row {
+        border-bottom: 1px solid var(--gray-100);
+        transition: background-color 0.2s ease;
+    }
+
+    .spec-row:hover {
+        background-color: var(--gray-50);
+    }
+
+    .spec-row:last-child {
+        border-bottom: none;
+    }
+
+    .spec-label {
+        padding: 1.25rem 1.5rem;
+        background-color: var(--gray-50);
+        color: var(--blue-dark);
+        font-weight: 700;
+        font-size: 0.95rem;
+        width: 40%;
+        border-right: 1px solid var(--gray-200);
+        vertical-align: top;
+        text-align: left;
+    }
+
+    .spec-value {
+        padding: 1.25rem 1.5rem;
+        color: var(--gray-700);
+        font-size: 0.95rem;
+        line-height: 1.6;
+        width: 60%;
+        vertical-align: top;
+        text-align: left;
+    }
+
+    /* Resources */
+    .resource-card {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        gap: 1.25rem;
+        padding: 1.5rem;
+        background: var(--gray-50);
+        border: none;
+        border-radius: 12px;
+        text-decoration: none;
+        color: var(--white);
+        transition: all 0.2s;
+        cursor: pointer;
+    }
+
+    .resource-card:hover {
+        background: var(--gray-100);
+        box-shadow: 0 4px 12px rgba(0, 91, 150, 0.3);
+        transform: translateY(-2px);
+        text-decoration: none;
+        color: var(--white);
+    }
+
+    .resource-icon {
+        width: 56px;
+        height: 56px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        background: var(--blue-medium);
+        color: var(--white);
+        flex-shrink: 0;
+    }
+
+    .resource-info {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .resource-title {
+        font-size: 1rem;
+        font-weight: 600;
+        color: var(--gray-700);
+        margin: 0 0 0.5rem 0;
+        line-height: 1.4;
+    }
+
+    .resource-action {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: var(--gray-600);
+        opacity: 0.9;
+        transition: gap 0.2s, opacity 0.2s;
+    }
+
+    .resource-card:hover .resource-action {
+        gap: 0.75rem;
+        opacity: 1;
+    }
+
+    .resource-action i {
+        font-size: 0.75rem;
+        transition: transform 0.2s;
+    }
+
+    .resource-card:hover .resource-action i {
+        transform: translateX(2px);
+    }
+
+    /* Events */
+    .event-capsule {
+        display: flex;
+        align-items: center;
+        padding: 1.5rem;
+        background-color: var(--white);
+        border: 1px solid var(--gray-200);
+        border-radius: var(--border-radius);
+        gap: 1.5rem;
+        transition: var(--transition-base);
+        cursor: pointer;
+        text-decoration: none;
+        color: inherit;
+    }
+
+    .event-capsule:hover {
+        border-color: var(--blue-medium);
+        box-shadow: var(--shadow-md);
+        transform: translateY(-2px);
+        text-decoration: none;
+        color: inherit;
+    }
+
+    .event-date {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        width: 80px;
+        min-height: 80px;
+        background-color: var(--blue-darkest);
+        color: var(--white);
+        border-radius: 12px;
+        padding: 0.5rem;
+    }
+
+    .event-date .month {
+        font-size: 0.7rem;
+        text-transform: uppercase;
+        font-weight: 800;
+        line-height: 1.2;
+    }
+
+    .event-date .day {
+        font-size: 1.5rem;
+        font-weight: 800;
+        line-height: 1;
+        margin: 0.2rem 0;
+    }
+
+    .event-date .year {
+        font-size: 0.65rem;
+        font-weight: 600;
+        opacity: 0.9;
+        line-height: 1;
+    }
+
+    .event-body {
+        flex: 1;
+    }
+
+    .event-body h4 {
+        margin: 0 0 0.25rem 0;
+        font-size: 1.1rem;
+    }
+
+    .event-body .location {
+        margin: 0;
+        font-size: 0.85rem;
+        color: var(--gray-500);
+    }
+
+    /* Testimonies */
+    .testimony-card {
+        padding: 2.5rem;
+        background-color: var(--gray-50);
+        border-radius: var(--border-radius-lg);
+        position: relative;
+    }
+
+    .testimony-quote {
+        margin-bottom: 2rem;
+        position: relative;
+    }
+
+    .testimony-quote i {
+        position: absolute;
+        top: -10px;
+        right: 0;
+        font-size: 2.5rem;
+        color: var(--gray-200);
+        opacity: 0.5;
+    }
+
+    .testimony-quote p {
+        font-size: 1.1rem;
+        font-style: italic;
+        color: var(--gray-700);
+        line-height: 1.6;
+        position: relative;
+        z-index: 1;
+    }
+
+    .testimony-author {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .author-avatar {
+        width: 48px;
+        height: 48px;
+        background-color: var(--blue-medium);
+        color: var(--white);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 800;
+        font-size: 1.25rem;
+    }
+
+    .author-info h5 {
+        margin: 0;
+        font-size: 1rem;
+    }
+
+    .author-info span {
+        font-size: 0.8rem;
+        color: var(--gray-500);
+    }
+
+    .treatment-info {
+        font-size: 0.8rem;
+        color: var(--gray-600);
+        font-style: italic;
+    }
+
+    .treatment-info em {
+        font-style: italic;
+    }
+
+    .pane-empty {
+        text-align: center;
+        padding: 4rem 2rem;
+        color: var(--gray-400);
+    }
+
+    .pane-empty i {
+        font-size: 4rem;
+        margin-bottom: 1.5rem;
+        opacity: 0.3;
+    }
+
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    @media (max-width: 1200px) {
+        .product-detail-container {
+            padding: 2rem 1.5rem 4rem;
+        }
+
+        .product-essentials {
+            padding: 3rem;
+        }
+    }
+
+    @media (max-width: 992px) {
+        .product-detail-container {
+            padding: 2rem 1rem 3rem;
+        }
+
+        .product-detail-flex {
+            flex-direction: column;
+        }
+
+        .product-gallery {
+            border-right: none;
+            border-bottom: 1px solid var(--gray-100);
+            padding: 2rem;
+            align-items: center;
+        }
+
+        .main-image-wrapper {
+            aspect-ratio: 1;
+        }
+
+        .gallery-nav-btn {
+            width: 40px;
+            height: 40px;
+            font-size: 0.9rem;
+        }
+
+        .gallery-prev {
+            left: 0.5rem;
+        }
+
+        .gallery-next {
+            right: 0.5rem;
+        }
+        
+        .image-thumbnails {
+            grid-template-columns: repeat(auto-fill, minmax(55px, 1fr)) !important;
+            gap: 0.5rem !important;
+        }
+
+        .product-essentials {
+            padding: 2rem;
+        }
+
+        .detail-title {
+            font-size: 2.25rem;
+        }
+
+        .tabs-nav {
+            overflow-x: auto;
+            padding: 0;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .tab-trigger {
+            padding: 1.25rem 1.5rem;
+            white-space: nowrap;
+            font-size: 0.9rem;
+        }
+
+        .tab-pane {
+            padding: 2rem;
+        }
+
+        .specs-table-wrapper {
+            overflow-x: auto;
+        }
+
+        .spec-header {
+            padding: 1rem 1.25rem;
+            font-size: 0.9rem;
+        }
+
+        .spec-label,
+        .spec-value {
+            padding: 1rem 1.25rem;
+            font-size: 0.9rem;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .product-detail-container {
+            padding: 1.5rem 1rem 3rem;
+        }
+
+        .breadcrumb-nav {
+            margin-bottom: 1.5rem;
+        }
+
+        .product-main-card {
+            margin-bottom: 2rem;
+        }
+
+        .product-gallery {
+            padding: 1.5rem;
+        }
+
+        .main-image-wrapper {
+            aspect-ratio: 1;
+            border-radius: 12px;
+        }
+
+        .slide {
+            padding: 1rem;
+        }
+
+        .gallery-nav-btn {
+            width: 36px;
+            height: 36px;
+            font-size: 0.8rem;
+        }
+
+        .gallery-prev {
+            left: 0.25rem;
+        }
+
+        .gallery-next {
+            right: 0.25rem;
+        }
+
+        .gallery-indicator {
+            bottom: 0.5rem;
+            padding: 0.4rem 0.8rem;
+            font-size: 0.75rem;
+        }
+        
+        .image-thumbnails {
+            grid-template-columns: repeat(auto-fill, minmax(50px, 1fr)) !important;
+            gap: 0.4rem !important;
+            margin-top: 1rem !important;
+        }
+
+        .product-essentials {
+            padding: 1.5rem;
+        }
+
+        .detail-title {
+            font-size: 1.75rem;
+            line-height: 1.2;
+        }
+
+        .category-path {
+            gap: 0.4rem;
+        }
+
+        .category-item {
+            padding: 0.45rem 0.75rem;
+            gap: 0.45rem;
+        }
+
+        .category-icon {
+            width: 26px;
+            height: 26px;
+            font-size: 0.8rem;
+        }
+
+        .category-name {
+            font-size: 0.8rem;
+        }
+
+        .category-label {
+            font-size: 0.6rem;
+        }
+
+        .category-connector {
+            font-size: 0.7rem;
+        }
+
+        .supplier-info {
+            padding: 0.75rem;
+        }
+
+        .supplier-detail {
+            font-size: 0.9rem;
+        }
+
+        .detail-description {
+            font-size: 1rem;
+            line-height: 1.6;
+        }
+
+        .detail-actions {
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .detail-actions .btn,
+        .detail-actions button {
+            width: 100%;
+            min-width: 100%;
+        }
+
+        .trust-indicators {
+            flex-direction: row;
+            gap: 1rem;
+            padding-top: 1.5rem;
+            justify-content: space-between;
+        }
+
+        .trust-item {
+            flex-direction: column;
+            gap: 0.5rem;
+            flex: 1;
+            min-width: 0;
+        }
+
+        .trust-item span {
+            font-size: 0.7rem;
+            white-space: nowrap;
+        }
+
+        .trust-item i {
+            font-size: 1.2rem;
+        }
+
+        .tabs-nav {
+            flex-wrap: nowrap;
+            padding: 0 1rem;
+        }
+
+        .tab-trigger {
+            padding: 1rem 1.25rem;
+            font-size: 0.85rem;
+            gap: 0.5rem;
+        }
+
+        .tab-trigger i {
+            font-size: 0.9rem;
+        }
+
+        .tab-pane {
+            padding: 1.5rem;
+        }
+
+        .specs-table-wrapper {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .specs-table {
+            min-width: 100%;
+        }
+
+        .spec-header {
+            padding: 0.875rem 1rem;
+            font-size: 0.85rem;
+        }
+
+        .spec-label {
+            padding: 1rem;
+            font-size: 0.9rem;
+            width: 35%;
+        }
+
+        .spec-value {
+            padding: 1rem;
+            font-size: 0.9rem;
+            width: 65%;
+        }
+
+        .grid {
+            grid-template-columns: 1fr;
+        }
+
+        .resource-card {
+            flex-direction: column;
+            text-align: center;
+            padding: 1.25rem;
+        }
+
+        .resource-icon {
+            margin: 0 auto;
+        }
+
+        .event-capsule {
+            flex-direction: column;
+            text-align: center;
+            gap: 1rem;
+        }
+
+        .event-date {
+            margin: 0 auto;
+        }
+
+        .event-link {
+            display: none;
+        }
+
+        .testimony-card {
+            padding: 2rem 1.5rem;
+        }
+
+        .testimony-quote p {
+            font-size: 1rem;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .product-detail-container {
+            padding: 1rem 0.75rem 2rem;
+        }
+
+        .back-link {
+            font-size: 0.9rem;
+        }
+
+        .product-gallery {
+            padding: 1rem;
+        }
+
+        .main-image-wrapper {
+            aspect-ratio: 1;
+            border-radius: 10px;
+        }
+
+        .gallery-nav-btn {
+            width: 32px;
+            height: 32px;
+            font-size: 0.7rem;
+        }
+
+        .gallery-indicator {
+            bottom: 0.25rem;
+            padding: 0.3rem 0.6rem;
+            font-size: 0.7rem;
+        }
+        
+        .image-thumbnails {
+            grid-template-columns: repeat(4, 1fr) !important;
+            gap: 0.35rem !important;
+        }
+
+        .thumbnail-item {
+            border-radius: 8px;
+        }
+
+        .product-essentials {
+            padding: 1.25rem;
+        }
+
+        .detail-title {
+            font-size: 1.5rem;
+        }
+
+        .category-path {
+            flex-direction: row;
+            align-items: center;
+            gap: 0.35rem;
+        }
+
+        .category-connector {
+            font-size: 0.65rem;
+        }
+
+        .category-item {
+            padding: 0.4rem 0.65rem;
+            gap: 0.4rem;
+        }
+
+        .category-icon {
+            width: 24px;
+            height: 24px;
+            font-size: 0.75rem;
+        }
+
+        .category-name {
+            font-size: 0.75rem;
+        }
+
+        .category-label {
+            font-size: 0.55rem;
+        }
+
+        .supplier-info {
+            padding: 0.65rem;
+        }
+
+        .supplier-detail {
+            font-size: 0.85rem;
+        }
+
+        .detail-description {
+            font-size: 0.95rem;
+        }
+
+        .trust-indicators {
+            gap: 0.75rem;
+            padding-top: 1.25rem;
+        }
+
+        .trust-item {
+            gap: 0.4rem;
+        }
+
+        .trust-item span {
+            font-size: 0.65rem;
+            white-space: nowrap;
+        }
+
+        .trust-item i {
+            font-size: 1.1rem;
+        }
+
+        .tabs-nav {
+            padding: 0 0.5rem;
+        }
+
+        .tab-trigger {
+            padding: 0.875rem 1rem;
+            font-size: 0.8rem;
+        }
+
+        .tab-pane {
+            padding: 1.25rem;
+        }
+
+        .spec-header {
+            padding: 0.75rem 0.875rem;
+            font-size: 0.8rem;
+        }
+
+        .spec-label {
+            padding: 0.875rem;
+            font-size: 0.85rem;
+            width: 35%;
+        }
+
+        .spec-value {
+            padding: 0.875rem;
+            font-size: 0.85rem;
+            width: 65%;
+        }
+
+        .resource-card {
+            padding: 1rem;
+        }
+
+        .resource-icon {
+            width: 48px;
+            height: 48px;
+            font-size: 1.25rem;
+        }
+
+        .resource-title {
+            font-size: 0.9rem;
+        }
+
+        .resource-action {
+            font-size: 0.85rem;
+        }
+
+        .event-capsule {
+            padding: 1.25rem;
+        }
+
+        .event-date {
+            width: 60px;
+            height: 60px;
+        }
+
+        .event-date .day {
+            font-size: 1.25rem;
+        }
+
+        .event-body h4 {
+            font-size: 1rem;
+        }
+
+        .testimony-card {
+            padding: 1.5rem 1rem;
+        }
+
+        .testimony-quote p {
+            font-size: 0.95rem;
+        }
+
+        .author-avatar {
+            width: 40px;
+            height: 40px;
+            font-size: 1rem;
+        }
+    }
+
+    @media (max-width: 360px) {
+        .product-detail-container {
+            padding: 0.75rem 0.5rem 1.5rem;
+        }
+
+        .detail-title {
+            font-size: 1.35rem;
+        }
+
+        .tab-trigger {
+            padding: 0.75rem 0.875rem;
+            font-size: 0.75rem;
+        }
+
+        .tab-pane {
+            padding: 1rem;
+        }
+
+        .trust-indicators {
+            gap: 0.5rem;
+            padding-top: 1rem;
+        }
+
+        .trust-item {
+            gap: 0.35rem;
+        }
+
+        .trust-item span {
+            font-size: 0.6rem;
+            white-space: nowrap;
+        }
+
+        .trust-item i {
+            font-size: 1rem;
+        }
+
+        .spec-header {
+            padding: 0.625rem 0.75rem;
+            font-size: 0.75rem;
+        }
+
+        .spec-label {
+            padding: 0.75rem;
+            font-size: 0.8rem;
+            width: 35%;
+        }
+
+        .spec-value {
+            padding: 0.75rem;
+            font-size: 0.8rem;
+            width: 65%;
+        }
+    }
+</style>
+
 <script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const triggers = document.querySelectorAll('.tab-trigger');
+        const panes = document.querySelectorAll('.tab-pane');
+
+        triggers.forEach(trigger => {
+            trigger.addEventListener('click', function () {
+                const target = this.getAttribute('data-tab');
+
+                // Update active trigger
+                triggers.forEach(t => t.classList.remove('active'));
+                this.classList.add('active');
+
+                // Update active pane
+                panes.forEach(p => {
+                    p.classList.remove('active');
+                    if (p.id === target) p.classList.add('active');
+                });
+            });
+        });
+
+        // Share button functionality
+        const shareButton = document.getElementById('shareButton');
+        if (shareButton) {
+            shareButton.addEventListener('click', async function() {
+                const productName = '<%= product.model || product.code %>';
+                const productUrl = window.location.href;
+                const shareData = {
+                    title: productName,
+                    text: `Check out this product: ${productName}`,
+                    url: productUrl
+                };
+
+                try {
+                    // Try Web Share API first (works on mobile and modern browsers)
+                    if (navigator.share) {
+                        await navigator.share(shareData);
+                    } else {
+                        // Fallback: Copy to clipboard
+                        await navigator.clipboard.writeText(productUrl);
+                        
+                        // Show feedback
+                        const originalText = shareButton.innerHTML;
+                        shareButton.innerHTML = '<i class="fa-solid fa-check"></i> Copied!';
+                        shareButton.style.background = 'var(--success)';
+                        shareButton.style.color = 'var(--white)';
+                        
+                        setTimeout(() => {
+                            shareButton.innerHTML = originalText;
+                            shareButton.style.background = '';
+                            shareButton.style.color = '';
+                        }, 2000);
+                    }
+                } catch (err) {
+                    // User cancelled or error occurred
+                    if (err.name !== 'AbortError') {
+                        // Fallback: Copy to clipboard if Web Share API failed
+                        try {
+                            await navigator.clipboard.writeText(productUrl);
+                            const originalText = shareButton.innerHTML;
+                            shareButton.innerHTML = '<i class="fa-solid fa-check"></i> Copied!';
+                            shareButton.style.background = 'var(--success)';
+                            shareButton.style.color = 'var(--white)';
+                            
+                            setTimeout(() => {
+                                shareButton.innerHTML = originalText;
+                                shareButton.style.background = '';
+                                shareButton.style.color = '';
+                            }, 2000);
+                        } catch (clipboardErr) {
+                            console.error('Failed to share or copy:', clipboardErr);
+                            alert('Unable to share. Please copy this link manually:\n' + productUrl);
+                        }
+                    }
+                }
+            });
+        }
+    });
+</script>
+
+
+<script>
+    // Enhanced Image Gallery with Swipe Support
+    document.addEventListener('DOMContentLoaded', function() {
+        const slides = document.querySelectorAll('.slide');
+        const thumbnails = document.querySelectorAll('.thumbnail-item');
+        const prevBtn = document.getElementById('prevBtn');
+        const nextBtn = document.getElementById('nextBtn');
+        const currentIndexSpan = document.getElementById('currentImageIndex');
+        const totalImagesSpan = document.getElementById('totalImages');
+        const mainImageWrapper = document.getElementById('mainImageWrapper');
+        
+        let currentIndex = 0;
+        const totalImages = slides.length;
+        let isTransitioning = false;
+        let touchStartX = 0;
+        let touchEndX = 0;
+        let touchStartY = 0;
+        let touchEndY = 0;
+        const minSwipeDistance = 50;
+
+        // Initialize: Ensure first slide is visible and hide others
+        if (totalImages > 0) {
+            // Hide all slides first
+            slides.forEach((slide, idx) => {
+                slide.style.zIndex = '0';
+                if (!slide.classList.contains('active')) {
+                    slide.style.opacity = '0';
+                    slide.style.visibility = 'hidden';
+                }
+            });
+
+            // Find the slide that already has the active class (from server-side)
+            const activeSlide = document.querySelector('.slide.active');
+            if (activeSlide) {
+                currentIndex = parseInt(activeSlide.dataset.index) || 0;
+                // Force visibility and z-index
+                activeSlide.style.opacity = '1';
+                activeSlide.style.visibility = 'visible';
+                activeSlide.style.transform = 'translateX(0) scale(1)';
+                activeSlide.style.zIndex = '2';
+            } else {
+                // If no active slide found, activate the first one
+                if (slides[0]) {
+                    slides[0].classList.add('active');
+                    slides[0].style.opacity = '1';
+                    slides[0].style.visibility = 'visible';
+                    slides[0].style.transform = 'translateX(0) scale(1)';
+                    slides[0].style.zIndex = '2';
+                    currentIndex = 0;
+                }
+            }
+        }
+
+        // Update indicator
+        function updateIndicator() {
+            if (currentIndexSpan) {
+                currentIndexSpan.textContent = currentIndex + 1;
+            }
+        }
+
+        // Show slide with animation
+        function showSlide(index, direction = 'next') {
+            if (isTransitioning || index < 0 || index >= totalImages) return;
+            
+            isTransitioning = true;
+            const prevIndex = currentIndex;
+            currentIndex = index;
+
+            // First, hide all slides and reset z-index
+            slides.forEach((slide, idx) => {
+                slide.classList.remove('active', 'prev', 'next');
+                slide.style.zIndex = '0';
+                if (idx !== currentIndex) {
+                    slide.style.opacity = '0';
+                    slide.style.visibility = 'hidden';
+                }
+            });
+
+            // Add appropriate classes for animation
+            if (direction === 'next') {
+                if (slides[prevIndex]) {
+                    slides[prevIndex].classList.add('prev');
+                    slides[prevIndex].style.zIndex = '0';
+                }
+                if (slides[currentIndex]) {
+                    slides[currentIndex].classList.add('active');
+                    slides[currentIndex].style.zIndex = '2';
+                }
+            } else {
+                if (slides[prevIndex]) {
+                    slides[prevIndex].classList.add('next');
+                    slides[prevIndex].style.zIndex = '0';
+                }
+                if (slides[currentIndex]) {
+                    slides[currentIndex].classList.add('active');
+                    slides[currentIndex].style.zIndex = '2';
+                }
+            }
+
+            // Update thumbnails
+            thumbnails.forEach((thumb, idx) => {
+                thumb.classList.toggle('active', idx === currentIndex);
+            });
+
+            updateIndicator();
+
+            // Reset transition lock after animation and ensure only active is visible
+            setTimeout(() => {
+                isTransitioning = false;
+                slides.forEach((slide, idx) => {
+                    slide.classList.remove('prev', 'next');
+                    if (idx !== currentIndex) {
+                        slide.style.zIndex = '0';
+                        slide.style.opacity = '0';
+                        slide.style.visibility = 'hidden';
+                    } else {
+                        slide.style.zIndex = '2';
+                        slide.style.opacity = '1';
+                        slide.style.visibility = 'visible';
+                    }
+                });
+            }, 500);
+        }
+
+        // Next image
+        function nextImage() {
+            const nextIndex = (currentIndex + 1) % totalImages;
+            showSlide(nextIndex, 'next');
+        }
+
+        // Previous image
+        function prevImage() {
+            const prevIndex = (currentIndex - 1 + totalImages) % totalImages;
+            showSlide(prevIndex, 'prev');
+        }
+
+        // Navigation buttons
+        if (prevBtn && nextBtn && totalImages > 1) {
+            prevBtn.addEventListener('click', prevImage);
+            nextBtn.addEventListener('click', nextImage);
+        }
+
+        // Thumbnail click handler
+        thumbnails.forEach((thumbnail, index) => {
+            thumbnail.addEventListener('click', function() {
+                if (index !== currentIndex && !isTransitioning) {
+                    const direction = index > currentIndex ? 'next' : 'prev';
+                    showSlide(index, direction);
+                }
+            });
+        });
+
+        // Touch/Swipe support
+        if (mainImageWrapper && totalImages > 1) {
+            mainImageWrapper.addEventListener('touchstart', function(e) {
+                touchStartX = e.changedTouches[0].screenX;
+                touchStartY = e.changedTouches[0].screenY;
+            }, { passive: true });
+
+            mainImageWrapper.addEventListener('touchend', function(e) {
+                touchEndX = e.changedTouches[0].screenX;
+                touchEndY = e.changedTouches[0].screenY;
+                handleSwipe();
+            }, { passive: true });
+
+            // Mouse drag support for desktop
+            let isMouseDown = false;
+            let mouseStartX = 0;
+
+            mainImageWrapper.addEventListener('mousedown', function(e) {
+                isMouseDown = true;
+                mouseStartX = e.clientX;
+                mainImageWrapper.style.cursor = 'grabbing';
+            });
+
+            mainImageWrapper.addEventListener('mousemove', function(e) {
+                if (isMouseDown) {
+                    // Prevent text selection while dragging
+                    e.preventDefault();
+                }
+            });
+
+            mainImageWrapper.addEventListener('mouseup', function(e) {
+                if (isMouseDown) {
+                    const mouseEndX = e.clientX;
+                    const deltaX = mouseEndX - mouseStartX;
+                    
+                    if (Math.abs(deltaX) > minSwipeDistance) {
+                        if (deltaX > 0) {
+                            prevImage();
+                        } else {
+                            nextImage();
+                        }
+                    }
+                    
+                    isMouseDown = false;
+                    mainImageWrapper.style.cursor = 'grab';
+                }
+            });
+
+            mainImageWrapper.addEventListener('mouseleave', function() {
+                isMouseDown = false;
+                mainImageWrapper.style.cursor = 'grab';
+            });
+
+            mainImageWrapper.style.cursor = 'grab';
+        }
+
+        function handleSwipe() {
+            const deltaX = touchEndX - touchStartX;
+            const deltaY = touchEndY - touchStartY;
+            
+            // Check if horizontal swipe is greater than vertical (to avoid conflicts with scrolling)
+            if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > minSwipeDistance) {
+                if (deltaX > 0) {
+                    // Swipe right - previous image
+                    prevImage();
+                } else {
+                    // Swipe left - next image
+                    nextImage();
+                }
+            }
+        }
+
+        // Keyboard navigation
+        document.addEventListener('keydown', function(e) {
+            if (totalImages <= 1) return;
+            
+            if (e.key === 'ArrowLeft') {
+                e.preventDefault();
+                prevImage();
+            } else if (e.key === 'ArrowRight') {
+                e.preventDefault();
+                nextImage();
+            }
+        });
+
+        // Initialize
+        updateIndicator();
+    });
+
     function switchTab(evt, tabName) {
         // Hide all tab content
         var i, tabcontent, tablinks;

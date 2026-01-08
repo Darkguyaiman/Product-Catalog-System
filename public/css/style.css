@@ -28,16 +28,24 @@
     --gray-800: #1f2937;
     --gray-900: #111827;
 
-    /* Layout Variables */
+    /* layout Variables */
     --sidebar-width: 260px;
-    --header-height: 64px;
-    --container-max-width: 1200px;
-    --border-radius: 8px;
-    --border-radius-lg: 12px;
-    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    --header-height: 72px;
+    --container-max-width: 1280px;
+    --border-radius-sm: 6px;
+    --border-radius: 12px;
+    --border-radius-lg: 20px;
+    --border-radius-full: 9999px;
+    
+    /* Shadows - Premium Elevation */
+    --shadow-sm: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
     --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
     --shadow-md: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
     --shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    --shadow-hover: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    
+    /* Transitions */
+    --transition-base: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* Reset & Base */
@@ -341,7 +349,7 @@ a:hover {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    padding: 0.625rem 1.25rem;
+    padding: 1rem 1.25rem;
     font-size: 0.95rem;
     font-weight: 600;
     border-radius: var(--border-radius);
@@ -408,6 +416,9 @@ input[type="text"],
 input[type="email"],
 input[type="password"],
 input[type="date"],
+input[type="url"],
+input[type="number"],
+input[type="tel"],
 select,
 textarea,
 input[type="file"] {
@@ -596,22 +607,109 @@ tr:hover td {
 
 /* Badges */
 .badge {
-    padding: 0.25rem 0.75rem;
-    border-radius: 9999px;
+    padding: 6px 14px;
+    border-radius: var(--border-radius-full);
     font-size: 0.75rem;
-    font-weight: 600;
-    display: inline-block;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
 }
 
 .badge-primary {
-    background-color: var(--blue-lightest);
-    color: var(--blue-darkest);
+    background-color: rgba(0, 91, 150, 0.1);
+    color: var(--blue-medium);
 }
 
 .badge-success {
-    background-color: #d1fae5;
-    color: #065f46;
+    background-color: #ecfdf5;
+    color: #059669;
 }
+
+.badge-outline {
+    background-color: transparent;
+    border: 1px solid var(--gray-300);
+    color: var(--gray-600);
+}
+
+/* Product Specific Styles */
+.product-card {
+    transition: var(--transition-base);
+    border: 1px solid var(--gray-100);
+    position: relative;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.product-card:hover {
+    transform: translateY(-8px);
+    box-shadow: var(--shadow-lg);
+    border-color: var(--blue-lightest);
+}
+
+.product-image-container {
+    height: 220px;
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    position: relative;
+}
+
+.product-image-container img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: var(--transition-base);
+}
+
+.product-card:hover .product-image-container img {
+    transform: scale(1.05);
+}
+
+.product-info {
+    padding: 1.5rem;
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Modern Inputs for Public Pages */
+.search-input-group {
+    position: relative;
+    width: 100%;
+}
+
+.search-input-group i {
+    position: absolute;
+    left: 1.25rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--gray-400);
+    transition: var(--transition-base);
+}
+
+.search-input-group input {
+    padding-left: 3rem !important;
+    background-color: var(--gray-50);
+    border: 1px solid var(--gray-200);
+    border-radius: var(--border-radius);
+    transition: var(--transition-base);
+}
+
+.search-input-group input:focus {
+    background-color: var(--white);
+    border-color: var(--blue-medium);
+}
+
+.search-input-group input:focus + i {
+    color: var(--blue-medium);
+}
+
 
 /* Custom Scrollbar */
 ::-webkit-scrollbar {
@@ -1006,7 +1104,8 @@ tr:hover td {
 
     .companies-header,
     .supplier-header,
-    .suppliers-header {
+    .suppliers-header,
+    .marketing-header {
         flex-direction: column;
         align-items: stretch !important;
         gap: 15px;
@@ -1158,4 +1257,94 @@ tr:hover td {
     to {
         transform: rotate(360deg);
     }
+}
+
+/* Upload Zone */
+.upload-zone {
+    border: 2px dashed var(--gray-300);
+    border-radius: 12px;
+    padding: 2.5rem 1.5rem;
+    text-align: center;
+    background: var(--gray-50);
+    transition: all 0.2s ease;
+    cursor: pointer;
+    position: relative;
+}
+
+.upload-zone:hover,
+.upload-zone.dragover {
+    border-color: var(--blue-medium);
+    background: rgba(0, 91, 150, 0.05);
+}
+
+.upload-icon {
+    font-size: 3rem;
+    color: var(--gray-400);
+    margin-bottom: 1rem;
+}
+
+.upload-text {
+    font-weight: 600;
+    color: var(--gray-700);
+    margin-bottom: 0.5rem;
+}
+
+.browse-link {
+    color: var(--blue-medium);
+    text-decoration: underline;
+}
+
+.upload-hint {
+    font-size: 0.85rem;
+    color: var(--gray-500);
+}
+
+.file-preview {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+}
+
+.file-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: white;
+    padding: 8px 15px;
+    border-radius: 20px;
+    border: 1px solid var(--gray-200);
+    box-shadow: var(--shadow-sm);
+}
+
+.file-name {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--gray-700);
+    max-width: 200px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.remove-file {
+    background: #fff;
+    color: var(--danger);
+    border: 1px solid #fee2e2;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: var(--shadow-sm);
+}
+
+.remove-file:hover {
+    background: var(--danger);
+    color: white;
+    border-color: var(--danger);
+    transform: scale(1.1);
 }

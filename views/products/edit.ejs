@@ -16,33 +16,41 @@
                 Basic Information</h3>
 
             <div class="form-group" style="margin-bottom: 2rem;">
-                <label>Product Image</label>
+                <label>Product Images <span style="color: var(--gray-500); font-size: 0.85rem; font-weight: normal;">(Select main image with star)</span></label>
                 <div class="upload-zone" id="imageUploadZone">
-                    <div class="upload-content" style="<%= product.product_image ? 'display: none;' : '' %>">
-                        <i class="fas fa-image upload-icon"></i>
-                        <p class="upload-text">Drag and drop product image here or <span
+                    <div class="upload-content">
+                        <i class="fas fa-images upload-icon"></i>
+                        <p class="upload-text">Drag and drop product images here or <span
                                 class="browse-link">browse</span></p>
-                        <p class="upload-hint">PNG, JPG, WEBP (Max 5MB)</p>
+                        <p class="upload-hint">PNG, JPG, WEBP (Max 5MB each, up to 10 images)</p>
                     </div>
-                    <input type="file" name="product_image" id="imageInput" accept="image/*" style="display: none;">
-
-                    <div id="imagePreview" class="file-preview"
-                        style="<%= product.product_image ? 'display: flex;' : 'display: none;' %>">
-                        <img id="previewProductImg" src="<%= product.product_image || '' %>" alt="Preview"
-                            style="max-width: 200px; max-height: 200px; object-fit: contain; border: 1px solid var(--gray-200); border-radius: 8px;">
-
-                        <div class="file-info" id="imageInfoChip" style="display: flex;">
-                            <span id="imageName" class="file-name">
-                                <%= product.product_image ? 'Current Image' : '' %>
-                            </span>
-                            <button type="button" class="remove-file" id="removeImage" title="Remove File">
-                                <i class="fas fa-times"></i>
-                            </button>
-                        </div>
-                        <input type="hidden" name="product_image_removed" id="product_image_removed" value="false">
-                        <input type="hidden" name="existing_product_image" value="<%= product.product_image %>">
-                    </div>
+                    <input type="file" name="product_images" id="imageInput" accept="image/*" multiple style="display: none;">
                 </div>
+                <div id="imagesPreviewContainer" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 1rem; margin-top: 1rem;">
+                    <% if (product.images && product.images.length > 0) { %>
+                        <% product.images.forEach((img, index) => { %>
+                            <div class="existing-image-card" data-image-id="<%= img.id %>" style="position: relative; border: 2px solid <%= img.is_main ? 'var(--blue-medium)' : 'var(--gray-200)' %>; border-radius: 8px; overflow: hidden; background: var(--gray-50);">
+                                <img src="<%= img.image_path %>" alt="Product Image" style="width: 100%; height: 150px; object-fit: cover; display: block;">
+                                <div style="position: absolute; top: 8px; right: 8px; display: flex; gap: 4px;">
+                                    <button type="button" class="star-btn existing-star-btn <%= img.is_main ? 'active' : '' %>" 
+                                        data-image-id="<%= img.id %>" style="background: rgba(255,255,255,0.9); border: none; border-radius: 50%; width: 32px; height: 32px; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                                        <i class="fas fa-star" style="color: <%= img.is_main ? '#FFD700' : '#ccc' %>;"></i>
+                                    </button>
+                                    <button type="button" class="remove-existing-btn" data-image-id="<%= img.id %>" 
+                                        style="background: rgba(220,38,38,0.9); border: none; border-radius: 50%; width: 32px; height: 32px; cursor: pointer; display: flex; align-items: center; justify-content: center; color: white; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </div>
+                                <% if (img.is_main) { %>
+                                    <div class="main-label" style="position: absolute; bottom: 0; left: 0; right: 0; background: rgba(0,91,150,0.9); color: white; padding: 4px; text-align: center; font-size: 0.75rem; font-weight: 600;">Main Image</div>
+                                <% } %>
+                                <input type="hidden" name="existing_images[]" value="<%= img.id %>">
+                            </div>
+                        <% }) %>
+                    <% } %>
+                </div>
+                <input type="hidden" name="main_image_id" id="mainImageId" value="<%= product.images && product.images.find(img => img.is_main) ? product.images.find(img => img.is_main).id : '' %>">
+                <input type="hidden" name="deleted_images" id="deletedImages" value="">
             </div>
 
             <div class="grid-2">
@@ -61,6 +69,22 @@
                 <div class="form-group">
                     <label>Product MDA Reg. No.</label>
                     <input type="text" name="mda_reg_no" value="<%= product.mda_reg_no %>">
+                </div>
+            </div>
+
+            <div class="grid-2">
+                <div class="form-group">
+                    <label>Supplier</label>
+                    <select name="supplier_id">
+                        <option value="">Select Supplier...</option>
+                        <% if (suppliers && suppliers.length > 0) { %>
+                            <% suppliers.forEach(supplier => { %>
+                                <option value="<%= supplier.id %>" <%= product.supplier_id == supplier.id ? 'selected' : '' %>>
+                                    <%= supplier.name %><% if (supplier.country) { %> - <%= supplier.country %><% } %>
+                                </option>
+                            <% }) %>
+                        <% } %>
+                    </select>
                 </div>
             </div>
 
@@ -268,6 +292,8 @@
         border-radius: 20px;
         border: 1px solid var(--gray-200);
         box-shadow: var(--shadow-sm);
+        flex-shrink: 0;
+        min-width: 0;
     }
 
     .file-name {
@@ -283,23 +309,33 @@
     .remove-file {
         background: #fff;
         color: var(--danger);
-        border: 1px solid #fee2e2;
-        width: 32px;
-        height: 32px;
+        border: 2px solid #fee2e2;
+        width: 36px;
+        height: 36px;
+        min-width: 36px;
+        min-height: 36px;
         border-radius: 50%;
         display: flex;
         align-items: center;
         justify-content: center;
         cursor: pointer;
         transition: all 0.2s;
-        box-shadow: var(--shadow-sm);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        flex-shrink: 0;
+        font-size: 0.9rem;
+        font-weight: 600;
     }
 
     .remove-file:hover {
         background: var(--danger);
         color: white;
         border-color: var(--danger);
-        transform: scale(1.1);
+        transform: scale(1.05);
+        box-shadow: 0 3px 6px rgba(220, 38, 38, 0.3);
+    }
+
+    .remove-file:active {
+        transform: scale(0.95);
     }
 
     /* Chips Styles */
@@ -357,6 +393,74 @@
         min-width: 150px;
         font-size: 0.95rem;
         background: transparent;
+    }
+
+    /* Mobile Responsive Styles for Buttons */
+    @media (max-width: 768px) {
+        .remove-file {
+            width: 44px;
+            height: 44px;
+            min-width: 44px;
+            min-height: 44px;
+            font-size: 1.1rem;
+            border-width: 2px;
+            box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);
+        }
+
+        .remove-existing-btn,
+        .remove-new-btn {
+            width: 44px !important;
+            height: 44px !important;
+            font-size: 1.1rem !important;
+            border-width: 2px !important;
+        }
+
+        .star-btn,
+        .existing-star-btn,
+        .new-star-btn {
+            width: 44px !important;
+            height: 44px !important;
+            font-size: 1.1rem !important;
+        }
+
+        .existing-image-card > div[style*="position: absolute; top: 8px"] {
+            gap: 8px !important;
+        }
+
+        .new-image-card > div[style*="position: absolute; top: 8px"] {
+            gap: 8px !important;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .remove-file {
+            width: 48px;
+            height: 48px;
+            min-width: 48px;
+            min-height: 48px;
+            font-size: 1.2rem;
+            border-width: 2.5px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .remove-existing-btn,
+        .remove-new-btn {
+            width: 48px !important;
+            height: 48px !important;
+            font-size: 1.2rem !important;
+        }
+
+        .star-btn,
+        .existing-star-btn,
+        .new-star-btn {
+            width: 48px !important;
+            height: 48px !important;
+            font-size: 1.2rem !important;
+        }
+
+        .file-info {
+            padding: 10px 18px;
+        }
     }
 </style>
 
@@ -440,8 +544,242 @@
     // Setup for Cert
     setupFileUpload('certUploadZone', 'certInput', '.upload-content', 'filePreview', 'mda_cert_removed', true);
 
-    // Setup for Product Image
-    setupFileUpload('imageUploadZone', 'imageInput', '.upload-content', 'imagePreview', 'product_image_removed', false);
+    // Multiple Images Upload Handler for Edit
+    let uploadedImages = [];
+    let deletedImageIds = [];
+    const imageInput = document.getElementById('imageInput');
+    const imageUploadZone = document.getElementById('imageUploadZone');
+    const imagesPreviewContainer = document.getElementById('imagesPreviewContainer');
+    const mainImageIdInput = document.getElementById('mainImageId');
+    const deletedImagesInput = document.getElementById('deletedImages');
+
+    // Initialize main image from existing images
+    const existingMainImage = document.querySelector('.existing-star-btn.active');
+    if (existingMainImage) {
+        mainImageIdInput.value = existingMainImage.dataset.imageId;
+    }
+
+    imageUploadZone.addEventListener('click', () => imageInput.click());
+
+    imageUploadZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        imageUploadZone.classList.add('dragover');
+    });
+
+    imageUploadZone.addEventListener('dragleave', () => {
+        imageUploadZone.classList.remove('dragover');
+    });
+
+    imageUploadZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        imageUploadZone.classList.remove('dragover');
+        if (e.dataTransfer.files.length) {
+            handleImageFiles(Array.from(e.dataTransfer.files));
+        }
+    });
+
+    imageInput.addEventListener('change', () => {
+        if (imageInput.files.length) {
+            handleImageFiles(Array.from(imageInput.files));
+        }
+    });
+
+    function handleImageFiles(files) {
+        const totalImages = document.querySelectorAll('.existing-image-card').length + uploadedImages.length;
+        files.forEach(file => {
+            if (file.type.startsWith('image/') && totalImages + uploadedImages.length < 10) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const imageData = {
+                        id: 'new_' + Date.now() + Math.random(),
+                        file: file,
+                        preview: e.target.result
+                    };
+                    uploadedImages.push(imageData);
+                    updateImagesPreview();
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+    }
+
+    function updateImagesPreview() {
+        const existingCards = document.querySelectorAll('.existing-image-card:not([style*="opacity: 0.5"])');
+        const totalImages = existingCards.length + uploadedImages.length;
+        
+        // Always show upload zone for adding more images
+        imageUploadZone.querySelector('.upload-content').style.display = 'block';
+
+        // Add new image previews
+        uploadedImages.forEach((img, index) => {
+            if (!document.querySelector(`[data-new-id="${img.id}"]`)) {
+                const imgCard = document.createElement('div');
+                imgCard.className = 'new-image-card';
+                imgCard.setAttribute('data-new-id', img.id);
+                imgCard.style.cssText = 'position: relative; border: 2px solid var(--gray-200); border-radius: 8px; overflow: hidden; background: var(--gray-50);';
+                imgCard.innerHTML = `
+                    <img src="${img.preview}" alt="Preview" style="width: 100%; height: 150px; object-fit: cover; display: block;">
+                    <div style="position: absolute; top: 8px; right: 8px; display: flex; gap: 4px;">
+                        <button type="button" class="star-btn new-star-btn" 
+                            data-new-id="${img.id}" style="background: rgba(255,255,255,0.9); border: none; border-radius: 50%; width: 32px; height: 32px; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                            <i class="fas fa-star" style="color: #ccc;"></i>
+                        </button>
+                        <button type="button" class="remove-new-btn" data-new-id="${img.id}" 
+                            style="background: rgba(220,38,38,0.9); border: none; border-radius: 50%; width: 32px; height: 32px; cursor: pointer; display: flex; align-items: center; justify-content: center; color: white; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                `;
+                imagesPreviewContainer.appendChild(imgCard);
+            }
+        });
+
+        // Update star buttons for existing images
+        document.querySelectorAll('.existing-star-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const imageId = e.currentTarget.dataset.imageId;
+                mainImageIdInput.value = imageId;
+                updateStarButtons();
+            });
+        });
+
+        // Update star buttons for new images
+        document.querySelectorAll('.new-star-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                // Clear existing main image selection (new images don't have DB IDs yet)
+                mainImageIdInput.value = '';
+                // Remove all main labels first
+                document.querySelectorAll('.main-label').forEach(label => label.remove());
+                // Clear all existing image stars
+                document.querySelectorAll('.existing-star-btn').forEach(eb => {
+                    eb.classList.remove('active');
+                    eb.querySelector('i').style.color = '#ccc';
+                    const card = eb.closest('.existing-image-card');
+                    if (card) {
+                        card.style.borderColor = 'var(--gray-200)';
+                    }
+                });
+                // Clear all new image stars
+                document.querySelectorAll('.new-star-btn').forEach(nb => {
+                    nb.classList.remove('active');
+                    nb.querySelector('i').style.color = '#ccc';
+                    const card = nb.closest('.new-image-card');
+                    if (card) {
+                        card.style.borderColor = 'var(--gray-200)';
+                    }
+                });
+                // Set clicked new image as main
+                btn.classList.add('active');
+                btn.querySelector('i').style.color = '#FFD700';
+                const card = btn.closest('.new-image-card');
+                if (card) {
+                    card.style.borderColor = 'var(--blue-medium)';
+                    const mainLabel = document.createElement('div');
+                    mainLabel.className = 'main-label';
+                    mainLabel.style.cssText = 'position: absolute; bottom: 0; left: 0; right: 0; background: rgba(0,91,150,0.9); color: white; padding: 4px; text-align: center; font-size: 0.75rem; font-weight: 600;';
+                    mainLabel.textContent = 'Main Image';
+                    card.appendChild(mainLabel);
+                }
+            });
+        });
+
+        // Remove buttons for existing images
+        document.querySelectorAll('.remove-existing-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const imageId = e.currentTarget.dataset.imageId;
+                const card = e.currentTarget.closest('.existing-image-card');
+                card.style.opacity = '0.5';
+                card.style.pointerEvents = 'none';
+                deletedImageIds.push(imageId);
+                deletedImagesInput.value = deletedImageIds.join(',');
+                
+                // If deleted image was main, clear main image
+                if (mainImageIdInput.value === imageId) {
+                    mainImageIdInput.value = '';
+                }
+                updateStarButtons();
+            });
+        });
+
+        // Remove buttons for new images
+        document.querySelectorAll('.remove-new-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const newId = e.currentTarget.dataset.newId;
+                uploadedImages = uploadedImages.filter(img => img.id !== newId);
+                const card = document.querySelector(`[data-new-id="${newId}"]`);
+                if (card) card.remove();
+                updateFileInput();
+                updateImagesPreview();
+            });
+        });
+
+        updateStarButtons();
+    }
+
+    function updateStarButtons() {
+        const mainId = mainImageIdInput.value;
+        
+        // Remove ALL main labels first (from both existing and new images)
+        document.querySelectorAll('.main-label').forEach(label => label.remove());
+        
+        // Clear all existing image stars and borders
+        document.querySelectorAll('.existing-star-btn').forEach(btn => {
+            btn.classList.remove('active');
+            const icon = btn.querySelector('i');
+            icon.style.color = '#ccc';
+            const card = btn.closest('.existing-image-card');
+            if (card) {
+                card.style.borderColor = 'var(--gray-200)';
+            }
+        });
+        
+        // Clear all new image stars and borders
+        document.querySelectorAll('.new-star-btn').forEach(btn => {
+            btn.classList.remove('active');
+            const icon = btn.querySelector('i');
+            icon.style.color = '#ccc';
+            const card = btn.closest('.new-image-card');
+            if (card) {
+                card.style.borderColor = 'var(--gray-200)';
+            }
+        });
+        
+        // Now set the main image if one is selected
+        if (mainId) {
+            // Update existing image that is main
+            document.querySelectorAll('.existing-star-btn').forEach(btn => {
+                if (btn.dataset.imageId === mainId) {
+                    btn.classList.add('active');
+                    const icon = btn.querySelector('i');
+                    icon.style.color = '#FFD700';
+                    const card = btn.closest('.existing-image-card');
+                    if (card) {
+                        card.style.borderColor = 'var(--blue-medium)';
+                        const mainLabel = document.createElement('div');
+                        mainLabel.className = 'main-label';
+                        mainLabel.style.cssText = 'position: absolute; bottom: 0; left: 0; right: 0; background: rgba(0,91,150,0.9); color: white; padding: 4px; text-align: center; font-size: 0.75rem; font-weight: 600;';
+                        mainLabel.textContent = 'Main Image';
+                        card.appendChild(mainLabel);
+                    }
+                }
+            });
+        }
+    }
+
+    function updateFileInput() {
+        const dt = new DataTransfer();
+        uploadedImages.forEach(img => {
+            dt.items.add(img.file);
+        });
+        imageInput.files = dt.files;
+    }
+
+    // Initialize
+    updateImagesPreview();
 
     // Reusable Chips Logic
     function setupChips(wrapperId, selectId, hiddenId) {

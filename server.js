@@ -1,10 +1,14 @@
 const express = require('express');
 const session = require('express-session');
+const MySQLStore = require('express-mysql-session')(session);
 const path = require('path');
 const fs = require('fs');
-const { initializeDatabase } = require('./config/database');
+const { initializeDatabase, sessionStoreConfig } = require('./config/database');
 const app = express();
 require('dotenv').config();
+
+// Create MySQL session store
+const sessionStore = new MySQLStore(sessionStoreConfig);
 
 // Initialize Database
 initializeDatabase();
@@ -17,17 +21,23 @@ app.use(express.json());
 ['public/uploads/products', 'public/uploads/logos', 'public/uploads/marketing'].forEach(dir => {
   try {
     fs.mkdirSync(path.join(__dirname, dir), { recursive: true });
-  } catch (e) {}
+  } catch (e) { }
 });
 
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Session Setup
+// Session Setup with MySQL Store
 app.use(session({
-    secret: process.env.SESSION_SECRET || 'secret',
-    resave: false,
-    saveUninitialized: false,
-    cookie: { secure: false }
+  key: 'product_catalog_session',
+  secret: process.env.SESSION_SECRET || 'secret',
+  store: sessionStore,
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    secure: process.env.NODE_ENV === 'production',
+    httpOnly: true,
+    maxAge: 86400000 // 24 hours
+  }
 }));
 
 const expressLayouts = require('express-ejs-layouts');
@@ -40,9 +50,9 @@ app.set('views', path.join(__dirname, 'views'));
 
 // Global Middleware for User Session
 app.use((req, res, next) => {
-    res.locals.user = req.session.user || null;
-    res.locals.path = req.path;
-    next();
+  res.locals.user = req.session.user || null;
+  res.locals.path = req.path;
+  next();
 });
 
 // Routes
@@ -66,10 +76,10 @@ app.use('/', publicRoutes);
 
 // Home Redirect
 app.get('/', (req, res) => {
-    res.redirect('/home'); 
+  res.redirect('/home');
 });
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-    console.log(`Server running on http://localhost:${PORT}`);
+  console.log(`Server running on http://localhost:${PORT}`);
 });
