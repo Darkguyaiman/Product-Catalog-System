@@ -80,8 +80,9 @@ async function initializeDatabase() {
             CREATE TABLE IF NOT EXISTS suppliers (
                 id INT AUTO_INCREMENT PRIMARY KEY,
                 name VARCHAR(255) NOT NULL,
-                country VARCHAR(255),
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                country_id INT DEFAULT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (country_id) REFERENCES settings(id) ON DELETE SET NULL
             );
 
             CREATE TABLE IF NOT EXISTS supplier_companies (
@@ -96,7 +97,6 @@ async function initializeDatabase() {
                 id INT AUTO_INCREMENT PRIMARY KEY,
                 code VARCHAR(100) NOT NULL,
                 model VARCHAR(100),
-                reg_no VARCHAR(100),
                 mda_reg_no VARCHAR(100),
                 description TEXT,
                 product_image VARCHAR(255),
@@ -108,9 +108,10 @@ async function initializeDatabase() {
 
             CREATE TABLE IF NOT EXISTS product_types (
                 product_id INT,
-                type_value VARCHAR(255),
-                PRIMARY KEY (product_id, type_value),
-                FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE
+                type_id INT,
+                PRIMARY KEY (product_id, type_id),
+                FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE,
+                FOREIGN KEY (type_id) REFERENCES settings(id) ON DELETE CASCADE
             );
 
             CREATE TABLE IF NOT EXISTS product_categories (
@@ -209,13 +210,141 @@ async function initializeDatabase() {
 
         await connection.query(createTablesSql);
 
+        // Migration: Transition product_types from raw text to type_id
+        try {
+            const [typeColumns] = await connection.query(`
+                SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS 
+                WHERE TABLE_SCHEMA = ? AND TABLE_NAME = 'product_types' AND COLUMN_NAME = 'type_id'
+            `, [process.env.DB_NAME || 'product_catalog']);
+
+            const [checkTypeValueColumn] = await connection.query(`
+                SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS 
+                WHERE TABLE_SCHEMA = ? AND TABLE_NAME = 'product_types' AND COLUMN_NAME = 'type_value'
+            `, [process.env.DB_NAME || 'product_catalog']);
+
+            if (checkTypeValueColumn.length > 0) {
+                if (typeColumns.length === 0) {
+                    await connection.query('ALTER TABLE product_types ADD COLUMN type_id INT');
+                }
+
+                // Migrate data
+                await connection.query(`
+                    UPDATE product_types pt
+                    JOIN settings st ON pt.type_value = st.value
+                    SET pt.type_id = st.id
+                    WHERE st.type = 'product_type'
+                `);
+
+                // Drop old column after migration
+                await connection.query('ALTER TABLE product_types DROP COLUMN type_value');
+            }
+
+            // EXTREMELY ROBUST PK FIX:
+            // 1. Get current primary key columns
+            const [pkColumns] = await connection.query(`
+                SELECT COLUMN_NAME 
+                FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE 
+                WHERE TABLE_SCHEMA = ? AND TABLE_NAME = 'product_types' AND CONSTRAINT_NAME = 'PRIMARY'
+            `, [process.env.DB_NAME || 'product_catalog']);
+
+            const hasCompositePK = pkColumns.length === 2 &&
+                pkColumns.some(c => c.COLUMN_NAME === 'product_id') &&
+                pkColumns.some(c => c.COLUMN_NAME === 'type_id');
+
+            if (!hasCompositePK) {
+                console.log('⚡ Normalizing product_types primary key...');
+                // To safely change PK, we might need to drop FKs first if they depend on it
+                try {
+                    // Try dropping the PK directly first
+                    await connection.query('ALTER TABLE product_types DROP PRIMARY KEY');
+                } catch (e) {
+                    console.log('Note: Drop PK failed or not found, continuing...');
+                }
+
+                // Remove any rogue unique indices on product_id
+                try {
+                    await connection.query('DROP INDEX product_id ON product_types');
+                } catch (e) { }
+
+                // Add the correct composite PK
+                await connection.query('ALTER TABLE product_types ADD PRIMARY KEY (product_id, type_id)');
+
+                // Ensure type_id has its FK
+                try {
+                    await connection.query('ALTER TABLE product_types ADD FOREIGN KEY (type_id) REFERENCES settings(id) ON DELETE CASCADE');
+                } catch (e) { }
+
+                console.log('✓ Fixed product_types composite primary key');
+            }
+        } catch (migrationError) {
+            console.log('Migration for product_types failed or skipped:', migrationError.message);
+        }
+
+        // Migration: Drop reg_no from products if it exists
+        try {
+            const [checkRegNo] = await connection.query(`
+                SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS 
+                WHERE TABLE_SCHEMA = ? AND TABLE_NAME = 'products' AND COLUMN_NAME = 'reg_no'
+            `, [process.env.DB_NAME || 'product_catalog']);
+
+            if (checkRegNo.length > 0) {
+                await connection.query('ALTER TABLE products DROP COLUMN reg_no');
+                console.log('✓ Dropped reg_no column from products');
+            }
+        } catch (err) {
+            console.log('Migration to drop reg_no skipped:', err.message);
+        }
+
+        // Migration: Transition suppliers country from raw text to country_id
+        try {
+            const [countryColumns] = await connection.query(`
+                SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS 
+                WHERE TABLE_SCHEMA = ? AND TABLE_NAME = 'suppliers' AND COLUMN_NAME = 'country_id'
+            `, [process.env.DB_NAME || 'product_catalog']);
+
+            // If the table exists but doesn't have country_id, OR if we want to ensure data is migrated
+            // Since we updated CREATE TABLE, new installations are fine.
+            // For existing installations, we might need to add the column if it was created before our change.
+
+            const [checkTextColumn] = await connection.query(`
+                SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS 
+                WHERE TABLE_SCHEMA = ? AND TABLE_NAME = 'suppliers' AND COLUMN_NAME = 'country'
+            `, [process.env.DB_NAME || 'product_catalog']);
+
+            if (checkTextColumn.length > 0) {
+                // If country (text) exists, check if country_id exists
+                if (countryColumns.length === 0) {
+                    await connection.query(`
+                        ALTER TABLE suppliers 
+                        ADD COLUMN country_id INT DEFAULT NULL,
+                        ADD FOREIGN KEY (country_id) REFERENCES settings(id) ON DELETE SET NULL
+                    `);
+                    console.log('✓ Added country_id column to suppliers table');
+                }
+
+                // Migrate data from 'country' text column to country_id
+                await connection.query(`
+                    UPDATE suppliers s
+                    JOIN settings st ON s.country = st.value
+                    SET s.country_id = st.id
+                    WHERE st.type = 'country' AND s.country_id IS NULL
+                `);
+                console.log('✓ Migrated supplier countries to country_id');
+
+                // Note: We keep the old column for now to avoid breaking things if migration fails half-way
+                // or if the user wants to keep it as backup.
+            }
+        } catch (migrationError) {
+            console.log('Migration for suppliers.country_id skipped or failed:', migrationError.message);
+        }
+
         // Migration: Update file_type column size if it exists and is too small
         try {
             const [columns] = await connection.query(`
                 SELECT COLUMN_TYPE FROM INFORMATION_SCHEMA.COLUMNS 
                 WHERE TABLE_SCHEMA = ? AND TABLE_NAME = 'marketing_materials' AND COLUMN_NAME = 'file_type'
             `, [process.env.DB_NAME || 'product_catalog']);
-            
+
             if (columns.length > 0 && columns[0].COLUMN_TYPE.includes('varchar(50)')) {
                 await connection.query('ALTER TABLE marketing_materials MODIFY COLUMN file_type VARCHAR(255)');
                 console.log('✓ Updated marketing_materials.file_type column size');
@@ -230,7 +359,7 @@ async function initializeDatabase() {
                 SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS 
                 WHERE TABLE_SCHEMA = ? AND TABLE_NAME = 'products' AND COLUMN_NAME = 'supplier_id'
             `, [process.env.DB_NAME || 'product_catalog']);
-            
+
             if (supplierColumns.length === 0) {
                 await connection.query(`
                     ALTER TABLE products 

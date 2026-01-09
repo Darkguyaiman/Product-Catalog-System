@@ -15,6 +15,9 @@ const upload = multer({
     }
 });
 
+// Configure Multer for Chunk Uploads
+const chunkUpload = multer({ storage: multer.memoryStorage() });
+
 // Middleware to handle Multer errors
 const handleUpload = (field) => (req, res, next) => {
     upload.single(field)(req, res, (err) => {
@@ -59,11 +62,69 @@ router.get('/edit/:id', async (req, res) => {
     }
 });
 
-router.post('/add', handleUpload('logo'), async (req, res) => {
-    const { name, reg_no, reg_date, address, website, email, contact_number } = req.body;
-    let logo = null;
+// Chunked Upload Route
+router.post('/upload-chunk', chunkUpload.single('chunk'), async (req, res) => {
+    try {
+        const { fileId, chunkIndex, totalChunks, fileName } = req.body;
+        const chunkDir = path.join(__dirname, '../temp/chunks', fileId);
 
-    if (req.file) {
+        if (!fs.existsSync(chunkDir)) {
+            fs.mkdirSync(chunkDir, { recursive: true });
+        }
+
+        const chunkPath = path.join(chunkDir, `chunk-${chunkIndex}`);
+        fs.writeFileSync(chunkPath, req.file.buffer);
+
+        const uploadedChunks = fs.readdirSync(chunkDir).length;
+
+        if (uploadedChunks === parseInt(totalChunks)) {
+            // Reassemble
+            const chunks = [];
+            let totalSize = 0;
+            for (let i = 0; i < totalChunks; i++) {
+                const chunkData = fs.readFileSync(path.join(chunkDir, `chunk-${i}`));
+                totalSize += chunkData.length;
+                if (totalSize > 2 * 1024 * 1024) {
+                    fs.rmSync(chunkDir, { recursive: true, force: true });
+                    return res.status(400).json({ success: false, error: 'File too large. Max 2MB.' });
+                }
+                chunks.push(chunkData);
+            }
+            const completeBuffer = Buffer.concat(chunks);
+
+            // Process with Sharp as before
+            const filename = `logo-${Date.now()}-${Math.round(Math.random() * 1E9)}.webp`;
+            const dir = path.join(__dirname, '../public/uploads/logos');
+            if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+
+            const outputPath = path.join(dir, filename);
+
+            await sharp(completeBuffer)
+                .resize({ width: 1000, height: 1000, fit: 'inside', withoutEnlargement: true })
+                .webp({ quality: 80, effort: 2 })
+                .toFile(outputPath);
+
+            // Clean up chunks
+            fs.rmSync(chunkDir, { recursive: true, force: true });
+
+            return res.json({
+                success: true,
+                logoPath: '/uploads/logos/' + filename
+            });
+        }
+
+        res.json({ success: true, message: 'Chunk uploaded' });
+    } catch (err) {
+        console.error('Chunk upload error:', err);
+        res.status(500).json({ success: false, error: 'Chunk upload failed' });
+    }
+});
+
+router.post('/add', handleUpload('logo'), async (req, res) => {
+    const { name, reg_no, reg_date, address, website, email, contact_number, logo_path } = req.body;
+    let logo = logo_path || null;
+
+    if (req.file && !logo) {
         try {
             const filename = `logo-${Date.now()}-${Math.round(Math.random() * 1E9)}.webp`;
             const dir = path.join(__dirname, '../public/uploads/logos');
@@ -95,11 +156,21 @@ router.post('/add', handleUpload('logo'), async (req, res) => {
 });
 
 router.post('/edit/:id', handleUpload('logo'), async (req, res) => {
-    const { name, reg_no, reg_date, address, website, email, contact_number, existing_logo } = req.body;
-    let logo = existing_logo;
+    const { name, reg_no, reg_date, address, website, email, contact_number, existing_logo, logo_path } = req.body;
+    let logo = logo_path || existing_logo;
 
-    // Handle logo replacement or removal
-    if (req.file) {
+    // Handle logo replacement via chunked upload
+    if (logo_path && existing_logo) {
+        try {
+            const oldPath = path.join(__dirname, '../public', existing_logo);
+            if (fs.existsSync(oldPath)) fs.unlinkSync(oldPath);
+        } catch (err) {
+            console.error('Error deleting old logo during chunked replacement:', err);
+        }
+    }
+
+    // Handle logo replacement or removal via normal upload (if chunked wasn't used)
+    if (req.file && !logo_path) {
         try {
             // Delete old logo if it exists
             if (existing_logo) {

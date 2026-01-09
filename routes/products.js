@@ -13,6 +13,8 @@ const upload = multer({
     limits: { fileSize: 5 * 1024 * 1024 } // 5MB limit
 });
 
+const chunkUpload = multer({ storage: multer.memoryStorage() });
+
 const handleUploads = upload.fields([
     { name: 'mda_cert', maxCount: 1 },
     { name: 'product_images', maxCount: 10 } // Allow up to 10 images
@@ -45,7 +47,7 @@ router.get('/', async (req, res) => {
 
         if (search) {
             // Simple text search
-            conditions.push("(model LIKE ? OR code LIKE ? OR description LIKE ? OR reg_no LIKE ?)");
+            conditions.push("(model LIKE ? OR code LIKE ? OR description LIKE ? OR mda_reg_no LIKE ?)");
             const term = `%${search}%`;
             params.push(term, term, term, term);
         }
@@ -87,7 +89,12 @@ router.get('/create', async (req, res) => {
     try {
         const [types] = await pool.query("SELECT * FROM settings WHERE type = 'product_type'");
         const [categories] = await pool.query("SELECT * FROM categories");
-        const [suppliers] = await pool.query("SELECT * FROM suppliers ORDER BY name ASC");
+        const [suppliers] = await pool.query(`
+            SELECT s.*, st.value as country_name 
+            FROM suppliers s
+            LEFT JOIN settings st ON s.country_id = st.id
+            ORDER BY s.name ASC
+        `);
         res.render('products/create', { types, categories, suppliers });
     } catch (err) {
         console.error(err);
@@ -105,13 +112,18 @@ router.get('/edit/:id', async (req, res) => {
         // Fetch related data
         const [types] = await pool.query("SELECT * FROM settings WHERE type = 'product_type'");
         const [categories] = await pool.query("SELECT * FROM categories");
-        const [suppliers] = await pool.query("SELECT * FROM suppliers ORDER BY name ASC");
-        const [prodTypes] = await pool.query("SELECT type_value FROM product_types WHERE product_id = ?", [product.id]);
+        const [suppliers] = await pool.query(`
+            SELECT s.*, st.value as country_name 
+            FROM suppliers s
+            LEFT JOIN settings st ON s.country_id = st.id
+            ORDER BY s.name ASC
+        `);
+        const [prodTypes] = await pool.query("SELECT type_id FROM product_types WHERE product_id = ?", [product.id]);
         const [prodCats] = await pool.query("SELECT category_id FROM product_categories WHERE product_id = ?", [product.id]);
         const [specs] = await pool.query("SELECT spec_key as `key`, spec_value as `value` FROM product_specifications WHERE product_id = ?", [product.id]);
         const [productImages] = await pool.query("SELECT * FROM product_images WHERE product_id = ? ORDER BY is_main DESC, id ASC", [product.id]);
 
-        product.product_types = prodTypes.map(t => t.type_value);
+        product.product_types = prodTypes.map(t => t.type_id);
         product.categories = prodCats.map(c => c.category_id);
         product.specs = specs;
         product.images = productImages;
@@ -176,40 +188,120 @@ async function processFiles(files) {
     return { mda_cert_path, product_images };
 }
 
+// Chunked Upload Route for Products
+router.post('/upload-chunk', chunkUpload.single('chunk'), async (req, res) => {
+    try {
+        const { fileId, chunkIndex, totalChunks, fileName, type } = req.body;
+        const chunkDir = path.join(__dirname, '../temp/chunks', fileId);
+
+        if (!fs.existsSync(chunkDir)) {
+            fs.mkdirSync(chunkDir, { recursive: true });
+        }
+
+        const chunkPath = path.join(chunkDir, `chunk-${chunkIndex}`);
+        fs.writeFileSync(chunkPath, req.file.buffer);
+
+        const uploadedChunks = fs.readdirSync(chunkDir).length;
+
+        if (uploadedChunks === parseInt(totalChunks)) {
+            // Reassemble
+            const chunks = [];
+            let totalSize = 0;
+            for (let i = 0; i < totalChunks; i++) {
+                const chunkData = fs.readFileSync(path.join(chunkDir, `chunk-${i}`));
+                totalSize += chunkData.length;
+                if (totalSize > 5 * 1024 * 1024) { // 5MB limit
+                    fs.rmSync(chunkDir, { recursive: true, force: true });
+                    return res.status(400).json({ success: false, error: 'File too large. Max 5MB.' });
+                }
+                chunks.push(chunkData);
+            }
+            const completeBuffer = Buffer.concat(chunks);
+
+            // Process with Sharp
+            const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+            const uploadDir = path.join(__dirname, '../public/uploads/products');
+            if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
+
+            let finalPath = '';
+            const ext = path.extname(fileName).toLowerCase();
+
+            if (type === 'cert' && ext === '.pdf') {
+                const filename = `cert-${uniqueSuffix}${ext}`;
+                fs.writeFileSync(path.join(uploadDir, filename), completeBuffer);
+                finalPath = '/uploads/products/' + filename;
+            } else {
+                // Image processing (for cert or product image)
+                const prefix = type === 'cert' ? 'cert' : 'prod';
+                const filename = `${prefix}-${uniqueSuffix}.webp`;
+                const width = type === 'cert' ? 1200 : 800;
+                await sharp(completeBuffer)
+                    .resize({ width, height: width, fit: 'inside', withoutEnlargement: true })
+                    .webp({ quality: 80, effort: 2 })
+                    .toFile(path.join(uploadDir, filename));
+                finalPath = '/uploads/products/' + filename;
+            }
+
+            // Clean up chunks
+            fs.rmSync(chunkDir, { recursive: true, force: true });
+
+            return res.json({
+                success: true,
+                filePath: finalPath
+            });
+        }
+
+        res.json({ success: true, message: 'Chunk uploaded' });
+    } catch (err) {
+        console.error('Product chunk upload error:', err);
+        res.status(500).json({ success: false, error: 'Chunk upload failed' });
+    }
+});
+
 router.post('/create', handleUploads, async (req, res) => {
     const {
-        code, model, reg_no, mda_reg_no, description,
+        code, model, mda_reg_no, description,
         product_types, product_categories,
         spec_key, spec_value,
         main_image_index,
-        supplier_id
+        supplier_id,
+        mda_cert_path,
+        product_images_paths
     } = req.body;
 
     let connection;
     try {
         const paths = await processFiles(req.files || {});
 
+        // Prioritize chunked upload paths if available
+        let finalCertPath = mda_cert_path || paths.mda_cert_path;
+        let finalProductImages = paths.product_images || [];
+
+        if (product_images_paths) {
+            const chunkedImages = Array.isArray(product_images_paths) ? product_images_paths : [product_images_paths];
+            finalProductImages = [...finalProductImages, ...chunkedImages];
+        }
+
         connection = await pool.getConnection();
         await connection.beginTransaction();
 
-        // Determine main image path (for backward compatibility)
+        // Determine main image path
         let mainImagePath = null;
-        if (paths.product_images && paths.product_images.length > 0) {
+        if (finalProductImages && finalProductImages.length > 0) {
             const mainIndex = main_image_index ? parseInt(main_image_index) : 0;
-            mainImagePath = paths.product_images[mainIndex] || paths.product_images[0];
+            mainImagePath = finalProductImages[mainIndex] || finalProductImages[0];
         }
 
-        // Insert Product
         const [result] = await connection.query(
-            "INSERT INTO products (code, model, reg_no, mda_reg_no, description, mda_cert, product_image, supplier_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-            [code, model, reg_no, mda_reg_no, description, paths.mda_cert_path, mainImagePath, supplier_id || null]
+            "INSERT INTO products (code, model, mda_reg_no, description, mda_cert, product_image, supplier_id) VALUES (?, ?, ?, ?, ?, ?, ?)",
+            [code, model, mda_reg_no, description, finalCertPath, mainImagePath, supplier_id || null]
         );
         const productId = result.insertId;
 
         // Insert Product Images
-        if (paths.product_images && paths.product_images.length > 0) {
+        if (finalProductImages && finalProductImages.length > 0) {
             const mainIndex = main_image_index ? parseInt(main_image_index) : 0;
-            const imageValues = paths.product_images.map((imgPath, index) => [
+            const imageValues = finalProductImages.map((imgPath, index) => [
                 productId,
                 imgPath,
                 index === mainIndex ? 1 : 0
@@ -217,11 +309,10 @@ router.post('/create', handleUploads, async (req, res) => {
             await connection.query("INSERT INTO product_images (product_id, image_path, is_main) VALUES ?", [imageValues]);
         }
 
-        // Insert Types
         if (product_types) {
             const types = Array.isArray(product_types) ? product_types : [product_types];
             const typeValues = types.map(t => [productId, t]);
-            await connection.query("INSERT INTO product_types (product_id, type_value) VALUES ?", [typeValues]);
+            await connection.query("INSERT INTO product_types (product_id, type_id) VALUES ?", [typeValues]);
         }
 
         // Insert Categories
@@ -260,26 +351,30 @@ router.post('/create', handleUploads, async (req, res) => {
 
 router.post('/edit/:id', handleUploads, async (req, res) => {
     const {
-        code, model, reg_no, mda_reg_no, description,
+        code, model, mda_reg_no, description,
         product_types, product_categories,
         spec_key, spec_value,
         existing_mda_cert, mda_cert_removed,
         existing_images, deleted_images, main_image_id,
-        supplier_id
+        supplier_id,
+        mda_cert_path,
+        product_images_paths
     } = req.body;
 
     let connection;
     try {
         const paths = await processFiles(req.files || {});
 
-        // Determine final cert path
-        let finalCertPath = paths.mda_cert_path || existing_mda_cert;
-        if (mda_cert_removed === 'true' && !paths.mda_cert_path) finalCertPath = null;
+        // Prioritize chunked upload paths
+        let finalCertPath = mda_cert_path || paths.mda_cert_path || existing_mda_cert;
+        if (mda_cert_removed === 'true' && !mda_cert_path && !paths.mda_cert_path) finalCertPath = null;
 
         // Cleanup old cert file if replaced/removed
-        if ((paths.mda_cert_path || mda_cert_removed === 'true') && existing_mda_cert) {
+        if ((mda_cert_path || paths.mda_cert_path || mda_cert_removed === 'true') && existing_mda_cert) {
             const oldPath = path.join(__dirname, '../public', existing_mda_cert);
-            if (fs.existsSync(oldPath)) fs.unlinkSync(oldPath);
+            if (fs.existsSync(oldPath)) {
+                try { fs.unlinkSync(oldPath); } catch (e) { console.error('Error deleting old cert:', e); }
+            }
         }
 
         connection = await pool.getConnection();
@@ -296,10 +391,10 @@ router.post('/edit/:id', handleUploads, async (req, res) => {
                     "SELECT image_path FROM product_images WHERE id IN (?)",
                     [deletedIds]
                 );
-                
+
                 // Delete from database
                 await connection.query("DELETE FROM product_images WHERE id IN (?)", [deletedIds]);
-                
+
                 // Delete files
                 imagesToDelete.forEach(img => {
                     const filePath = path.join(__dirname, '../public', img.image_path);
@@ -314,9 +409,15 @@ router.post('/edit/:id', handleUploads, async (req, res) => {
             }
         }
 
-        // Add new images
-        if (paths.product_images && paths.product_images.length > 0) {
-            const imageValues = paths.product_images.map(imgPath => [productId, imgPath, 0]);
+        // Add new images (normal or chunked)
+        let finalNewImages = paths.product_images || [];
+        if (product_images_paths) {
+            const chunkedImages = Array.isArray(product_images_paths) ? product_images_paths : [product_images_paths];
+            finalNewImages = [...finalNewImages, ...chunkedImages];
+        }
+
+        if (finalNewImages.length > 0) {
+            const imageValues = finalNewImages.map(imgPath => [productId, imgPath, 0]);
             await connection.query("INSERT INTO product_images (product_id, image_path, is_main) VALUES ?", [imageValues]);
         }
 
@@ -335,10 +436,9 @@ router.post('/edit/:id', handleUploads, async (req, res) => {
         );
         const mainImagePath = mainImageResult.length > 0 ? mainImageResult[0].image_path : null;
 
-        // Update Product
-        await connection.query(
-            "UPDATE products SET code=?, model=?, reg_no=?, mda_reg_no=?, description=?, mda_cert=?, product_image=?, supplier_id=? WHERE id=?",
-            [code, model, reg_no, mda_reg_no, description, finalCertPath, mainImagePath, supplier_id || null, productId]
+        const [result] = await connection.query(
+            "UPDATE products SET code=?, model=?, mda_reg_no=?, description=?, mda_cert=?, product_image=?, supplier_id=? WHERE id=?",
+            [code, model, mda_reg_no, description, finalCertPath, mainImagePath, supplier_id || null, productId]
         );
 
         // Reset Relations
@@ -346,11 +446,10 @@ router.post('/edit/:id', handleUploads, async (req, res) => {
         await connection.query("DELETE FROM product_categories WHERE product_id = ?", [productId]);
         await connection.query("DELETE FROM product_specifications WHERE product_id = ?", [productId]);
 
-        // Insert Types
         if (product_types) {
             const types = Array.isArray(product_types) ? product_types : [product_types];
             const typeValues = types.map(t => [productId, t]);
-            await connection.query("INSERT INTO product_types (product_id, type_value) VALUES ?", [typeValues]);
+            await connection.query("INSERT INTO product_types (product_id, type_id) VALUES ?", [typeValues]);
         }
 
         // Insert Categories

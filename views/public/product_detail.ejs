@@ -13,26 +13,28 @@
                 <div class="gallery-container">
                     <div class="main-image-wrapper" id="mainImageWrapper">
                         <div class="image-slider">
-                            <% if (productImages && productImages.length > 0) { %>
-                                <% productImages.forEach((img, index) => { %>
+                            <% if (productImages && productImages.length> 0) { %>
+                                <% productImages.forEach((img, index)=> { %>
                                     <div class="slide <%= index === 0 ? 'active' : '' %>" data-index="<%= index %>">
-                                        <img src="<%= img.image_path %>" alt="<%= product.model %>" class="main-product-image">
+                                        <img src="<%= img.image_path %>" alt="<%= product.model %>"
+                                            class="main-product-image">
                                     </div>
-                                <% }) %>
-                            <% } else if (product.product_image) { %>
-                                <div class="slide active" data-index="0">
-                                    <img src="<%= product.product_image %>" alt="<%= product.model %>" class="main-product-image">
-                                </div>
-                            <% } else { %>
-                                <div class="slide active" data-index="0">
-                                    <div class="detail-image-placeholder">
-                                        <i class="fa-solid fa-box-open"></i>
-                                    </div>
-                                </div>
-                            <% } %>
+                                    <% }) %>
+                                        <% } else if (product.product_image) { %>
+                                            <div class="slide active" data-index="0">
+                                                <img src="<%= product.product_image %>" alt="<%= product.model %>"
+                                                    class="main-product-image">
+                                            </div>
+                                            <% } else { %>
+                                                <div class="slide active" data-index="0">
+                                                    <div class="detail-image-placeholder">
+                                                        <i class="fa-solid fa-box-open"></i>
+                                                    </div>
+                                                </div>
+                                                <% } %>
                         </div>
 
-                        <% if (productImages && productImages.length > 1) { %>
+                        <% if (productImages && productImages.length> 1) { %>
                             <button class="gallery-nav-btn gallery-prev" id="prevBtn" aria-label="Previous image">
                                 <i class="fa-solid fa-chevron-left"></i>
                             </button>
@@ -40,31 +42,32 @@
                                 <i class="fa-solid fa-chevron-right"></i>
                             </button>
                             <div class="gallery-indicator">
-                                <span id="currentImageIndex">1</span> / <span id="totalImages"><%= productImages.length %></span>
+                                <span id="currentImageIndex">1</span> / <span id="totalImages">
+                                    <%= productImages.length %>
+                                </span>
                             </div>
-                        <% } %>
+                            <% } %>
 
-                        <% if (product.mda_cert) { %>
-                            <div class="mda-cert-overlay">
-                                <a href="<%= product.mda_cert %>" target="_blank" class="badge badge-success">
-                                    <i class="fa-solid fa-certificate"></i> MDA Certified
-                                </a>
-                            </div>
-                        <% } %>
+                                <% if (product.mda_cert) { %>
+                                    <div class="mda-cert-overlay">
+                                        <a href="<%= product.mda_cert %>" target="_blank" class="badge badge-success">
+                                            <i class="fa-solid fa-certificate"></i> MDA Certified
+                                        </a>
+                                    </div>
+                                    <% } %>
                     </div>
-                    
-                    <% if (productImages && productImages.length > 1) { %>
+
+                    <% if (productImages && productImages.length> 1) { %>
                         <div class="image-thumbnails">
-                            <% productImages.forEach((img, index) => { %>
-                                <div class="thumbnail-item <%= index === 0 ? 'active' : '' %>" 
-                                    data-image-index="<%= index %>"
-                                    data-image-src="<%= img.image_path %>">
+                            <% productImages.forEach((img, index)=> { %>
+                                <div class="thumbnail-item <%= index === 0 ? 'active' : '' %>"
+                                    data-image-index="<%= index %>" data-image-src="<%= img.image_path %>">
                                     <img src="<%= img.image_path %>" alt="Thumbnail <%= index + 1 %>">
                                     <div class="thumbnail-overlay"></div>
                                 </div>
-                            <% }) %>
+                                <% }) %>
                         </div>
-                    <% } %>
+                        <% } %>
                 </div>
             </div>
 
@@ -75,82 +78,88 @@
                         <span class="badge badge-primary">
                             <i class="fa-solid fa-barcode"></i>
                             Code: <%= product.code %>
-                        </span>                        
+                        </span>
                         <% if (product.mda_reg_no) { %>
-                            <a href="/product/<%= product.id %>/mda-cert" target="_blank" class="badge badge-outline" style="text-decoration: none; cursor: pointer;">
+                            <a href="/product/<%= product.id %>/mda-cert" target="_blank" class="badge badge-outline"
+                                style="text-decoration: none; cursor: pointer;">
                                 <i class="fa-solid fa-shield-halved mr-1"></i> MDA: <%= product.mda_reg_no %>
                             </a>
-                        <% } %>
+                            <% } %>
                     </div>
                     <h1 class="detail-title">
                         <%= product.model %>
                     </h1>
-                    <% if (product.reg_no) { %>
-                        <p class="reg-number text-muted">Registration Number: <strong>
-                                <%= product.reg_no %>
-                            </strong></p>
-                        <% } %>
-                    
-                    <!-- Category and Subcategory -->
-                    <% if (category || subcategory) { %>
-                        <div class="product-categories-wrapper mb-3">
-                            <div class="category-path">
-                                <% if (category) { %>
-                                    <div class="category-item main-category">
-                                        <div class="category-icon">
-                                            <i class="fa-solid fa-layer-group"></i>
-                                        </div>
-                                        <div class="category-content">
-                                            <span class="category-label">Category</span>
-                                            <span class="category-name"><%= category.name %></span>
-                                        </div>
-                                    </div>
-                                <% } %>
-                                <% if (subcategory) { %>
-                                    <div class="category-connector">
-                                        <i class="fa-solid fa-chevron-right"></i>
-                                    </div>
-                                    <div class="category-item sub-category">
-                                        <div class="category-icon">
-                                            <i class="fa-solid fa-tags"></i>
-                                        </div>
-                                        <div class="category-content">
-                                            <span class="category-label">Subcategory</span>
-                                            <span class="category-name"><%= subcategory.name %></span>
-                                        </div>
-                                    </div>
-                                <% } %>
-                            </div>
-                        </div>
-                    <% } %>
+                    <% %>
 
-                    <!-- Supplier Information -->
-                    <% if (supplier) { %>
-                        <div class="supplier-info mb-3">
-                            <div class="supplier-detail">
-                                <i class="fa-solid fa-truck"></i>
-                                <span class="supplier-label">Supplier:</span>
-                                <strong><%= supplier.name %></strong>
-                            </div>
-                            <% if (supplier.country) { %>
-                                <div class="supplier-detail">
-                                    <i class="fa-solid fa-globe"></i>
-                                    <span class="supplier-label">Origin:</span>
-                                    <strong><%= supplier.country %></strong>
+                        <!-- Category and Subcategory -->
+                        <% if (category || subcategory) { %>
+                            <div class="product-categories-wrapper mb-3">
+                                <div class="category-path">
+                                    <% if (category) { %>
+                                        <div class="category-item main-category">
+                                            <div class="category-icon">
+                                                <i class="fa-solid fa-layer-group"></i>
+                                            </div>
+                                            <div class="category-content">
+                                                <span class="category-label">Category</span>
+                                                <span class="category-name">
+                                                    <%= category.name %>
+                                                </span>
+                                            </div>
+                                        </div>
+                                        <% } %>
+                                            <% if (subcategory) { %>
+                                                <div class="category-connector">
+                                                    <i class="fa-solid fa-chevron-right"></i>
+                                                </div>
+                                                <div class="category-item sub-category">
+                                                    <div class="category-icon">
+                                                        <i class="fa-solid fa-tags"></i>
+                                                    </div>
+                                                    <div class="category-content">
+                                                        <span class="category-label">Subcategory</span>
+                                                        <span class="category-name">
+                                                            <%= subcategory.name %>
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                                <% } %>
                                 </div>
+                            </div>
                             <% } %>
-                        </div>
-                    <% } %>
+
+                                <!-- Supplier Information -->
+                                <% if (supplier) { %>
+                                    <div class="supplier-info mb-3">
+                                        <div class="supplier-detail">
+                                            <i class="fa-solid fa-truck"></i>
+                                            <span class="supplier-label">Supplier:</span>
+                                            <strong>
+                                                <%= supplier.name %>
+                                            </strong>
+                                        </div>
+                                        <% if (supplier.country_name) { %>
+                                            <div class="supplier-detail">
+                                                <i class="fa-solid fa-globe"></i>
+                                                <span class="supplier-label">Origin:</span>
+                                                <strong>
+                                                    <%= supplier.country_name %>
+                                                </strong>
+                                            </div>
+                                            <% } %>
+                                    </div>
+                                    <% } %>
                 </div>
 
                 <div class="detail-description mb-4">
-                    <p>
+                    <p style="white-space: pre-line;">
                         <%= product.description %>
                     </p>
                 </div>
 
                 <div class="detail-actions">
-                    <a href="https://wa.me/01121194948?text=Hello,%20I%20would%20like%20to%20get%20a%20quote%20for%20<%= encodeURIComponent(product.model || product.code) %>" target="_blank" class="btn btn-primary btn-lg px-5">
+                    <a href="https://wa.me/01121194948?text=Hello,%20I%20would%20like%20to%20get%20a%20quote%20for%20<%= encodeURIComponent(product.model || product.code) %>"
+                        target="_blank" class="btn btn-primary btn-lg px-5">
                         <i class="fa-solid fa-paper-plane"></i> Get a Quote
                     </a>
                     <button class="btn btn-secondary btn-lg" id="shareButton">
@@ -202,7 +211,9 @@
                             <thead>
                                 <tr>
                                     <th class="spec-header">Specification</th>
-                                    <th class="spec-header"><%= product.model || product.code %></th>
+                                    <th class="spec-header">
+                                        <%= product.model || product.code %>
+                                    </th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -215,7 +226,7 @@
                                             <%= s.spec_value %>
                                         </td>
                                     </tr>
-                                <% }) %>
+                                    <% }) %>
                             </tbody>
                         </table>
                     </div>
@@ -234,16 +245,14 @@
                         <% materials.forEach(m=> { %>
                             <a href="<%= m.file_path %>" target="_blank" class="resource-card">
                                 <div class="resource-icon">
-                                    <% 
-                                        const fileExt = m.file_path ? m.file_path.split('.').pop().toLowerCase() : '';
-                                        let iconClass = 'fa-file';
-                                        if (fileExt === 'pdf') iconClass = 'fa-file-pdf';
-                                        else if (['doc', 'docx'].includes(fileExt)) iconClass = 'fa-file-word';
-                                        else if (['xls', 'xlsx'].includes(fileExt)) iconClass = 'fa-file-excel';
-                                        else if (['ppt', 'pptx'].includes(fileExt)) iconClass = 'fa-file-powerpoint';
-                                        else if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(fileExt)) iconClass = 'fa-file-image';
-                                    %>
-                                    <i class="fa-solid <%= iconClass %>"></i>
+                                    <% const fileExt=m.file_path ? m.file_path.split('.').pop().toLowerCase() : '' ; let
+                                        iconClass='fa-file' ; if (fileExt==='pdf' ) iconClass='fa-file-pdf' ; else if
+                                        (['doc', 'docx' ].includes(fileExt)) iconClass='fa-file-word' ; else if
+                                        (['xls', 'xlsx' ].includes(fileExt)) iconClass='fa-file-excel' ; else if
+                                        (['ppt', 'pptx' ].includes(fileExt)) iconClass='fa-file-powerpoint' ; else if
+                                        (['jpg', 'jpeg' , 'png' , 'gif' , 'webp' ].includes(fileExt))
+                                        iconClass='fa-file-image' ; %>
+                                        <i class="fa-solid <%= iconClass %>"></i>
                                 </div>
                                 <div class="resource-info">
                                     <h4 class="resource-title">
@@ -269,7 +278,7 @@
                 <% if (events.length> 0) { %>
                     <div class="grid grid-2">
                         <% events.forEach(e=> { %>
-                            <a href="<%= e.link || '#' %>" class="event-capsule" <%= e.link ? 'target="_blank"' : '' %>>
+                            <a href="<%= e.link || '#' %>" class="event-capsule" <%=e.link ? 'target="_blank"' : '' %>>
                                 <div class="event-date">
                                     <span class="month">
                                         <%= e.start_date ? new Date(e.start_date).toLocaleString('default', {
@@ -327,9 +336,9 @@
                                             <span class="treatment-info">
                                                 <em>Treatment: <%= t.treatment %></em>
                                             </span>
-                                        <% } else { %>
-                                            <span>Healthcare Professional</span>
-                                        <% } %>
+                                            <% } else { %>
+                                                <span>Healthcare Professional</span>
+                                                <% } %>
                                     </div>
                                 </div>
                             </div>
@@ -422,9 +431,9 @@
         height: 100%;
         opacity: 0;
         transform: translateX(30px) scale(0.95);
-        transition: opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1), 
-                    transform 0.5s cubic-bezier(0.4, 0, 0.2, 1),
-                    visibility 0s 0.5s;
+        transition: opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1),
+            transform 0.5s cubic-bezier(0.4, 0, 0.2, 1),
+            visibility 0s 0.5s;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -440,8 +449,8 @@
         z-index: 2 !important;
         pointer-events: auto;
         visibility: visible !important;
-        transition: opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1), 
-                    transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        transition: opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1),
+            transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
     /* Ensure at least one slide is visible on page load */
@@ -539,7 +548,7 @@
         right: 1rem;
         z-index: 10;
     }
-    
+
     .image-thumbnails {
         display: grid;
         grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
@@ -548,7 +557,7 @@
         max-width: 100%;
         padding: 0.5rem;
     }
-    
+
     .thumbnail-item {
         position: relative;
         width: 100%;
@@ -567,7 +576,7 @@
         box-shadow: 0 4px 16px rgba(0, 91, 150, 0.15);
         border-color: var(--blue-light);
     }
-    
+
     .thumbnail-item.active {
         border-color: var(--blue-medium);
         box-shadow: 0 4px 16px rgba(0, 91, 150, 0.25);
@@ -577,7 +586,7 @@
     .thumbnail-item.active .thumbnail-overlay {
         opacity: 0;
     }
-    
+
     .thumbnail-item img {
         width: 100%;
         height: 100%;
@@ -735,6 +744,7 @@
         flex-direction: column;
         gap: 0.5rem;
         margin-top: 0.75rem;
+        margin-bottom: 0.5rem;
         padding: 1rem;
         background: var(--gray-50);
         border-radius: 8px;
@@ -1214,7 +1224,7 @@
         .gallery-next {
             right: 0.5rem;
         }
-        
+
         .image-thumbnails {
             grid-template-columns: repeat(auto-fill, minmax(55px, 1fr)) !important;
             gap: 0.5rem !important;
@@ -1305,7 +1315,7 @@
             padding: 0.4rem 0.8rem;
             font-size: 0.75rem;
         }
-        
+
         .image-thumbnails {
             grid-template-columns: repeat(auto-fill, minmax(50px, 1fr)) !important;
             gap: 0.4rem !important;
@@ -1506,7 +1516,7 @@
             padding: 0.3rem 0.6rem;
             font-size: 0.7rem;
         }
-        
+
         .image-thumbnails {
             grid-template-columns: repeat(4, 1fr) !important;
             gap: 0.35rem !important;
@@ -1663,6 +1673,68 @@
         }
     }
 
+    @media (max-width: 527px) {
+        .category-path {
+            flex-wrap: nowrap !important;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            padding-bottom: 0.25rem;
+            white-space: nowrap;
+        }
+
+        .category-item {
+            flex-shrink: 0;
+            white-space: normal;
+        }
+
+        .category-connector {
+            flex-shrink: 0;
+        }
+    }
+
+    @media (max-width: 425px) {
+        .supplier-info .supplier-detail {
+            font-size: 0.75rem;
+        }
+
+        .supplier-info .supplier-detail i {
+            font-size: 0.85rem;
+        }
+
+        .supplier-info .supplier-label {
+            font-size: 0.7rem;
+        }
+
+        .essential-header .d-flex.gap-2 {
+            gap: 0.5rem !important;
+        }
+
+        .essential-header .badge {
+            font-size: 0.65rem;
+            padding: 0.3rem 0.6rem;
+        }
+
+        .essential-header .badge i {
+            font-size: 0.7rem;
+        }
+
+        .spec-header {
+            font-size: 0.7rem;
+            padding: 0.7rem 0.8rem;
+        }
+
+        .spec-label,
+        .spec-value {
+            font-size: 0.65rem;
+            padding: 0.5rem 0.6rem;
+        }
+
+        .supplier-info {
+            padding: 0.5rem;
+            gap: 0.35rem;
+        }
+    }
+
     @media (max-width: 360px) {
         .product-detail-container {
             padding: 0.75rem 0.5rem 1.5rem;
@@ -1716,6 +1788,30 @@
             width: 65%;
         }
     }
+
+    /* Custom Scrollbar for Product Detail Page */
+    .product-detail-container ::-webkit-scrollbar {
+        width: 6px;
+        height: 6px;
+    }
+
+    .product-detail-container ::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    .product-detail-container ::-webkit-scrollbar-thumb {
+        background: #005b96;
+        border-radius: 3px;
+    }
+
+    .product-detail-container ::-webkit-scrollbar-thumb:hover {
+        background: #004a7a;
+    }
+
+    .product-detail-container * {
+        scrollbar-width: thin;
+        scrollbar-color: #005b96 transparent;
+    }
 </style>
 
 <script>
@@ -1742,7 +1838,7 @@
         // Share button functionality
         const shareButton = document.getElementById('shareButton');
         if (shareButton) {
-            shareButton.addEventListener('click', async function() {
+            shareButton.addEventListener('click', async function () {
                 const productName = '<%= product.model || product.code %>';
                 const productUrl = window.location.href;
                 const shareData = {
@@ -1758,13 +1854,13 @@
                     } else {
                         // Fallback: Copy to clipboard
                         await navigator.clipboard.writeText(productUrl);
-                        
+
                         // Show feedback
                         const originalText = shareButton.innerHTML;
                         shareButton.innerHTML = '<i class="fa-solid fa-check"></i> Copied!';
                         shareButton.style.background = 'var(--success)';
                         shareButton.style.color = 'var(--white)';
-                        
+
                         setTimeout(() => {
                             shareButton.innerHTML = originalText;
                             shareButton.style.background = '';
@@ -1781,7 +1877,7 @@
                             shareButton.innerHTML = '<i class="fa-solid fa-check"></i> Copied!';
                             shareButton.style.background = 'var(--success)';
                             shareButton.style.color = 'var(--white)';
-                            
+
                             setTimeout(() => {
                                 shareButton.innerHTML = originalText;
                                 shareButton.style.background = '';
@@ -1801,7 +1897,7 @@
 
 <script>
     // Enhanced Image Gallery with Swipe Support
-    document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('DOMContentLoaded', function () {
         const slides = document.querySelectorAll('.slide');
         const thumbnails = document.querySelectorAll('.thumbnail-item');
         const prevBtn = document.getElementById('prevBtn');
@@ -1809,7 +1905,7 @@
         const currentIndexSpan = document.getElementById('currentImageIndex');
         const totalImagesSpan = document.getElementById('totalImages');
         const mainImageWrapper = document.getElementById('mainImageWrapper');
-        
+
         let currentIndex = 0;
         const totalImages = slides.length;
         let isTransitioning = false;
@@ -1862,7 +1958,7 @@
         // Show slide with animation
         function showSlide(index, direction = 'next') {
             if (isTransitioning || index < 0 || index >= totalImages) return;
-            
+
             isTransitioning = true;
             const prevIndex = currentIndex;
             currentIndex = index;
@@ -1943,7 +2039,7 @@
 
         // Thumbnail click handler
         thumbnails.forEach((thumbnail, index) => {
-            thumbnail.addEventListener('click', function() {
+            thumbnail.addEventListener('click', function () {
                 if (index !== currentIndex && !isTransitioning) {
                     const direction = index > currentIndex ? 'next' : 'prev';
                     showSlide(index, direction);
@@ -1953,12 +2049,12 @@
 
         // Touch/Swipe support
         if (mainImageWrapper && totalImages > 1) {
-            mainImageWrapper.addEventListener('touchstart', function(e) {
+            mainImageWrapper.addEventListener('touchstart', function (e) {
                 touchStartX = e.changedTouches[0].screenX;
                 touchStartY = e.changedTouches[0].screenY;
             }, { passive: true });
 
-            mainImageWrapper.addEventListener('touchend', function(e) {
+            mainImageWrapper.addEventListener('touchend', function (e) {
                 touchEndX = e.changedTouches[0].screenX;
                 touchEndY = e.changedTouches[0].screenY;
                 handleSwipe();
@@ -1968,24 +2064,24 @@
             let isMouseDown = false;
             let mouseStartX = 0;
 
-            mainImageWrapper.addEventListener('mousedown', function(e) {
+            mainImageWrapper.addEventListener('mousedown', function (e) {
                 isMouseDown = true;
                 mouseStartX = e.clientX;
                 mainImageWrapper.style.cursor = 'grabbing';
             });
 
-            mainImageWrapper.addEventListener('mousemove', function(e) {
+            mainImageWrapper.addEventListener('mousemove', function (e) {
                 if (isMouseDown) {
                     // Prevent text selection while dragging
                     e.preventDefault();
                 }
             });
 
-            mainImageWrapper.addEventListener('mouseup', function(e) {
+            mainImageWrapper.addEventListener('mouseup', function (e) {
                 if (isMouseDown) {
                     const mouseEndX = e.clientX;
                     const deltaX = mouseEndX - mouseStartX;
-                    
+
                     if (Math.abs(deltaX) > minSwipeDistance) {
                         if (deltaX > 0) {
                             prevImage();
@@ -1993,13 +2089,13 @@
                             nextImage();
                         }
                     }
-                    
+
                     isMouseDown = false;
                     mainImageWrapper.style.cursor = 'grab';
                 }
             });
 
-            mainImageWrapper.addEventListener('mouseleave', function() {
+            mainImageWrapper.addEventListener('mouseleave', function () {
                 isMouseDown = false;
                 mainImageWrapper.style.cursor = 'grab';
             });
@@ -2010,7 +2106,7 @@
         function handleSwipe() {
             const deltaX = touchEndX - touchStartX;
             const deltaY = touchEndY - touchStartY;
-            
+
             // Check if horizontal swipe is greater than vertical (to avoid conflicts with scrolling)
             if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > minSwipeDistance) {
                 if (deltaX > 0) {
@@ -2024,9 +2120,9 @@
         }
 
         // Keyboard navigation
-        document.addEventListener('keydown', function(e) {
+        document.addEventListener('keydown', function (e) {
             if (totalImages <= 1) return;
-            
+
             if (e.key === 'ArrowLeft') {
                 e.preventDefault();
                 prevImage();

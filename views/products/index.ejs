@@ -79,12 +79,8 @@
                                         </div>
                                     </td>
                                     <td>
-                                        <div style="font-size: 0.9rem;">
-                                            <strong>Reg:</strong>
-                                            <%= p.reg_no || '-' %>
-                                        </div>
-                                        <div style="font-size: 0.85rem; color: var(--gray-500); margin-top: 2px;">
-                                            <strong>MDA:</strong>
+                                        <div style="font-size: 0.85rem; color: var(--gray-700);">
+                                            <strong>MDA Reg:</strong>
                                             <%= p.mda_reg_no || '-' %>
                                         </div>
                                     </td>
@@ -190,12 +186,8 @@
                 </div>
                 <div class="category-card-details" style="flex-direction: column; align-items: flex-start; gap: 8px;">
                     <div style="font-size: 0.85rem;">
-                        <strong>Reg:</strong>
-                        <%= p.reg_no || 'N/A' %>
-                            <% if(p.mda_reg_no) { %>
-                                <span style="margin-left: 5px; color: var(--gray-400);">|</span> <strong>MDA:</strong>
-                                <%= p.mda_reg_no %>
-                                    <% } %>
+                        <strong>MDA Reg:</strong>
+                        <%= p.mda_reg_no || 'N/A' %>
                     </div>
                     <% if(p.description) { %>
                         <div

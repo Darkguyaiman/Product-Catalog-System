@@ -14,19 +14,31 @@
             </div>
 
             <div class="form-group">
-                <label>Upload File (Image/PDF) <span style="color: var(--danger);">*</span></label>
+                <label>Upload File (Image/PDF/PPTX/XLSX) <span style="color: var(--danger);">*</span></label>
                 <div class="upload-zone" id="fileUploadZone">
                     <div class="upload-content">
                         <i class="fas fa-cloud-upload-alt upload-icon"></i>
                         <p class="upload-text">Drag and drop file here or <span class="browse-link">browse</span></p>
-                        <p class="upload-hint">PDF, JPG, PNG (Max 10MB)</p>
+                        <p class="upload-hint">PDF, JPG, PNG, WEBP, PPTX, XLSX (Max 5MB)</p>
                     </div>
-                    <input type="file" name="file" id="fileInput" required style="display: none;">
+                    <input type="file" id="fileInput" required style="display: none;" accept=".pdf,.pptx,.xlsx,image/*">
+                    <input type="hidden" name="file_path" id="filePathInput">
+                    <input type="hidden" name="file_mime" id="fileMimeInput">
+
+                    <div id="uploadProgressContainer" class="upload-progress-container"
+                        style="display: none; margin-top: 10px;">
+                        <div class="upload-progress-bar" id="uploadProgressBar"></div>
+                        <span class="upload-status-text" id="uploadStatusText"></span>
+                    </div>
+
                     <div id="filePreview" class="file-preview" style="display: none;">
                         <div id="previewIcon"
                             style="font-size: 3rem; color: var(--blue-medium); margin-bottom: 0.5rem;">
                             <i class="fas fa-file-alt"></i>
                         </div>
+                        <img id="previewImg" src="" alt="Preview"
+                            style="display:none; max-width: 200px; max-height: 200px; object-fit: contain; border: 1px solid var(--gray-200); border-radius: 8px; margin-bottom: 0.5rem;">
+
                         <div class="file-info" id="fileInfoChip">
                             <span id="fileName" class="file-name"></span>
                             <button type="button" class="remove-file" id="removeFile"><i
@@ -67,6 +79,45 @@
         </form>
     </div>
 </div>
+
+<style>
+    .upload-progress-container {
+        width: 100%;
+        background-color: var(--gray-200);
+        border-radius: 8px;
+        overflow: hidden;
+        position: relative;
+        height: 25px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .upload-progress-bar {
+        height: 100%;
+        width: 0%;
+        background-color: var(--blue-medium);
+        border-radius: 8px;
+        transition: width 0.3s ease-in-out;
+        position: absolute;
+        left: 0;
+        top: 0;
+    }
+
+    .upload-status-text {
+        position: relative;
+        z-index: 1;
+        color: var(--gray-700);
+        font-size: 0.85rem;
+        font-weight: 600;
+    }
+
+    .file-preview {
+        flex-direction: column;
+        align-items: center;
+        gap: 10px;
+    }
+</style>
 
 <script>
     document.addEventListener('DOMContentLoaded', () => {
@@ -116,8 +167,12 @@
         const input = document.getElementById('fileInput');
         const content = zone.querySelector('.upload-content');
         const preview = document.getElementById('filePreview');
+        const previewImg = document.getElementById('previewImg');
+        const previewIcon = document.getElementById('previewIcon');
         const fileName = document.getElementById('fileName');
         const removeBtn = document.getElementById('removeFile');
+        const filePathInput = document.getElementById('filePathInput');
+        const fileMimeInput = document.getElementById('fileMimeInput');
 
         zone.addEventListener('click', (e) => {
             if (e.target !== removeBtn && !removeBtn.contains(e.target)) input.click();
@@ -125,25 +180,110 @@
 
         input.addEventListener('change', () => {
             if (input.files.length) {
+                const file = input.files[0];
+                if (file.size > 5 * 1024 * 1024) {
+                    alert('File too large. Max 5MB.');
+                    input.value = '';
+                    return;
+                }
+
                 content.style.display = 'none';
                 preview.style.display = 'flex';
-                fileName.textContent = input.files[0].name;
+                fileName.textContent = file.name;
+                filePathInput.value = '';
+
+                if (file.type.startsWith('image/')) {
+                    previewIcon.style.display = 'none';
+                    previewImg.style.display = 'block';
+                    const reader = new FileReader();
+                    reader.onload = (e) => previewImg.src = e.target.result;
+                    reader.readAsDataURL(file);
+                } else {
+                    previewImg.style.display = 'none';
+                    previewIcon.style.display = 'block';
+                    if (file.name.endsWith('.pdf')) previewIcon.innerHTML = '<i class="fas fa-file-pdf"></i>';
+                    else if (file.name.endsWith('.pptx')) previewIcon.innerHTML = '<i class="fas fa-file-powerpoint"></i>';
+                    else if (file.name.endsWith('.xlsx')) previewIcon.innerHTML = '<i class="fas fa-file-excel"></i>';
+                    else previewIcon.innerHTML = '<i class="fas fa-file-alt"></i>';
+                }
             }
         });
 
         removeBtn.addEventListener('click', (e) => {
             e.stopPropagation();
             input.value = '';
+            filePathInput.value = '';
             content.style.display = 'block';
             preview.style.display = 'none';
+            document.getElementById('uploadProgressContainer').style.display = 'none';
         });
 
-        // Submit loading state
-        document.getElementById('addMaterialForm').addEventListener('submit', function () {
+        // Form Submit with Chunked Upload
+        document.getElementById('addMaterialForm').addEventListener('submit', async function (e) {
+            e.preventDefault();
             const btn = document.getElementById('submitBtn');
+            const file = input.files[0];
+
+            if (!file && !filePathInput.value) {
+                alert('Please select a file');
+                return;
+            }
+
             btn.classList.add('btn-loading');
             btn.disabled = true;
-            btn.querySelector('span').textContent = 'Uploading...';
+            btn.querySelector('span').textContent = 'Processing...';
+
+            try {
+                if (file && !filePathInput.value) {
+                    const chunkSize = 750 * 1024; // 750KB
+                    const totalChunks = Math.ceil(file.size / chunkSize);
+                    const fileId = Date.now() + '-' + Math.round(Math.random() * 1e9);
+
+                    document.getElementById('uploadProgressContainer').style.display = 'flex';
+                    const progressBar = document.getElementById('uploadProgressBar');
+                    const statusText = document.getElementById('uploadStatusText');
+
+                    for (let i = 0; i < totalChunks; i++) {
+                        const start = i * chunkSize;
+                        const end = Math.min(start + chunkSize, file.size);
+                        const chunk = file.slice(start, end);
+
+                        const formData = new FormData();
+                        formData.append('chunk', chunk);
+                        formData.append('chunkIndex', i);
+                        formData.append('totalChunks', totalChunks);
+                        formData.append('fileId', fileId);
+                        formData.append('fileName', file.name);
+                        formData.append('mimeType', file.type);
+
+                        const response = await fetch('/admin/marketing/upload-chunk', {
+                            method: 'POST',
+                            body: formData
+                        });
+
+                        const result = await response.json();
+                        if (!result.success) throw new Error(result.error || 'Upload failed');
+
+                        const percent = Math.round(((i + 1) / totalChunks) * 100);
+                        progressBar.style.width = percent + '%';
+                        statusText.textContent = `Uploading: ${percent}%`;
+
+                        if (result.filePath) {
+                            filePathInput.value = result.filePath;
+                            fileMimeInput.value = result.mimeType;
+                        }
+                    }
+                }
+
+                btn.querySelector('span').textContent = 'Saving...';
+                this.submit();
+            } catch (error) {
+                console.error(error);
+                alert('Upload failed: ' + error.message);
+                btn.classList.remove('btn-loading');
+                btn.disabled = false;
+                btn.querySelector('span').textContent = 'Upload Material';
+            }
         });
     });
 </script>

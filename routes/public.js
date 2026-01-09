@@ -28,7 +28,7 @@ router.get('/home', async (req, res) => {
         query += " ORDER BY created_at DESC";
 
         const [products] = await pool.query(query, params);
-        
+
         // Fetch main image for each product
         for (let product of products) {
             const [mainImage] = await pool.query(
@@ -37,7 +37,7 @@ router.get('/home', async (req, res) => {
             );
             product.main_image = mainImage.length > 0 ? mainImage[0].image_path : product.product_image;
         }
-        
+
         const [categories] = await pool.query("SELECT * FROM categories");
         res.render('public/products', { products, categories, selectedCategory: category, search: search || '' });
     } catch (err) {
@@ -72,7 +72,7 @@ router.get('/products', async (req, res) => {
         query += " ORDER BY created_at DESC";
 
         const [products] = await pool.query(query, params);
-        
+
         // Fetch main image for each product
         for (let product of products) {
             const [mainImage] = await pool.query(
@@ -81,7 +81,7 @@ router.get('/products', async (req, res) => {
             );
             product.main_image = mainImage.length > 0 ? mainImage[0].image_path : product.product_image;
         }
-        
+
         const [categories] = await pool.query("SELECT * FROM categories");
         res.render('public/products', { products, categories, selectedCategory: category, search: search || '' });
     } catch (err) {
@@ -125,7 +125,12 @@ router.get('/product/:id', async (req, res) => {
         // Check if products table has supplier_id column
         try {
             if (product.supplier_id) {
-                const [suppliers] = await pool.query("SELECT * FROM suppliers WHERE id = ?", [product.supplier_id]);
+                const [suppliers] = await pool.query(`
+                    SELECT s.*, st.value as country_name 
+                    FROM suppliers s
+                    LEFT JOIN settings st ON s.country_id = st.id
+                    WHERE s.id = ?
+                `, [product.supplier_id]);
                 if (suppliers.length > 0) {
                     supplier = suppliers[0];
                 }
@@ -134,7 +139,9 @@ router.get('/product/:id', async (req, res) => {
             // If supplier_id doesn't exist, try product_suppliers junction table
             try {
                 const [productSuppliers] = await pool.query(`
-                    SELECT s.* FROM suppliers s
+                    SELECT s.*, st.value as country_name 
+                    FROM suppliers s
+                    LEFT JOIN settings st ON s.country_id = st.id
                     JOIN product_suppliers ps ON s.id = ps.supplier_id
                     WHERE ps.product_id = ?
                     LIMIT 1
@@ -164,7 +171,7 @@ router.get('/product/:id', async (req, res) => {
             JOIN product_events pe ON e.id = pe.event_id
             WHERE pe.product_id = ?
         `, [product.id]);
-        
+
         // Fetch links for each event
         for (let event of events) {
             const [links] = await pool.query("SELECT url FROM event_links WHERE event_id = ? LIMIT 1", [event.id]);
@@ -184,12 +191,12 @@ router.get('/product/:id', async (req, res) => {
             [product.id]
         );
 
-        res.render('public/product_detail', { 
-            product, 
-            specs, 
-            materials, 
-            events, 
-            testimonies, 
+        res.render('public/product_detail', {
+            product,
+            specs,
+            materials,
+            events,
+            testimonies,
             productImages,
             category,
             subcategory,
@@ -208,12 +215,12 @@ router.get('/product/:id/mda-cert', async (req, res) => {
         if (products.length === 0 || !products[0].mda_cert) {
             return res.status(404).send('MDA Certificate not found');
         }
-        
+
         const certPath = products[0].mda_cert;
         const isPdf = certPath.toLowerCase().endsWith('.pdf');
-        
-        res.render('public/mda_cert', { 
-            certPath, 
+
+        res.render('public/mda_cert', {
+            certPath,
             isPdf,
             productId: req.params.id
         });

@@ -1,126 +1,497 @@
-<div style="margin-bottom: 2rem;">
-    <h1 style="font-size: 1.75rem; color: var(--blue-darkest); margin-bottom: 0.5rem;">Dashboard Overview</h1>
-    <p style="color: var(--gray-500);">Welcome back! Here's what's happening with your catalog today.</p>
+<div class="dashboard-page">
+    <div style="margin-bottom: 2.5rem; position: relative; z-index: 1;">
+        <h1
+            style="font-size: 2.2rem; color: var(--blue-darkest); margin-bottom: 0.5rem; font-weight: 800; letter-spacing: -1px;">
+            Dashboard Overview</h1>
+        <p style="color: var(--gray-600); font-size: 1.1rem;">Welcome back! Here's a real-time snapshot of your catalog.
+        </p>
+    </div>
+
+    <!-- Stats Section -->
+    <div class="stats-container">
+        <!-- Main Stats Row -->
+        <div class="stats-row main-stats">
+            <div class="stat-card glass products">
+                <div class="stat-icon">
+                    <i class="fa-solid fa-box-open"></i>
+                </div>
+                <div class="stat-content">
+                    <p class="stat-label">Total Products</p>
+                    <h2 class="stat-value">
+                        <%= totalProducts %>
+                    </h2>
+                </div>
+                <div class="stat-footer">
+                    <i class="fas fa-box" aria-hidden="true"></i>
+                    The Number of Products in the System
+                </div>
+            </div>
+
+            <div class="stat-card glass companies">
+                <div class="stat-icon">
+                    <i class="fa-solid fa-building"></i>
+                </div>
+                <div class="stat-content">
+                    <p class="stat-label">Total Companies</p>
+                    <h2 class="stat-value">
+                        <%= totalCompanies %>
+                    </h2>
+                </div>
+                <div class="stat-footer">
+                    <i class="fa-solid fa-network-wired"></i> Total Number of Affiliated Companies in the System
+                </div>
+            </div>
+
+            <div class="stat-card glass suppliers">
+                <div class="stat-icon">
+                    <i class="fa-solid fa-truck-field"></i>
+                </div>
+                <div class="stat-content">
+                    <p class="stat-label">Total Suppliers</p>
+                    <h2 class="stat-value">
+                        <%= totalSuppliers %>
+                    </h2>
+                </div>
+                <div class="stat-footer">
+                    <i class="fa-solid fa-globe"></i> Total Number of Suppliers in the System
+                </div>
+            </div>
+        </div>
+
+        <!-- Marketing Trends Row -->
+        <div class="stats-row trend-stats">
+            <div class="stat-card detail testimonials">
+                <div class="detail-header">
+                    <span class="detail-icon"><i class="fa-solid fa-comment-dots"></i></span>
+                    <span class="trend-badge <%= testimonialsChange >= 0 ? 'up' : 'down' %>">
+                        <i
+                            class="fa-solid <%= testimonialsChange >= 0 ? 'fa-arrow-trend-up' : 'fa-arrow-trend-down' %>"></i>
+                        <%= Math.abs(testimonialsChange) %>%
+                    </span>
+                </div>
+                <p class="detail-label">Testimonials</p>
+                <h2 class="detail-value">
+                    <%= totalTestimonials %>
+                </h2>
+                <p class="detail-hint">Testimonials Growth vs last month</p>
+            </div>
+
+            <div class="stat-card detail events">
+                <div class="detail-header">
+                    <span class="detail-icon"><i class="fa-solid fa-calendar-check"></i></span>
+                    <span class="trend-badge <%= eventsChange >= 0 ? 'up' : 'down' %>">
+                        <i class="fa-solid <%= eventsChange >= 0 ? 'fa-arrow-trend-up' : 'fa-arrow-trend-down' %>"></i>
+                        <%= Math.abs(eventsChange) %>%
+                    </span>
+                </div>
+                <p class="detail-label">Events</p>
+                <h2 class="detail-value">
+                    <%= totalEvents %>
+                </h2>
+                <p class="detail-hint">Events Growth vs last month</p>
+            </div>
+
+            <div class="stat-card detail materials">
+                <div class="detail-header">
+                    <span class="detail-icon"><i class="fa-solid fa-file-pdf"></i></span>
+                    <span class="trend-badge <%= materialsChange >= 0 ? 'up' : 'down' %>">
+                        <i
+                            class="fa-solid <%= materialsChange >= 0 ? 'fa-arrow-trend-up' : 'fa-arrow-trend-down' %>"></i>
+                        <%= Math.abs(materialsChange) %>%
+                    </span>
+                </div>
+                <p class="detail-label">Marketing Assets</p>
+                <h2 class="detail-value">
+                    <%= totalMaterials %>
+                </h2>
+                <p class="detail-hint">Marketing Assets Growth vs last month</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Row -->
+    <div class="grid grid-2" style="gap: 2rem; margin-top: 2rem;">
+        <div class="card chart-card">
+            <div class="chart-header">
+                <h3>Products per Category</h3>
+                <div class="chart-legend">
+                    <span class="dot primary"></span> Count of Products
+                </div>
+            </div>
+            <div style="height: 350px; position: relative; padding: 1rem;">
+                <canvas id="categoryChart" data-chart='<%- JSON.stringify(categoriesData) %>'></canvas>
+            </div>
+        </div>
+
+        <div class="card chart-card">
+            <div class="chart-header">
+                <h3>Top 10 Suppliers</h3>
+                <div class="chart-legend">
+                    <span class="dot secondary"></span> Count of Products
+                </div>
+            </div>
+            <div style="height: 350px; position: relative; padding: 1rem;">
+                <canvas id="supplierChart" data-chart='<%- JSON.stringify(suppliersData) %>'></canvas>
+            </div>
+        </div>
+    </div>
 </div>
 
-<div class="grid grid-4" style="gap: 1.5rem; margin-bottom: 2rem;">
-    <!-- Stats Cards -->
-    <div class="card" style="padding: 1.5rem; display: flex; align-items: center; justify-content: space-between;">
-        <div>
-            <p style="color: var(--gray-500); font-size: 0.9rem; font-weight: 500; margin-bottom: 0.5rem;">Total
-                Products</p>
-            <h2 style="font-size: 2rem; color: var(--blue-darkest); margin: 0;">24</h2>
-        </div>
-        <div
-            style="width: 50px; height: 50px; background-color: var(--blue-lightest); color: var(--blue-dark); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem;">
-            <i class="fa-solid fa-box-open"></i>
-        </div>
-    </div>
+<style>
+    .dashboard-page {
+        padding: 1rem 0;
+    }
 
-    <div class="card" style="padding: 1.5rem; display: flex; align-items: center; justify-content: space-between;">
-        <div>
-            <p style="color: var(--gray-500); font-size: 0.9rem; font-weight: 500; margin-bottom: 0.5rem;">Companies</p>
-            <h2 style="font-size: 2rem; color: var(--blue-darkest); margin: 0;">5</h2>
-        </div>
-        <div
-            style="width: 50px; height: 50px; background-color: var(--green-light); color: var(--green); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem;">
-            <i class="fa-solid fa-building"></i>
-        </div>
-    </div>
+    .stats-row {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
 
-    <div class="card" style="padding: 1.5rem; display: flex; align-items: center; justify-content: space-between;">
-        <div>
-            <p style="color: var(--gray-500); font-size: 0.9rem; font-weight: 500; margin-bottom: 0.5rem;">Events</p>
-            <h2 style="font-size: 2rem; color: var(--blue-darkest); margin: 0;">3</h2>
-        </div>
-        <div
-            style="width: 50px; height: 50px; background-color: var(--yellow-light); color: var(--yellow-dark); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem;">
-            <i class="fa-solid fa-calendar-check"></i>
-        </div>
-    </div>
+    .stat-card {
+        background: white;
+        border-radius: 20px;
+        padding: 1.75rem;
+        position: relative;
+        overflow: hidden;
+        border: 1px solid rgba(0, 0, 0, 0.05);
+        box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.05);
+        transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
 
-    <div class="card" style="padding: 1.5rem; display: flex; align-items: center; justify-content: space-between;">
-        <div>
-            <p style="color: var(--gray-500); font-size: 0.9rem; font-weight: 500; margin-bottom: 0.5rem;">Downloads</p>
-            <h2 style="font-size: 2rem; color: var(--blue-darkest); margin: 0;">12</h2>
-        </div>
-        <div
-            style="width: 50px; height: 50px; background-color: var(--purple-light); color: var(--purple); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem;">
-            <i class="fa-solid fa-download"></i>
-        </div>
-    </div>
-</div>
+    .stat-card:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.1);
+    }
 
-<div class="grid grid-2" style="gap: 1.5rem;">
-    <div class="card" style="padding: 0; overflow: hidden;">
-        <div
-            style="padding: 1.5rem; border-bottom: 1px solid var(--gray-200); display: flex; justify-content: space-between; align-items: center;">
-            <h3 style="margin: 0; font-size: 1.1rem;">Quick Actions</h3>
-        </div>
-        <div style="padding: 1.5rem;">
-            <div class="grid grid-2" style="gap: 1rem;">
-                <a href="/admin/products/create" class="btn btn-outline"
-                    style="justify-content: center; padding: 1rem;">
-                    <i class="fa-solid fa-plus" style="margin-right: 8px;"></i> Add Product
-                </a>
-                <a href="/admin/marketing" class="btn btn-outline" style="justify-content: center; padding: 1rem;">
-                    <i class="fa-solid fa-upload" style="margin-right: 8px;"></i> Upload File
-                </a>
-                <a href="/admin/companies" class="btn btn-outline" style="justify-content: center; padding: 1rem;">
-                    <i class="fa-solid fa-building" style="margin-right: 8px;"></i> Add Company
-                </a>
-                <a href="/admin/settings" class="btn btn-outline" style="justify-content: center; padding: 1rem;">
-                    <i class="fa-solid fa-gear" style="margin-right: 8px;"></i> Settings
-                </a>
-            </div>
-        </div>
-    </div>
+    .stat-card.glass {
+        background: rgba(255, 255, 255, 0.9);
+        backdrop-filter: blur(10px);
+    }
 
-    <div class="card" style="padding: 0; overflow: hidden;">
-        <div
-            style="padding: 1.5rem; border-bottom: 1px solid var(--gray-200); display: flex; justify-content: space-between; align-items: center;">
-            <h3 style="margin: 0; font-size: 1.1rem;">Recent Activity</h3>
-            <a href="#" style="font-size: 0.85rem; color: var(--blue-medium);">View All</a>
-        </div>
-        <div style="padding: 0;">
-            <div
-                style="padding: 1rem 1.5rem; border-bottom: 1px solid var(--gray-100); display: flex; align-items: center; gap: 1rem;">
-                <div
-                    style="width: 36px; height: 36px; background-color: var(--blue-lightest); color: var(--blue-dark); border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-                    <i class="fa-solid fa-plus"></i>
-                </div>
-                <div>
-                    <p style="margin: 0; font-weight: 500; font-size: 0.95rem;">New Product Added</p>
-                    <p style="margin: 0; font-size: 0.8rem; color: var(--gray-500);">Product code MD-2024-X was
-                        registered.</p>
-                </div>
-                <span style="margin-left: auto; font-size: 0.8rem; color: var(--gray-400);">2h ago</span>
-            </div>
-            <div
-                style="padding: 1rem 1.5rem; border-bottom: 1px solid var(--gray-100); display: flex; align-items: center; gap: 1rem;">
-                <div
-                    style="width: 36px; height: 36px; background-color: var(--green-light); color: var(--green); border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-                    <i class="fa-solid fa-pen"></i>
-                </div>
-                <div>
-                    <p style="margin: 0; font-weight: 500; font-size: 0.95rem;">Company Updated</p>
-                    <p style="margin: 0; font-size: 0.8rem; color: var(--gray-500);">MediTech Solutions info updated.
-                    </p>
-                </div>
-                <span style="margin-left: auto; font-size: 0.8rem; color: var(--gray-400);">5h ago</span>
-            </div>
-            <div style="padding: 1rem 1.5rem; display: flex; align-items: center; gap: 1rem;">
-                <div
-                    style="width: 36px; height: 36px; background-color: var(--yellow-light); color: var(--yellow-dark); border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-                    <i class="fa-solid fa-calendar-check"></i>
-                </div>
-                <div>
-                    <p style="margin: 0; font-weight: 500; font-size: 0.95rem;">Event Scheduled</p>
-                    <p style="margin: 0; font-size: 0.8rem; color: var(--gray-500);">Annual Health Expo added to events.
-                    </p>
-                </div>
-                <span style="margin-left: auto; font-size: 0.8rem; color: var(--gray-400);">1d ago</span>
-            </div>
-        </div>
-    </div>
-</div>
+    .stat-icon {
+        width: 56px;
+        height: 56px;
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 8px 16px -4px rgba(0, 0, 0, 0.1);
+    }
+
+    .products .stat-icon {
+        background: linear-gradient(135deg, #0284c7, #0369a1);
+        color: white;
+    }
+
+    .companies .stat-icon {
+        background: linear-gradient(135deg, #059669, #047857);
+        color: white;
+    }
+
+    .suppliers .stat-icon {
+        background: linear-gradient(135deg, #d97706, #b45309);
+        color: white;
+    }
+
+    .stat-label {
+        color: var(--gray-500);
+        font-size: 0.9rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+        text-transform: uppercase;
+        letter-spacing: 0.8px;
+    }
+
+    .stat-value {
+        font-size: 2.8rem;
+        font-weight: 800;
+        color: var(--blue-darkest);
+        margin: 0;
+        line-height: 1;
+        letter-spacing: -2px;
+    }
+
+    .stat-footer {
+        margin-top: 1.5rem;
+        padding-top: 1rem;
+        border-top: 1px solid rgba(0, 0, 0, 0.03);
+        font-size: 0.85rem;
+        color: var(--gray-400);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-weight: 500;
+    }
+
+    .stat-card.detail {
+        padding: 1.5rem;
+        background: linear-gradient(135deg, #ffffff, #f9fafb);
+    }
+
+    .detail-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.25rem;
+    }
+
+    .detail-icon {
+        width: 42px;
+        height: 42px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.2rem;
+        box-shadow: 0 4px 10px -2px rgba(0, 0, 0, 0.05);
+    }
+
+    .testimonials .detail-icon {
+        background: #fee2e2;
+        color: #ef4444;
+    }
+
+    .events .detail-icon {
+        background: #ede9fe;
+        color: #8b5cf6;
+    }
+
+    .materials .detail-icon {
+        background: #dbeafe;
+        color: #3b82f6;
+    }
+
+    .trend-badge {
+        font-size: 0.75rem;
+        font-weight: 700;
+        padding: 6px 12px;
+        border-radius: 30px;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+    }
+
+    .trend-badge.up {
+        background: #ecfdf5;
+        color: #065f46;
+        border: 1px solid #d1fae5;
+    }
+
+    .trend-badge.down {
+        background: #fef2f2;
+        color: #991b1b;
+        border: 1px solid #fee2e2;
+    }
+
+    .detail-label {
+        font-size: 0.9rem;
+        color: var(--gray-500);
+        font-weight: 700;
+        margin: 0;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .detail-value {
+        font-size: 2.4rem;
+        font-weight: 800;
+        color: var(--blue-darkest);
+        margin: 0.25rem 0;
+        letter-spacing: -1.5px;
+    }
+
+    .detail-hint {
+        font-size: 0.8rem;
+        color: var(--gray-400);
+        margin: 0;
+        font-weight: 500;
+    }
+
+    .chart-card {
+        padding: 0 !important;
+        background: white;
+        border-radius: 24px;
+        border: 1px solid rgba(0, 0, 0, 0.05);
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+    }
+
+    .chart-header {
+        padding: 1.5rem 2rem;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.03);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .chart-header h3 {
+        margin: 0;
+        font-size: 1.15rem;
+        font-weight: 700;
+        color: var(--blue-darkest);
+    }
+
+    .chart-legend {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        font-size: 0.8rem;
+        color: var(--gray-500);
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        display: inline-block;
+    }
+
+    .dot.primary {
+        background: #0284c7;
+    }
+
+    .dot.secondary {
+        background: #10b981;
+    }
+
+    @media (max-width: 1024px) {
+        .stats-row {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+
+    @media (max-width: 768px) {
+        .stats-row {
+            grid-template-columns: 1fr;
+        }
+
+        .grid-2 {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // Global Chart Defaults
+        Chart.defaults.font.family = "'Inter', sans-serif";
+        Chart.defaults.color = '#64748b';
+        Chart.defaults.scale.grid.color = 'rgba(0,0,0,0.05)';
+
+        // Function to safely parse data from canvas attribute
+        const getChartData = (id) => {
+            const el = document.getElementById(id);
+            try {
+                return JSON.parse(el.getAttribute('data-chart'));
+            } catch (e) {
+                console.error('Failed to parse chart data for ' + id, e);
+                return [];
+            }
+        };
+
+        // Products per Category Chart
+        const catCtx = document.getElementById('categoryChart').getContext('2d');
+        const catDataRaw = getChartData('categoryChart');
+
+        new Chart(catCtx, {
+            type: 'bar',
+            data: {
+                labels: catDataRaw.map(d => d.name),
+                datasets: [{
+                    label: 'Products',
+                    data: catDataRaw.map(d => d.count),
+                    backgroundColor: 'rgba(2, 132, 199, 0.8)',
+                    hoverBackgroundColor: '#0284c7',
+                    borderRadius: 10,
+                    maxBarThickness: 35
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: '#1e293b',
+                        padding: 12,
+                        titleFont: { size: 14, weight: 'bold' },
+                        bodyFont: { size: 13 },
+                        cornerRadius: 10,
+                        displayColors: false,
+                        boxPadding: 5
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: { display: false },
+                        ticks: { font: { weight: '600' } },
+                        border: { display: true, color: 'rgba(0,0,0,0.15)', width: 2 }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        ticks: { stepSize: 1, padding: 10 },
+                        border: { display: true, color: 'rgba(0,0,0,0.15)', width: 2 },
+                        grid: { color: 'rgba(0,0,0,0.05)' }
+                    }
+                }
+            }
+        });
+
+        // Top Suppliers Chart (Horizontal)
+        const supCtx = document.getElementById('supplierChart').getContext('2d');
+        const supDataRaw = getChartData('supplierChart');
+
+        new Chart(supCtx, {
+            type: 'bar',
+            data: {
+                labels: supDataRaw.map(d => d.name),
+                datasets: [{
+                    label: 'Products',
+                    data: supDataRaw.map(d => d.product_count),
+                    backgroundColor: 'rgba(16, 185, 129, 0.8)',
+                    hoverBackgroundColor: '#10b981',
+                    borderRadius: 10,
+                    maxBarThickness: 30
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                indexAxis: 'y',
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: '#1e293b',
+                        padding: 12,
+                        titleFont: { size: 14, weight: 'bold' },
+                        bodyFont: { size: 13 },
+                        cornerRadius: 10,
+                        displayColors: false,
+                        boxPadding: 5
+                    }
+                },
+                scales: {
+                    x: {
+                        beginAtZero: true,
+                        ticks: { stepSize: 2, padding: 10 },
+                        grid: { display: true, color: 'rgba(0,0,0,0.05)' },
+                        border: { display: true, color: 'rgba(0,0,0,0.15)', width: 2 }
+                    },
+                    y: {
+                        grid: { display: false },
+                        border: { display: true, color: 'rgba(0,0,0,0.15)', width: 2 },
+                        ticks: { font: { weight: '600' } }
+                    }
+                }
+            }
+        });
+    });
+</script>

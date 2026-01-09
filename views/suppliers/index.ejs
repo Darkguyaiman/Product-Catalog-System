@@ -45,7 +45,7 @@
                                         </div>
                                     </td>
                                     <td>
-                                        <%= s.country %>
+                                        <%= s.country_name || '-' %>
                                     </td>
                                     <td>
                                         <% if (s.company_ids && s.company_ids.length> 0) {
@@ -101,7 +101,7 @@
                 </div>
                 <div class="category-card-details" style="flex-direction: column; align-items: flex-start; gap: 8px;">
                     <div style="font-size: 0.85rem;"><strong>Country:</strong>
-                        <%= s.country %>
+                        <%= s.country_name || '-' %>
                     </div>
                     <% if (s.company_ids && s.company_ids.length> 0) {
                         const linked = companies.filter(c => s.company_ids.includes(c.id));

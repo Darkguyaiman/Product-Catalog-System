@@ -54,18 +54,24 @@
                                 <i class="fas fa-cloud-upload-alt upload-icon"></i>
                                 <p class="upload-text">Drag and drop logo here or <span
                                         class="browse-link">browse</span></p>
-                                <p class="upload-hint">SVG, PNG, JPG (Recommended: Square, 400x400px)</p>
+                                <p class="upload-hint">SVG, PNG, JPG (Max 2MB. Recommended: Square, 400x400px)</p>
                             </div>
-                            <input type="file" name="logo" id="logoInput" accept="image/*" style="display: none;">
+                            <input type="file" id="logoInput" accept="image/*" style="display: none;">
+                            <input type="hidden" name="logo_path" id="logoPathInput">
+
                             <div id="filePreview" class="file-preview" style="display: none;">
                                 <img id="previewImg" src="" alt="Preview">
                                 <div class="file-info" id="fileInfoChip" style="display: none;">
                                     <span id="fileName" class="file-name"></span>
-                                    <button type="button" class="remove-file" id="removeLogo" style="display: none;"
-                                        title="Remove Logo">
+                                    <button type="button" class="remove-file" id="removeLogo" title="Remove Logo">
                                         <i class="fas fa-times"></i>
                                     </button>
                                 </div>
+                            </div>
+
+                            <div id="uploadProgressContainer" class="upload-progress-container" style="display: none;">
+                                <div id="uploadProgressBar" class="upload-progress-bar"></div>
+                                <span id="uploadStatusText" class="upload-status-text"></span>
                             </div>
                         </div>
                     </div>
@@ -181,6 +187,40 @@
         border-color: var(--danger);
         transform: scale(1.1);
     }
+
+    .upload-progress-container {
+        width: 100%;
+        background-color: var(--gray-200);
+        border-radius: 8px;
+        margin-top: 1rem;
+        overflow: hidden;
+        position: relative;
+        height: 25px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .upload-progress-bar {
+        height: 100%;
+        width: 0%;
+        background-color: var(--blue-medium);
+        border-radius: 8px;
+        text-align: center;
+        color: white;
+        transition: width 0.3s ease-in-out;
+        position: absolute;
+        left: 0;
+        top: 0;
+    }
+
+    .upload-status-text {
+        position: relative;
+        z-index: 1;
+        color: var(--gray-700);
+        font-size: 0.85rem;
+        font-weight: 600;
+    }
 </style>
 
 <script>
@@ -191,6 +231,7 @@
     const previewImg = document.getElementById('previewImg');
     const fileName = document.getElementById('fileName');
     const removeBtn = document.getElementById('removeLogo');
+    const logoPathInput = document.getElementById('logoPathInput');
 
     zone.addEventListener('click', () => input.click());
 
@@ -229,6 +270,7 @@
         document.getElementById('fileInfoChip').style.display = 'flex';
         removeBtn.style.display = 'flex';
         fileName.textContent = file.name;
+        logoPathInput.value = '';
 
         const reader = new FileReader();
         reader.onload = (e) => {
@@ -240,17 +282,85 @@
     removeBtn.addEventListener('click', (e) => {
         e.stopPropagation();
         input.value = '';
+        logoPathInput.value = '';
         content.style.display = 'block';
         preview.style.display = 'none';
         document.getElementById('fileInfoChip').style.display = 'none';
+        document.getElementById('uploadProgressContainer').style.display = 'none';
+        document.getElementById('uploadProgressBar').style.width = '0%';
+        document.getElementById('uploadStatusText').textContent = '';
     });
 </script>
 
 <script>
-    document.getElementById('addCompanyForm').addEventListener('submit', function() {
+    document.getElementById('addCompanyForm').addEventListener('submit', async function (e) {
+        e.preventDefault();
+
         const btn = document.getElementById('submitBtn');
+        const logoInput = document.getElementById('logoInput');
+        const logoPathInput = document.getElementById('logoPathInput');
+
         btn.classList.add('btn-loading');
         btn.disabled = true;
-        btn.querySelector('span').textContent = 'Saving...';
+        btn.querySelector('span').textContent = 'Processing...';
+
+        try {
+            if (logoInput.files.length > 0 && !logoPathInput.value) {
+                const file = logoInput.files[0];
+
+                // Validate file size (2MB)
+                if (file.size > 2 * 1024 * 1024) {
+                    throw new Error('File too large. Max 2MB.');
+                }
+
+                const chunkSize = 750 * 1024; // 750KB
+                const totalChunks = Math.ceil(file.size / chunkSize);
+                const fileId = Date.now() + '-' + Math.round(Math.random() * 1e9);
+
+                document.getElementById('uploadProgressContainer').style.display = 'flex';
+                const progressBar = document.getElementById('uploadProgressBar');
+                const statusText = document.getElementById('uploadStatusText');
+
+                for (let i = 0; i < totalChunks; i++) {
+                    const start = i * chunkSize;
+                    const end = Math.min(start + chunkSize, file.size);
+                    const chunk = file.slice(start, end);
+
+                    const formData = new FormData();
+                    formData.append('chunk', chunk);
+                    formData.append('chunkIndex', i);
+                    formData.append('totalChunks', totalChunks);
+                    formData.append('fileId', fileId);
+                    formData.append('fileName', file.name);
+
+                    const response = await fetch('/admin/companies/upload-chunk', {
+                        method: 'POST',
+                        body: formData
+                    });
+
+                    const result = await response.json();
+                    if (!result.success) throw new Error(result.error || 'Upload failed');
+
+                    const percent = Math.round(((i + 1) / totalChunks) * 100);
+                    progressBar.style.width = percent + '%';
+                    statusText.textContent = `Uploading: ${percent}%`;
+
+                    if (result.logoPath) {
+                        logoPathInput.value = result.logoPath;
+                    }
+                }
+            }
+
+            // Final submission
+            btn.querySelector('span').textContent = 'Saving...';
+            this.submit();
+        } catch (error) {
+            console.error(error);
+            alert('Upload failed: ' + error.message);
+            btn.classList.remove('btn-loading');
+            btn.disabled = false;
+            btn.querySelector('span').textContent = 'Save Company';
+            document.getElementById('uploadProgressContainer').style.display = 'none';
+        }
     });
 </script>

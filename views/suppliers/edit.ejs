@@ -18,7 +18,7 @@
                 <select name="country">
                     <option value="">-- Select Country --</option>
                     <% countries.forEach(c=> { %>
-                        <option value="<%= c.value %>" <%=supplier.country===c.value ? 'selected' : '' %>><%= c.value %>
+                        <option value="<%= c.id %>" <%=supplier.country_id===c.id ? 'selected' : '' %>><%= c.value %>
                         </option>
                         <% }) %>
                 </select>

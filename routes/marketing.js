@@ -19,9 +19,11 @@ const storage = multer.diskStorage({
     }
 });
 const upload = multer({
-    storage: storage,
-    limits: { fileSize: 10 * 1024 * 1024 } // 10MB limit
+    storage: multer.memoryStorage(),
+    limits: { fileSize: 5 * 1024 * 1024 } // 5MB limit
 });
+
+const chunkUpload = multer({ storage: multer.memoryStorage() });
 
 router.use((req, res, next) => {
     if (!req.session.user) return res.redirect('/auth/login');
@@ -132,23 +134,117 @@ router.get('/testimonies', async (req, res) => {
 // MATERIALS
 // ==========================================
 
+// Chunked Upload Route for Marketing Materials
+router.post('/upload-chunk', chunkUpload.single('chunk'), async (req, res) => {
+    try {
+        const { fileId, chunkIndex, totalChunks, fileName } = req.body;
+        const chunkDir = path.join(__dirname, '../temp/chunks', fileId);
+
+        if (!fs.existsSync(chunkDir)) {
+            fs.mkdirSync(chunkDir, { recursive: true });
+        }
+
+        const chunkPath = path.join(chunkDir, `chunk-${chunkIndex}`);
+        fs.writeFileSync(chunkPath, req.file.buffer);
+
+        const uploadedChunks = fs.readdirSync(chunkDir).length;
+
+        if (uploadedChunks === parseInt(totalChunks)) {
+            // Reassemble
+            const chunks = [];
+            let totalSize = 0;
+            for (let i = 0; i < totalChunks; i++) {
+                const chunkData = fs.readFileSync(path.join(chunkDir, `chunk-${i}`));
+                totalSize += chunkData.length;
+                if (totalSize > 5 * 1024 * 1024) { // 5MB limit
+                    fs.rmSync(chunkDir, { recursive: true, force: true });
+                    return res.status(400).json({ success: false, error: 'File too large. Max 5MB.' });
+                }
+                chunks.push(chunkData);
+            }
+            const completeBuffer = Buffer.concat(chunks);
+
+            // Process with Sharp or Save Raw
+            const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+            const uploadDir = path.join(__dirname, '../public/uploads/marketing');
+            if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
+
+            let finalPath = '';
+            const ext = path.extname(fileName).toLowerCase();
+            const mimeType = req.body.mimeType || '';
+
+            if (ext === '.pdf' || ext === '.pptx' || ext === '.xlsx') {
+                const filename = `material-${uniqueSuffix}${ext}`;
+                fs.writeFileSync(path.join(uploadDir, filename), completeBuffer);
+                finalPath = '/uploads/marketing/' + filename;
+            } else if (ext === '.jpg' || ext === '.jpeg' || ext === '.png' || ext === '.webp' || mimeType.startsWith('image/')) {
+                // Image processing
+                const filename = `material-${uniqueSuffix}.webp`;
+                await sharp(completeBuffer)
+                    .resize({ width: 1920, height: 1080, fit: 'inside', withoutEnlargement: true })
+                    .webp({ quality: 80, effort: 2 })
+                    .toFile(path.join(uploadDir, filename));
+                finalPath = '/uploads/marketing/' + filename;
+            } else {
+                // Default fallback for other files
+                const filename = `material-${uniqueSuffix}${ext}`;
+                fs.writeFileSync(path.join(uploadDir, filename), completeBuffer);
+                finalPath = '/uploads/marketing/' + filename;
+            }
+
+            // Clean up chunks
+            fs.rmSync(chunkDir, { recursive: true, force: true });
+
+            return res.json({
+                success: true,
+                filePath: finalPath,
+                mimeType: ext === '.webp' || (ext !== '.pdf' && ext !== '.pptx' && ext !== '.xlsx' && !mimeType.startsWith('application/')) ? 'image/webp' : mimeType
+            });
+        }
+
+        res.json({ success: true, message: 'Chunk uploaded' });
+    } catch (err) {
+        console.error('Marketing chunk upload error:', err);
+        res.status(500).json({ success: false, error: 'Chunk upload failed' });
+    }
+});
+
 router.get('/materials/add', async (req, res) => {
     const [products] = await pool.query("SELECT id, code, model FROM products ORDER BY code ASC");
     res.render('marketing/materials/add', { products });
 });
 
 router.post('/materials/add', upload.single('file'), async (req, res) => {
-    const { name, product_ids } = req.body;
-    let filePath = req.file ? '/uploads/marketing/' + req.file.filename : null;
+    const { name, product_ids, file_path, file_mime } = req.body;
+    let filePath = file_path;
+    let mimeType = file_mime;
 
-    if (req.file && req.file.mimetype.startsWith('image/')) {
-        try {
-            const buffer = await sharp(req.file.path)
-                .resize(1920, null, { withoutEnlargement: true })
-                .jpeg({ quality: 80 })
-                .toBuffer();
-            fs.writeFileSync(req.file.path, buffer);
-        } catch (e) { console.error("Compression error", e); }
+    // Fallback to normal upload if chunked wasn't used
+    if (!filePath && req.file) {
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+        const ext = path.extname(req.file.originalname).toLowerCase();
+
+        if (ext === '.jpg' || ext === '.jpeg' || ext === '.png' || ext === '.webp' || req.file.mimetype.startsWith('image/')) {
+            const filename = `material-${uniqueSuffix}.webp`;
+            const dir = path.join(__dirname, '../public/uploads/marketing');
+            if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+            const outputPath = path.join(dir, filename);
+
+            await sharp(req.file.buffer)
+                .resize({ width: 1920, height: 1080, fit: 'inside', withoutEnlargement: true })
+                .webp({ quality: 80, effort: 2 })
+                .toFile(outputPath);
+
+            filePath = '/uploads/marketing/' + filename;
+            mimeType = 'image/webp';
+        } else {
+            const filename = `material-${uniqueSuffix}${ext}`;
+            const dir = path.join(__dirname, '../public/uploads/marketing');
+            if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+            fs.writeFileSync(path.join(dir, filename), req.file.buffer);
+            filePath = '/uploads/marketing/' + filename;
+            mimeType = req.file.mimetype;
+        }
     }
 
     let connection;
@@ -156,7 +252,7 @@ router.post('/materials/add', upload.single('file'), async (req, res) => {
         connection = await pool.getConnection();
         await connection.beginTransaction();
 
-        const [result] = await connection.query("INSERT INTO marketing_materials (name, file_path, file_type) VALUES (?, ?, ?)", [name, filePath, req.file ? req.file.mimetype : 'unknown']);
+        const [result] = await connection.query("INSERT INTO marketing_materials (name, file_path, file_type) VALUES (?, ?, ?)", [name, filePath, mimeType || 'unknown']);
         const materialId = result.insertId;
 
         if (product_ids) {
@@ -197,36 +293,69 @@ router.get('/materials/edit/:id', async (req, res) => {
 });
 
 router.post('/materials/edit/:id', upload.single('file'), async (req, res) => {
-    const { name, product_ids } = req.body;
+    const { name, product_ids, existing_file, file_path, file_mime } = req.body;
 
     let connection;
     try {
         connection = await pool.getConnection();
         await connection.beginTransaction();
 
-        let filePath = undefined;
-        let fileType = undefined;
+        let finalFilePath = existing_file;
+        let finalFileType = undefined;
 
-        if (req.file) {
-            filePath = '/uploads/marketing/' + req.file.filename;
-            fileType = req.file.mimetype;
+        // If new file provided via chunking
+        if (file_path) {
+            finalFilePath = file_path;
+            finalFileType = file_mime;
 
-            if (req.file.mimetype.startsWith('image/')) {
-                try {
-                    const buffer = await sharp(req.file.path)
-                        .resize(1920, null, { withoutEnlargement: true })
-                        .jpeg({ quality: 80 })
-                        .toBuffer();
-                    fs.writeFileSync(req.file.path, buffer);
-                } catch (e) { console.error("Compression error", e); }
+            // Delete old file
+            if (existing_file) {
+                const oldPath = path.join(__dirname, '../public', existing_file);
+                if (fs.existsSync(oldPath)) {
+                    try { fs.unlinkSync(oldPath); } catch (e) { console.error("Error deleting old file:", e); }
+                }
+            }
+        }
+        // Fallback to normal upload
+        else if (req.file) {
+            const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+            const ext = path.extname(req.file.originalname).toLowerCase();
+            const dir = path.join(__dirname, '../public/uploads/marketing');
+            if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+
+            if (ext === '.jpg' || ext === '.jpeg' || ext === '.png' || ext === '.webp' || req.file.mimetype.startsWith('image/')) {
+                const filename = `material-${uniqueSuffix}.webp`;
+                await sharp(req.file.buffer)
+                    .resize({ width: 1920, height: 1080, fit: 'inside', withoutEnlargement: true })
+                    .webp({ quality: 80, effort: 2 })
+                    .toFile(path.join(dir, filename));
+
+                finalFilePath = '/uploads/marketing/' + filename;
+                finalFileType = 'image/webp';
+            } else {
+                const filename = `material-${uniqueSuffix}${ext}`;
+                fs.writeFileSync(path.join(dir, filename), req.file.buffer);
+                finalFilePath = '/uploads/marketing/' + filename;
+                finalFileType = req.file.mimetype;
+            }
+
+            // Delete old file
+            if (existing_file) {
+                const oldPath = path.join(__dirname, '../public', existing_file);
+                if (fs.existsSync(oldPath)) {
+                    try { fs.unlinkSync(oldPath); } catch (e) { console.error("Error deleting old file:", e); }
+                }
             }
         }
 
         let query = "UPDATE marketing_materials SET name = ?";
         let params = [name];
-        if (filePath) {
+        if (finalFileType) {
             query += ", file_path = ?, file_type = ?";
-            params.push(filePath, fileType);
+            params.push(finalFilePath, finalFileType);
+        } else if (finalFilePath && finalFilePath !== existing_file) {
+            query += ", file_path = ?";
+            params.push(finalFilePath);
         }
         query += " WHERE id = ?";
         params.push(req.params.id);
@@ -472,6 +601,13 @@ router.post('/testimonies/edit/:id', async (req, res) => {
 
 router.post('/materials/delete/:id', async (req, res) => {
     try {
+        const [rows] = await pool.query("SELECT file_path FROM marketing_materials WHERE id = ?", [req.params.id]);
+        if (rows.length > 0 && rows[0].file_path) {
+            const fullPath = path.join(__dirname, '../public', rows[0].file_path);
+            if (fs.existsSync(fullPath)) {
+                try { fs.unlinkSync(fullPath); } catch (e) { console.error("Error deleting material file:", e); }
+            }
+        }
         await pool.query("DELETE FROM marketing_materials WHERE id = ?", [req.params.id]);
         res.redirect('/admin/marketing/materials');
     } catch (e) { console.error(e); res.redirect('/admin/marketing/materials'); }

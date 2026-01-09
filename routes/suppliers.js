@@ -10,11 +10,15 @@ router.use((req, res, next) => {
 router.get('/', async (req, res) => {
     try {
         const { search } = req.query;
-        let query = "SELECT * FROM suppliers";
+        let query = `
+            SELECT s.*, st.value as country_name 
+            FROM suppliers s
+            LEFT JOIN settings st ON s.country_id = st.id
+        `;
         const params = [];
 
         if (search) {
-            query += " WHERE name LIKE ? OR country LIKE ?";
+            query += " WHERE s.name LIKE ? OR st.value LIKE ?";
             const term = `%${search}%`;
             params.push(term, term);
         }
@@ -59,7 +63,7 @@ router.post('/add', async (req, res) => {
         connection = await pool.getConnection();
         await connection.beginTransaction();
 
-        const [result] = await connection.query("INSERT INTO suppliers (name, country) VALUES (?, ?)", [name, country]);
+        const [result] = await connection.query("INSERT INTO suppliers (name, country_id) VALUES (?, ?)", [name, country || null]);
         const supplierId = result.insertId;
 
         if (companyIds.length > 0) {
@@ -106,7 +110,7 @@ router.post('/edit/:id', async (req, res) => {
         connection = await pool.getConnection();
         await connection.beginTransaction();
 
-        await connection.query("UPDATE suppliers SET name = ?, country = ? WHERE id = ?", [name, country, req.params.id]);
+        await connection.query("UPDATE suppliers SET name = ?, country_id = ? WHERE id = ?", [name, country || null, req.params.id]);
 
         // Update relations: delete all then insert new
         await connection.query("DELETE FROM supplier_companies WHERE supplier_id = ?", [req.params.id]);
