@@ -2,6 +2,16 @@ const express = require('express');
 const router = express.Router();
 const { pool } = require('../config/database');
 
+// Helper to get all child category IDs recursively
+function getCategoryChildIds(allCategories, parentId) {
+    let ids = [parseInt(parentId)];
+    const children = allCategories.filter(c => c.parent_id === parseInt(parentId));
+    for (const child of children) {
+        ids = ids.concat(getCategoryChildIds(allCategories, child.id));
+    }
+    return ids;
+}
+
 // Home / Landing - Shows product listing page
 router.get('/home', async (req, res) => {
     try {
@@ -10,15 +20,21 @@ router.get('/home', async (req, res) => {
         let params = [];
         const conditions = [];
 
+        // Fetch all categories for filter and recursion logic
+        const [allCategories] = await pool.query("SELECT * FROM categories ORDER BY name ASC");
+
         if (search) {
-            conditions.push("(model LIKE ? OR code LIKE ? OR description LIKE ? OR reg_no LIKE ?)");
+            conditions.push("(model LIKE ? OR code LIKE ? OR description LIKE ? OR mda_reg_no LIKE ?)");
             const searchTerm = `%${search}%`;
             params.push(searchTerm, searchTerm, searchTerm, searchTerm);
         }
 
         if (category) {
-            conditions.push("category_id = ?");
-            params.push(category);
+            // Recursive category filter
+            const familyIds = getCategoryChildIds(allCategories, category);
+            if (familyIds.length > 0) {
+                conditions.push(`id IN (SELECT product_id FROM product_categories WHERE category_id IN (${familyIds.join(',')}))`);
+            }
         }
 
         if (conditions.length > 0) {
@@ -38,8 +54,7 @@ router.get('/home', async (req, res) => {
             product.main_image = mainImage.length > 0 ? mainImage[0].image_path : product.product_image;
         }
 
-        const [categories] = await pool.query("SELECT * FROM categories");
-        res.render('public/products', { products, categories, selectedCategory: category, search: search || '' });
+        res.render('public/products', { products, categories: allCategories, selectedCategory: category, search: search || '' });
     } catch (err) {
         console.error(err);
         res.status(500).send('Server Error');
@@ -54,15 +69,21 @@ router.get('/products', async (req, res) => {
         let params = [];
         const conditions = [];
 
+        // Fetch all categories for filter and recursion logic
+        const [allCategories] = await pool.query("SELECT * FROM categories ORDER BY name ASC");
+
         if (search) {
-            conditions.push("(model LIKE ? OR code LIKE ? OR description LIKE ? OR reg_no LIKE ?)");
+            conditions.push("(model LIKE ? OR code LIKE ? OR description LIKE ? OR mda_reg_no LIKE ?)");
             const searchTerm = `%${search}%`;
             params.push(searchTerm, searchTerm, searchTerm, searchTerm);
         }
 
         if (category) {
-            conditions.push("category_id = ?");
-            params.push(category);
+            // Recursive category filter
+            const familyIds = getCategoryChildIds(allCategories, category);
+            if (familyIds.length > 0) {
+                conditions.push(`id IN (SELECT product_id FROM product_categories WHERE category_id IN (${familyIds.join(',')}))`);
+            }
         }
 
         if (conditions.length > 0) {
@@ -82,8 +103,7 @@ router.get('/products', async (req, res) => {
             product.main_image = mainImage.length > 0 ? mainImage[0].image_path : product.product_image;
         }
 
-        const [categories] = await pool.query("SELECT * FROM categories");
-        res.render('public/products', { products, categories, selectedCategory: category, search: search || '' });
+        res.render('public/products', { products, categories: allCategories, selectedCategory: category, search: search || '' });
     } catch (err) {
         console.error(err);
         res.status(500).send('Server Error');
