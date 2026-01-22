@@ -1,0 +1,120 @@
+<div class="companies-page">
+    <div class="card-header companies-header"
+        style="justify-content: space-between; align-items: center; border-bottom: none; margin-bottom: 1rem; padding-bottom: 2rem; margin-top: 2rem;">
+        <h1 style="margin: 0;">Package Management</h1>
+        <a href="/admin/packages/create" class="btn btn-primary add-company-btn">
+            <i class="fas fa-plus"></i> <span>Create New Package</span>
+        </a>
+    </div>
+
+    <!-- Desktop Table View -->
+    <div class="card desktop-only">
+        <!-- Search -->
+        <form action="/admin/packages" method="GET"
+            style="padding-bottom: 1.5rem; border-bottom: 1px solid var(--gray-200); margin-bottom: 1.5rem; display: flex; gap: 1rem;">
+            <div style="position: relative; flex: 1;">
+                <i class="fas fa-search"
+                    style="position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: var(--gray-400);"></i>
+                <input type="text" name="search" placeholder="Search packages by name or description (Press Enter)..."
+                    value="<%= typeof search !== 'undefined' ? search : '' %>"
+                    style="width: 100%; padding: 0.75rem 1rem 0.75rem 2.5rem; border: 1px solid var(--gray-300); border-radius: 6px;">
+            </div>
+        </form>
+        <div class="table-responsive">
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width: 300px;">Package Name</th>
+                        <th>Description</th>
+                        <th style="text-align: center; width: 120px;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% if (packages.length===0) { %>
+                        <tr>
+                            <td colspan="3" style="text-align: center; padding: 2rem; color: var(--gray-500);">
+                                No packages found. Click "Create New Package" to get started.
+                            </td>
+                        </tr>
+                        <% } %>
+                            <% packages.forEach(pkg=> { %>
+                                <tr>
+                                    <td>
+                                        <div style="font-weight: 700; color: var(--blue-darkest);">
+                                            <%= pkg.name %>
+                                        </div>
+                                    </td>
+                                    <td style="color: var(--gray-600); font-size: 0.9rem;">
+                                        <%= pkg.description ? (pkg.description.length> 100 ?
+                                            pkg.description.substring(0, 100) + '...' : pkg.description) : '-' %>
+                                    </td>
+                                    <td>
+                                        <div style="display: flex; gap: 8px; justify-content: center;">
+                                            <a href="/admin/packages/edit/<%= pkg.id %>"
+                                                class="btn btn-secondary btn-sm" title="Edit">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            <form action="/admin/packages/delete/<%= pkg.id %>" method="POST"
+                                                style="display:inline;"
+                                                onsubmit="return confirm('Are you sure you want to delete this package?');">
+                                                <button type="submit" class="btn btn-danger btn-sm" title="Delete">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <% }) %>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Mobile Cards -->
+    <div class="mobile-category-cards">
+        <!-- Mobile Search -->
+        <div
+            style="background: white; padding: 1rem; border-radius: 12px; border: 1px solid var(--gray-200); box-shadow: var(--shadow-sm); margin-bottom: 1rem;">
+            <form action="/admin/packages" method="GET">
+                <div style="position: relative;">
+                    <i class="fas fa-search"
+                        style="position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: var(--gray-400);"></i>
+                    <input type="text" name="search" placeholder="Search packages..."
+                        value="<%= typeof search !== 'undefined' ? search : '' %>"
+                        style="width: 100%; padding: 0.75rem 1rem 0.75rem 2.5rem; border: 1px solid var(--gray-300); border-radius: 6px;">
+                </div>
+            </form>
+        </div>
+
+        <% packages.forEach(pkg=> { %>
+            <div class="category-card">
+                <div class="category-card-header">
+                    <div class="category-card-name">
+                        <div>
+                            <%= pkg.name %>
+                        </div>
+                    </div>
+                    <div class="category-card-actions">
+                        <a href="/admin/packages/edit/<%= pkg.id %>" class="btn btn-secondary btn-sm">
+                            <i class="fas fa-edit"></i>
+                        </a>
+                        <form action="/admin/packages/delete/<%= pkg.id %>" method="POST" style="display:inline;"
+                            onsubmit="return confirm('Delete <%= pkg.name %>?');">
+                            <button type="submit" class="btn btn-danger btn-sm">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+                <div class="category-card-details" style="flex-direction: column; align-items: flex-start; gap: 8px;">
+                    <% if(pkg.description) { %>
+                        <div
+                            style="font-size: 0.85rem; color: var(--gray-600); display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
+                            <%= pkg.description %>
+                        </div>
+                        <% } %>
+                </div>
+            </div>
+            <% }) %>
+    </div>
+</div>

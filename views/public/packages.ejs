@@ -1,0 +1,364 @@
+<section class="container packages-page-container">
+    <!-- Header styled like admin product index but for public -->
+    <div class="packages-header-v2">
+        <div class="header-main">
+            <h1 class="header-title">Our Exclusive Packages</h1>
+            <p class="header-subtitle">Optimized bundles for professional medical environments.</p>
+        </div>
+        <div class="header-actions">
+            <form method="GET" action="/packages" class="search-form-v2">
+                <div class="search-input-wrapper">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    <input type="text" name="search" placeholder="Search bundles..."
+                        value="<%= typeof search !== 'undefined' ? search : '' %>">
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <% if (packages.length===0) { %>
+        <div class="empty-state">
+            <div class="empty-icon">
+                <i class="fa-solid fa-box-open"></i>
+            </div>
+            <% if (typeof search !=='undefined' && search) { %>
+                <h3>No bundles match your search</h3>
+                <p>Try using different keywords or browse all our available medical packages.</p>
+                <a href="/packages" class="btn-clear-v2">Clear Search</a>
+                <% } else { %>
+                    <h3>No bundles available yet</h3>
+                    <p>We are currently curating new packages. Please check back soon.</p>
+                    <a href="/products" class="btn-clear-v2">Browse All Products</a>
+                    <% } %>
+        </div>
+        <% } else { %>
+            <div class="packages-grid">
+                <% packages.forEach(pkg=> { %>
+                    <div class="package-card">
+                        <div class="package-info">
+                            <div class="package-badge">
+                                <%= pkg.bundle_label || 'Special Bundle' %>
+                            </div>
+                            <h2 class="package-title">
+                                <%= pkg.name %>
+                            </h2>
+                            <p class="package-description">
+                                <%= pkg.description || 'Complete solution featuring our top-tier medical equipment.' %>
+                            </p>
+
+                            <div class="package-highlights">
+                                <% if (pkg.specs && pkg.specs.length> 0) { %>
+                                    <% pkg.specs.slice(0, 3).forEach(spec=> { %>
+                                        <div class="highlight-item">
+                                            <i class="<%= spec.icon %>"></i>
+                                            <span>
+                                                <%= spec.spec_text %>
+                                            </span>
+                                        </div>
+                                        <% }) %>
+                                            <% } else { %>
+                                                <div class="highlight-item">
+                                                    <i class="fa-solid fa-check"></i>
+                                                    <span>Includes <%= pkg.products.length %> specialized units</span>
+                                                </div>
+                                                <% } %>
+                            </div>
+
+                            <a href="/package/<%= pkg.id %>" class="btn-package">View Bundle Details <i
+                                    class="fa-solid fa-arrow-right"></i></a>
+                        </div>
+
+                        <div class="package-preview">
+                            <% if (pkg.main_image) { %>
+                                <div class="main-image-preview">
+                                    <img src="<%= pkg.main_image %>" alt="<%= pkg.name %>">
+                                </div>
+                                <% } else if (pkg.products.length> 0) { %>
+                                    <div class="preview-grid">
+                                        <% pkg.products.slice(0, 4).forEach((prod, idx)=> { %>
+                                            <div class="preview-item <%= idx === 0 ? 'large' : '' %>">
+                                                <% if (prod.main_image) { %>
+                                                    <img src="<%= prod.main_image %>" alt="<%= prod.model %>">
+                                                    <% } else { %>
+                                                        <div class="preview-placeholder"><i class="fa-solid fa-box"></i>
+                                                        </div>
+                                                        <% } %>
+                                            </div>
+                                            <% }) %>
+                                    </div>
+                                    <% } else { %>
+                                        <div class="no-preview">
+                                            <i class="fa-solid fa-boxes-stacked"></i>
+                                        </div>
+                                        <% } %>
+                        </div>
+                    </div>
+                    <% }) %>
+            </div>
+            <% } %>
+</section>
+
+<style>
+    .packages-page-container {
+        padding: 4rem 1.5rem 8rem;
+        max-width: 1200px;
+    }
+
+    /* New Header Style (Admin Inspired) */
+    .packages-header-v2 {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
+        margin-bottom: 4rem;
+        padding-bottom: 2.5rem;
+        border-bottom: 2px solid var(--gray-100);
+        gap: 2rem;
+    }
+
+    .header-title {
+        font-size: 3rem;
+        font-weight: 900;
+        color: var(--blue-darkest);
+        margin: 0;
+        letter-spacing: -0.03em;
+        line-height: 1;
+    }
+
+    .header-subtitle {
+        font-size: 1.15rem;
+        color: var(--gray-500);
+        margin: 0.75rem 0 0;
+        font-weight: 500;
+    }
+
+    .search-form-v2 {
+        min-width: 350px;
+    }
+
+    .search-input-wrapper {
+        position: relative;
+    }
+
+    .search-input-wrapper i {
+        position: absolute;
+        left: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--gray-400);
+    }
+
+    .search-input-wrapper input {
+        width: 100%;
+        padding: 0.85rem 1rem 0.85rem 3rem;
+        border: 1px solid var(--gray-200);
+        border-radius: 12px;
+        font-size: 1rem;
+        background: var(--white);
+        transition: all 0.2s;
+        box-shadow: var(--shadow-sm);
+    }
+
+    .search-input-wrapper input:focus {
+        border-color: var(--blue-medium);
+        box-shadow: 0 0 0 4px rgba(0, 91, 150, 0.05);
+    }
+
+    /* Cards */
+    .packages-grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 4rem;
+    }
+
+    .package-card {
+        background: var(--white);
+        border: 1px solid var(--gray-100);
+        border-radius: 32px;
+        overflow: hidden;
+        display: grid;
+        grid-template-columns: 1fr 1.1fr;
+        box-shadow: 0 15px 40px rgba(0, 0, 0, 0.03);
+        transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+    }
+
+    .package-card:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 30px 60px rgba(0, 0, 0, 0.08);
+    }
+
+    .package-info {
+        padding: 4rem;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .package-badge {
+        background: var(--gray-100);
+        color: var(--blue-darkest);
+        padding: 0.4rem 1rem;
+        border-radius: 50px;
+        font-size: 0.75rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        margin-bottom: 2rem;
+        align-self: flex-start;
+    }
+
+    .package-title {
+        font-size: 2.5rem;
+        font-weight: 800;
+        color: var(--blue-darkest);
+        margin: 0 0 1.5rem 0;
+        line-height: 1.1;
+    }
+
+    .package-description {
+        font-size: 1.1rem;
+        color: var(--gray-600);
+        margin-bottom: 2.5rem;
+        line-height: 1.6;
+    }
+
+    .package-highlights {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+        margin-bottom: auto;
+        padding-bottom: 3rem;
+    }
+
+    .highlight-item {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        color: var(--gray-700);
+        font-weight: 600;
+        font-size: 0.95rem;
+    }
+
+    .highlight-item i {
+        color: var(--blue-medium);
+        width: 18px;
+        text-align: center;
+    }
+
+    .btn-package {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.75rem;
+        background: var(--blue-darkest);
+        color: var(--white);
+        padding: 1.25rem 2.5rem;
+        border-radius: 16px;
+        font-weight: 700;
+        text-decoration: none;
+        transition: all 0.2s;
+        align-self: flex-start;
+    }
+
+    .btn-package:hover {
+        background: var(--blue-medium);
+        color: var(--white);
+        gap: 1.25rem;
+    }
+
+    .package-preview {
+        background: #fcfdfe;
+        padding: 3rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .main-image-preview {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .main-image-preview img {
+        max-width: 100%;
+        max-height: 100%;
+        object-fit: contain;
+        border-radius: 20px;
+    }
+
+    .preview-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        grid-template-rows: repeat(2, 1fr);
+        gap: 1.5rem;
+        width: 100%;
+        height: 100%;
+    }
+
+    .preview-item {
+        background: var(--white);
+        border-radius: 20px;
+        overflow: hidden;
+        border: 1px solid var(--gray-100);
+        box-shadow: var(--shadow-sm);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 1rem;
+    }
+
+    .preview-item.large {
+        grid-row: span 2;
+    }
+
+    .preview-item img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 8rem 2rem;
+        background: var(--white);
+        border-radius: 40px;
+        border: 2px dashed var(--gray-100);
+    }
+
+    .btn-clear-v2 {
+        display: inline-block;
+        margin-top: 2rem;
+        background: var(--blue-darkest);
+        color: white;
+        padding: 1rem 2rem;
+        border-radius: 12px;
+        font-weight: 700;
+        text-decoration: none;
+    }
+
+    @media (max-width: 1024px) {
+        .package-card {
+            grid-template-columns: 1fr;
+        }
+
+        .package-info {
+            padding: 3rem;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .packages-header-v2 {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .search-form-v2 {
+            width: 100%;
+            min-width: 0;
+        }
+
+        .header-title {
+            font-size: 2.25rem;
+        }
+    }
+</style>

@@ -250,4 +250,93 @@ router.get('/product/:id/mda-cert', async (req, res) => {
     }
 });
 
+// Packages List
+router.get('/packages', async (req, res) => {
+    try {
+        const { search } = req.query;
+        let query = 'SELECT * FROM packages';
+        const params = [];
+
+        if (search) {
+            query += ' WHERE name LIKE ? OR description LIKE ?';
+            const term = `%${search}%`;
+            params.push(term, term);
+        }
+
+        query += ' ORDER BY created_at DESC';
+
+        const [packages] = await pool.query(query, params);
+
+        // Fetch products and specs for each package
+        for (let pkg of packages) {
+            const [products] = await pool.query(`
+                SELECT p.* FROM products p
+                JOIN package_products pp ON p.id = pp.product_id
+                WHERE pp.package_id = ?
+                ORDER BY pp.sort_order ASC
+            `, [pkg.id]);
+
+            // Get main image for each product in the package for preview
+            for (let product of products) {
+                const [mainImage] = await pool.query(
+                    "SELECT image_path FROM product_images WHERE product_id = ? AND is_main = 1 LIMIT 1",
+                    [product.id]
+                );
+                product.main_image = mainImage.length > 0 ? mainImage[0].image_path : product.product_image;
+            }
+            pkg.products = products;
+
+            const [specs] = await pool.query(
+                "SELECT * FROM package_specs WHERE package_id = ? ORDER BY sort_order ASC",
+                [pkg.id]
+            );
+            pkg.specs = specs;
+        }
+
+        res.render('public/packages', { packages, search: search || '' });
+    } catch (err) {
+        console.error(err);
+        res.status(500).send('Server Error');
+    }
+});
+
+// Package Detail
+router.get('/package/:id', async (req, res) => {
+    try {
+        const [packages] = await pool.query('SELECT * FROM packages WHERE id = ?', [req.params.id]);
+        if (packages.length === 0) return res.status(404).send('Package not found');
+
+        const pkg = packages[0];
+
+        // Products with order
+        const [products] = await pool.query(`
+            SELECT p.* FROM products p
+            JOIN package_products pp ON p.id = pp.product_id
+            WHERE pp.package_id = ?
+            ORDER BY pp.sort_order ASC
+        `, [pkg.id]);
+
+        for (let product of products) {
+            const [mainImage] = await pool.query(
+                "SELECT image_path FROM product_images WHERE product_id = ? AND is_main = 1 LIMIT 1",
+                [product.id]
+            );
+            product.main_image = mainImage.length > 0 ? mainImage[0].image_path : product.product_image;
+        }
+        pkg.products = products;
+
+        // Specs with order
+        const [specs] = await pool.query(
+            "SELECT * FROM package_specs WHERE package_id = ? ORDER BY sort_order ASC",
+            [pkg.id]
+        );
+        pkg.specs = specs;
+
+        res.render('public/package_detail', { package: pkg });
+    } catch (err) {
+        console.error(err);
+        res.status(500).send('Server Error');
+    }
+});
+
 module.exports = router;

@@ -49,9 +49,51 @@ app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 
 // Global Middleware for User Session
-app.use((req, res, next) => {
+app.use(async (req, res, next) => {
   res.locals.user = req.session.user || null;
   res.locals.path = req.path;
+  res.locals.port = process.env.PORT || 3000;
+  res.locals.baseDomain = process.env.BASE_DOMAIN || 'lvh.me';
+
+  // Subdomain Detection
+  const hostname = req.hostname;
+  const parts = hostname.split('.');
+  console.log(`[DEBUG] Hostname: ${hostname}, Parts: ${parts.length}`);
+
+  // Default values
+  res.locals.brandLogo = '/QSS Healthcare.png';
+  res.locals.brandName = 'Product Catalog';
+  res.locals.isSubdomain = false;
+
+  // If we have a subdomain (e.g., [subdomain].myapp.local)
+  // local testing: parts.length >= 3 (e.g., qss.myapp.local)
+  // production: parts.length >= 3 (e.g., qss.yourdomain.com)
+  if (parts.length >= 3) {
+    const subdomain = parts[0];
+    if (subdomain !== 'www') {
+      try {
+        const { pool } = require('./config/database');
+        const [companies] = await pool.query(
+          "SELECT name, logo FROM affiliated_companies WHERE subdomain = ?",
+          [subdomain]
+        );
+
+        if (companies.length > 0) {
+          console.log(`[DEBUG] Found Brand: ${companies[0].name}`);
+          res.locals.brandName = companies[0].name;
+          if (companies[0].logo) {
+            res.locals.brandLogo = companies[0].logo;
+          }
+          res.locals.isSubdomain = true;
+        } else {
+          console.log(`[DEBUG] No company found for subdomain: ${subdomain}`);
+        }
+      } catch (err) {
+        console.error('Subdomain lookup failed:', err);
+      }
+    }
+  }
+
   next();
 });
 
@@ -63,6 +105,7 @@ const companyRoutes = require('./routes/companies');
 const supplierRoutes = require('./routes/suppliers');
 const productRoutes = require('./routes/products');
 const marketingRoutes = require('./routes/marketing');
+const packageRoutes = require('./routes/packages');
 const publicRoutes = require('./routes/public');
 
 app.use('/auth', authRoutes);
@@ -72,6 +115,7 @@ app.use('/admin/companies', companyRoutes);
 app.use('/admin/suppliers', supplierRoutes);
 app.use('/admin/products', productRoutes);
 app.use('/admin/marketing', marketingRoutes);
+app.use('/admin/packages', packageRoutes);
 app.use('/', publicRoutes);
 
 // Home Redirect

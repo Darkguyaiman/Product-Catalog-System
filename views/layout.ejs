@@ -32,10 +32,11 @@
         <div class="main-wrapper">
             <nav class="sidebar">
                 <div class="sidebar-header">
-                    <img src="/QSS Healthcare.png" alt="Logo" style="height: 35px; margin-bottom: 10px;">
-                    <span
-                        style="font-size: 1.1rem; font-weight: 700; letter-spacing: -0.5px; text-align: center;">Product
-                        Catalog</span>
+                    <img src="<%= brandLogo %>" alt="Logo"
+                        style="height: 35px; margin-bottom: 10px; object-fit: contain;">
+                    <span style="font-size: 1.1rem; font-weight: 700; letter-spacing: -0.5px; text-align: center;">
+                        <%= brandName %>
+                    </span>
                 </div>
                 <div class="sidebar-nav">
                     <a href="/admin" class="sidebar-link <%= path === '/admin' ? 'active' : '' %>">
@@ -52,6 +53,10 @@
                     <a href="/admin/marketing/testimonies"
                         class="sidebar-link <%= path.startsWith('/admin/marketing/testimonies') ? 'active' : '' %>">
                         <i class="fa-solid fa-comment-dots"></i> Testimonies
+                    </a>
+                    <a href="/admin/packages"
+                        class="sidebar-link <%= path.startsWith('/admin/packages') ? 'active' : '' %>">
+                        <i class="fa-solid fa-box-open"></i> Packages
                     </a>
                     <a href="/admin/products"
                         class="sidebar-link <%= path.startsWith('/admin/products') ? 'active' : '' %>">
@@ -93,14 +98,22 @@
                 <nav class="public-navbar">
                     <div class="container">
                         <a href="/home" class="nav-brand">
-                            <img src="/QSS Healthcare.png" alt="Logo"
-                                style="height: 32px; margin-right: 10px; vertical-align: middle;">
-                            <span>Product Catalog</span>
+                            <img src="<%= brandLogo %>" alt="Logo"
+                                style="height: 32px; margin-right: 10px; vertical-align: middle; object-fit: contain;">
+                            <span>
+                                <%= brandName %>
+                            </span>
                         </a>
                         <div class="nav-links">
-                            <a href="/home" class="nav-link <%= path === '/home' || path === '/' || path.startsWith('/products') || path.startsWith('/product/') ? 'active' : '' %>">
+                            <a href="/home"
+                                class="nav-link <%= path === '/home' || path === '/' || path.startsWith('/products') || path.startsWith('/product/') ? 'active' : '' %>">
                                 <i class="fa-solid fa-boxes-stacked"></i>
                                 <span>Home</span>
+                            </a>
+                            <a href="/packages"
+                                class="nav-link <%= path.startsWith('/packages') || path.startsWith('/package/') ? 'active' : '' %>">
+                                <i class="fa-solid fa-box-open"></i>
+                                <span>Packages</span>
                             </a>
                             <a href="/auth/login" class="nav-link <%= path === '/auth/login' ? 'active' : '' %>">
                                 <i class="fa-solid fa-user-shield"></i>
@@ -117,9 +130,10 @@
                             <footer
                                 style="background-color: var(--blue-darkest); color: var(--blue-lightest); padding: 3rem 0; margin-top: 4rem;">
                                 <div class="container text-center">
-                                    <p>&copy; <%= new Date().getFullYear() %> QSS Healthcare Product Catalog System. All
-                                            rights
-                                            reserved.</p>
+                                    <p>&copy; <%= new Date().getFullYear() %>
+                                            <%= brandName %> System. All
+                                                rights
+                                                reserved.</p>
                                 </div>
                             </footer>
                             <% } %>

@@ -67,6 +67,7 @@ async function initializeDatabase() {
             CREATE TABLE IF NOT EXISTS affiliated_companies (
                 id INT AUTO_INCREMENT PRIMARY KEY,
                 name VARCHAR(255) NOT NULL,
+                subdomain VARCHAR(100) UNIQUE,
                 logo VARCHAR(255),
                 reg_no VARCHAR(100),
                 reg_date DATE,
@@ -205,6 +206,33 @@ async function initializeDatabase() {
                 PRIMARY KEY (product_id, testimony_id),
                 FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE,
                 FOREIGN KEY (testimony_id) REFERENCES testimonies(id) ON DELETE CASCADE
+            );
+
+            CREATE TABLE IF NOT EXISTS packages (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                name VARCHAR(255) NOT NULL,
+                description TEXT,
+                bundle_label VARCHAR(255),
+                main_image TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+
+            CREATE TABLE IF NOT EXISTS package_products (
+                package_id INT,
+                product_id INT,
+                sort_order INT DEFAULT 0,
+                PRIMARY KEY (package_id, product_id),
+                FOREIGN KEY (package_id) REFERENCES packages(id) ON DELETE CASCADE,
+                FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE
+            );
+
+            CREATE TABLE IF NOT EXISTS package_specs (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                package_id INT,
+                icon VARCHAR(255) DEFAULT 'fa-solid fa-circle',
+                spec_text TEXT,
+                sort_order INT DEFAULT 0,
+                FOREIGN KEY (package_id) REFERENCES packages(id) ON DELETE CASCADE
             );
         `;
 
@@ -353,6 +381,24 @@ async function initializeDatabase() {
             console.log('Migration check skipped (table may not exist yet)');
         }
 
+        // Migration: Add subdomain column to affiliated_companies if it doesn't exist
+        try {
+            const [subdomainColumns] = await connection.query(`
+                SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS 
+                WHERE TABLE_SCHEMA = ? AND TABLE_NAME = 'affiliated_companies' AND COLUMN_NAME = 'subdomain'
+            `, [process.env.DB_NAME || 'product_catalog']);
+
+            if (subdomainColumns.length === 0) {
+                await connection.query(`
+                    ALTER TABLE affiliated_companies 
+                    ADD COLUMN subdomain VARCHAR(100) UNIQUE AFTER name
+                `);
+                console.log('✓ Added subdomain column to affiliated_companies table');
+            }
+        } catch (migrationError) {
+            console.log('Migration check for subdomain skipped (table may not exist yet)');
+        }
+
         // Migration: Add supplier_id column to products table if it doesn't exist
         try {
             const [supplierColumns] = await connection.query(`
@@ -370,6 +416,42 @@ async function initializeDatabase() {
             }
         } catch (migrationError) {
             console.log('Migration check for supplier_id skipped (table may not exist yet)');
+        }
+
+        // Migration for Packages enhancements
+        try {
+            const dbName = process.env.DB_NAME || 'product_catalog';
+
+            // Check bundle_label and main_image in packages
+            const [pkgColumns] = await connection.query(`
+                SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS 
+                WHERE TABLE_SCHEMA = ? AND TABLE_NAME = 'packages' AND COLUMN_NAME IN ('bundle_label', 'main_image')
+            `, [dbName]);
+
+            if (pkgColumns.length < 2) {
+                const existingCols = pkgColumns.map(c => c.COLUMN_NAME);
+                if (!existingCols.includes('bundle_label')) {
+                    await connection.query('ALTER TABLE packages ADD COLUMN bundle_label VARCHAR(255) AFTER description');
+                    console.log('✓ Added bundle_label column to packages table');
+                }
+                if (!existingCols.includes('main_image')) {
+                    await connection.query('ALTER TABLE packages ADD COLUMN main_image TEXT AFTER bundle_label');
+                    console.log('✓ Added main_image column to packages table');
+                }
+            }
+
+            // Check sort_order in package_products
+            const [ppColumns] = await connection.query(`
+                SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS 
+                WHERE TABLE_SCHEMA = ? AND TABLE_NAME = 'package_products' AND COLUMN_NAME = 'sort_order'
+            `, [dbName]);
+
+            if (ppColumns.length === 0) {
+                await connection.query('ALTER TABLE package_products ADD COLUMN sort_order INT DEFAULT 0');
+                console.log('✓ Added sort_order column to package_products table');
+            }
+        } catch (migrationError) {
+            console.log('Migration check for packages enhancements failed:', migrationError.message);
         }
 
         const [rows] = await connection.query('SELECT * FROM users WHERE email = ?', ['admin@admin.com']);

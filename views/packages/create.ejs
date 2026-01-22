@@ -1,0 +1,344 @@
+<div class="create-company-page">
+    <div class="card-header" style="margin-top: 2rem; border-bottom: none; padding-bottom: 0;">
+        <h1>Create New Package</h1>
+        <p style="color: var(--gray-500); margin-top: 0.5rem;">Group products together into a professional bundle.</p>
+    </div>
+
+    <div class="card" style="margin-top: 2rem;">
+        <form action="/admin/packages/create" method="POST" enctype="multipart/form-data">
+            <div class="form-grid">
+                <!-- Basic Info -->
+                <div class="form-group" style="grid-column: span 1;">
+                    <label for="name">Package Name <span style="color: var(--danger);">*</span></label>
+                    <input type="text" id="name" name="name" required placeholder="e.g., ICU Complete Setup">
+                </div>
+
+                <div class="form-group" style="grid-column: span 1;">
+                    <label for="bundle_label">Hero Label (e.g. Premium Medical Bundle)</label>
+                    <input type="text" id="bundle_label" name="bundle_label" placeholder="Premium Medical Bundle">
+                </div>
+
+                <div class="form-group" style="grid-column: span 2;">
+                    <label for="description">Description</label>
+                    <textarea id="description" name="description" rows="3"
+                        placeholder="Enter package description..."></textarea>
+                </div>
+
+                <div class="form-group" style="grid-column: span 2;">
+                    <label for="main_image">Package Main Image (Optional)</label>
+                    <input type="file" id="main_image" name="main_image" accept="image/*">
+                    <p style="font-size: 0.75rem; color: var(--gray-500); margin-top: 0.25rem;">This image will replace
+                        the dynamic product stack in the hero section.</p>
+                </div>
+
+                <!-- Key Specs / Highlights -->
+                <div class="form-group" style="grid-column: span 2;">
+                    <label>Key Specs / Highlights</label>
+                    <div id="specsContainer">
+                        <!-- Dynamic specs will be added here -->
+                    </div>
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="addSpecRow()"
+                        style="margin-top: 0.5rem;">
+                        <i class="fas fa-plus"></i> Add Highlight Point
+                    </button>
+                    <p style="font-size: 0.8rem; color: var(--gray-500); margin-top: 0.5rem;">These appear as bullet
+                        points with icons in the hero section.</p>
+                </div>
+
+                <!-- Product Selection & Ordering -->
+                <div class="form-group" style="grid-column: span 2;">
+                    <label>Select & Order Products</label>
+                    <div class="product-selector-wrapper"
+                        style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-top: 0.5rem;">
+                        <!-- Available Products -->
+                        <div>
+                            <div style="position: relative; margin-bottom: 0.5rem;">
+                                <i class="fas fa-search"
+                                    style="position: absolute; left: 0.75rem; top: 50%; transform: translateY(-50%); color: var(--gray-400);"></i>
+                                <input type="text" id="productSearch" placeholder="Search available products..."
+                                    style="padding-left: 2.5rem; margin-bottom: 0;">
+                            </div>
+                            <div id="availableProducts"
+                                style="max-height: 400px; overflow-y: auto; border: 1px solid var(--gray-300); border-radius: 8px; padding: 1rem; background: var(--gray-50);">
+                                <% products.forEach(product=> { %>
+                                    <div class="product-selection-item" data-id="<%= product.id %>"
+                                        data-model="<%= product.model.toLowerCase() %>"
+                                        data-code="<%= product.code.toLowerCase() %>"
+                                        onclick="toggleProductSelection(this)"
+                                        style="display: flex; align-items: center; margin-bottom: 0.5rem; background: white; padding: 0.75rem; border-radius: 6px; border: 1px solid var(--gray-200); cursor: pointer; transition: all 0.2s;">
+                                        <i class="fas fa-plus" style="margin-right: 1rem; color: var(--gray-300);"></i>
+                                        <div style="display: flex; flex-direction: column;">
+                                            <span style="font-weight: 600; color: var(--blue-darkest);">
+                                                <%= product.model %>
+                                            </span>
+                                            <span style="font-size: 0.75rem; color: var(--gray-500);">
+                                                <%= product.code %>
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <% }) %>
+                            </div>
+                        </div>
+
+                        <!-- Chosen Products (Ordered) -->
+                        <div>
+                            <label style="font-size: 0.8rem; color: var(--gray-500); margin-bottom: 0.5rem;">Selected
+                                Products (Drag to reorder)</label>
+                            <div id="chosenProducts"
+                                style="min-height: 400px; border: 2px dashed var(--gray-300); border-radius: 8px; padding: 1rem; background: var(--white);">
+                                <!-- Selected products appear here -->
+                            </div>
+                            <p style="font-size: 0.75rem; color: var(--gray-400); margin-top: 0.5rem;">The order here
+                                defines how they appear in the hero and listing.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div
+                style="margin-top: 2.5rem; display: flex; gap: 1rem; padding-top: 1.5rem; border-top: 1px solid var(--gray-200);">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save" style="margin-right: 0.5rem;"></i> Create Package
+                </button>
+                <a href="/admin/packages" class="btn btn-outline"
+                    style="text-decoration: none; text-align: center;">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+    .spec-row {
+        display: flex;
+        gap: 0.5rem;
+        margin-bottom: 0.5rem;
+        align-items: center;
+        background: var(--gray-50);
+        padding: 0.5rem;
+        border-radius: 8px;
+        border: 1px solid var(--gray-200);
+    }
+
+    .icon-picker-wrapper {
+        position: relative;
+        width: 60px;
+    }
+
+    .icon-display {
+        width: 100%;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: white;
+        border: 1px solid var(--gray-300);
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 1.2rem;
+        color: var(--blue-medium);
+    }
+
+    .icon-dropdown {
+        display: none;
+        position: absolute;
+        top: 100%;
+        left: 0;
+        z-index: 100;
+        background: white;
+        border: 1px solid var(--gray-300);
+        border-radius: 8px;
+        box-shadow: var(--shadow-lg);
+        padding: 0.5rem;
+        width: 250px;
+    }
+
+    .icon-dropdown.show {
+        display: block;
+    }
+
+    .icon-grid {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 0.5rem;
+        max-height: 200px;
+        overflow-y: auto;
+        padding-top: 0.5rem;
+    }
+
+    .icon-item {
+        width: 36px;
+        height: 36px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: background 0.2s;
+    }
+
+    .icon-item:hover {
+        background: var(--gray-100);
+    }
+
+    .product-selection-item:hover {
+        border-color: var(--blue-medium) !important;
+        background: var(--gray-50) !important;
+    }
+
+    .product-selection-item.disabled {
+        opacity: 0.5;
+        pointer-events: none;
+        background: var(--gray-100) !important;
+    }
+
+    .chosen-item {
+        display: flex;
+        align-items: center;
+        background: var(--blue-darkest);
+        color: white;
+        padding: 0.75rem;
+        border-radius: 8px;
+        margin-bottom: 0.5rem;
+        cursor: grab;
+    }
+
+    .chosen-item:active {
+        cursor: grabbing;
+    }
+
+    .chosen-item .remove-btn {
+        margin-left: auto;
+        cursor: pointer;
+        color: rgba(255, 255, 255, 0.6);
+        transition: color 0.2s;
+    }
+
+    .chosen-item .remove-btn:hover {
+        color: var(--danger);
+    }
+</style>
+
+<!-- Using SortableJS for product reordering -->
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+
+<script>
+    const commonIcons = [
+        'fa-solid fa-circle', 'fa-solid fa-check', 'fa-solid fa-star', 'fa-solid fa-shield-medical',
+        'fa-solid fa-truck-fast', 'fa-solid fa-list-check', 'fa-solid fa-heart-pulse', 'fa-solid fa-kit-medical',
+        'fa-solid fa-stethoscope', 'fa-solid fa-microscope', 'fa-solid fa-user-doctor', 'fa-solid fa-hospital',
+        'fa-solid fa-award', 'fa-solid fa-certificate', 'fa-solid fa-lightbulb', 'fa-solid fa-bolt'
+    ];
+
+    function addSpecRow(icon = 'fa-solid fa-circle', text = '') {
+        const container = document.getElementById('specsContainer');
+        const index = container.children.length;
+        const row = document.createElement('div');
+        row.className = 'spec-row';
+        row.innerHTML = `
+            <div class="icon-picker-wrapper">
+                <div class="icon-display" onclick="toggleIconDropdown(this)">
+                    <i class="${icon}"></i>
+                </div>
+                <input type="hidden" name="spec_icons" value="${icon}">
+                <div class="icon-dropdown">
+                    <input type="text" placeholder="Search icon..." class="icon-search" oninput="filterIcons(this)" style="margin-bottom: 0.5rem; padding: 0.4rem; font-size: 0.8rem;">
+                    <div class="icon-grid">
+                        ${commonIcons.map(i => `<div class="icon-item" onclick="selectIcon(this, '${i}')"><i class="${i}"></i></div>`).join('')}
+                    </div>
+                </div>
+            </div>
+            <input type="text" name="spec_texts" value="${text}" placeholder="Enter highlight text..." style="flex: 1; margin: 0;">
+            <button type="button" class="btn btn-danger btn-sm" onclick="this.parentElement.remove()">
+                <i class="fas fa-times"></i>
+            </button>
+        `;
+        container.appendChild(row);
+    }
+
+    function toggleIconDropdown(el) {
+        // Close all other dropdowns
+        document.querySelectorAll('.icon-dropdown').forEach(d => {
+            if (d !== el.nextElementSibling.nextElementSibling) d.classList.remove('show');
+        });
+        el.nextElementSibling.nextElementSibling.classList.toggle('show');
+    }
+
+    function selectIcon(el, iconClass) {
+        const wrapper = el.closest('.icon-picker-wrapper');
+        wrapper.querySelector('.icon-display i').className = iconClass;
+        wrapper.querySelector('input[type="hidden"]').value = iconClass;
+        wrapper.querySelector('.icon-dropdown').classList.remove('show');
+    }
+
+    function filterIcons(input) {
+        const term = input.value.toLowerCase();
+        const grid = input.nextElementSibling;
+        grid.querySelectorAll('.icon-item').forEach(item => {
+            const icon = item.querySelector('i').className.toLowerCase();
+            item.style.display = icon.includes(term) ? 'flex' : 'none';
+        });
+    }
+
+    // Product Selection Logic
+    function toggleProductSelection(el) {
+        const id = el.getAttribute('data-id');
+        const model = el.querySelector('span:first-child').innerText;
+        const code = el.querySelector('span:last-child').innerText;
+
+        if (el.classList.contains('disabled')) return;
+
+        el.classList.add('disabled');
+
+        const chosenContainer = document.getElementById('chosenProducts');
+        const chosenItem = document.createElement('div');
+        chosenItem.className = 'chosen-item';
+        chosenItem.setAttribute('data-id', id);
+        chosenItem.innerHTML = `
+            <i class="fas fa-grip-vertical" style="margin-right: 1rem; opacity: 0.5;"></i>
+            <div style="display: flex; flex-direction: column;">
+                <span style="font-weight: 600;">${model}</span>
+                <span style="font-size: 0.7rem; opacity: 0.8;">${code}</span>
+            </div>
+            <input type="hidden" name="product_ids" value="${id}">
+            <div class="remove-btn" onclick="removeProduct('${id}', this.parentElement)">
+                <i class="fas fa-trash"></i>
+            </div>
+        `;
+        chosenContainer.appendChild(chosenItem);
+    }
+
+    function removeProduct(id, itemEl) {
+        itemEl.remove();
+        const availableItem = document.querySelector(`.product-selection-item[data-id="${id}"]`);
+        if (availableItem) availableItem.classList.remove('disabled');
+    }
+
+    // Initialize Sortable
+    document.addEventListener('DOMContentLoaded', () => {
+        new Sortable(document.getElementById('chosenProducts'), {
+            animation: 150,
+            ghostClass: 'blue-background-class'
+        });
+
+        // Add an initial spec row
+        addSpecRow('fa-solid fa-list-check', '');
+
+        // Search in available products
+        const searchInput = document.getElementById('productSearch');
+        searchInput.addEventListener('input', function () {
+            const term = this.value.toLowerCase();
+            document.querySelectorAll('.product-selection-item').forEach(item => {
+                const model = item.getAttribute('data-model');
+                const code = item.getAttribute('data-code');
+                item.style.display = (model.includes(term) || code.includes(term)) ? 'flex' : 'none';
+            });
+        });
+    });
+
+    // Close dropdowns on outside click
+    window.onclick = function (event) {
+        if (!event.target.closest('.icon-picker-wrapper')) {
+            document.querySelectorAll('.icon-dropdown').forEach(d => d.classList.remove('show'));
+        }
+    }
+</script>
