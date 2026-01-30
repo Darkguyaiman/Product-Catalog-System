@@ -33,7 +33,7 @@ router.use((req, res, next) => {
 });
 
 // Helper to build WHERE clause
-const buildWhere = (search, productId, category, linkTable, linkIdCol) => {
+const buildWhere = (search, productIds, category, linkTable, linkIdCol, companyIds) => {
     let conditions = [];
     let params = [];
 
@@ -42,9 +42,9 @@ const buildWhere = (search, productId, category, linkTable, linkIdCol) => {
         params.push(`%${search}%`);
     }
 
-    if (productId) {
-        conditions.push(`m.id IN (SELECT ${linkIdCol} FROM ${linkTable} WHERE product_id = ?)`);
-        params.push(productId);
+    if (productIds && productIds.length > 0) {
+        conditions.push(`m.id IN (SELECT ${linkIdCol} FROM ${linkTable} WHERE product_id IN (${productIds.map(() => '?').join(',')}))`);
+        params.push(...productIds);
     }
 
     if (category) {
@@ -52,10 +52,15 @@ const buildWhere = (search, productId, category, linkTable, linkIdCol) => {
         params.push(category);
     }
 
+    if (companyIds && companyIds.length > 0) {
+        conditions.push(`m.company_id IN (${companyIds.map(() => '?').join(',')})`);
+        params.push(...companyIds);
+    }
+
     return { where: conditions.length ? 'WHERE ' + conditions.join(' AND ') : '', params };
 };
 
-const buildTestimonyWhere = (search, productId) => {
+const buildTestimonyWhere = (search, productIds) => {
     let conditions = [];
     let params = [];
 
@@ -64,19 +69,23 @@ const buildTestimonyWhere = (search, productId) => {
         params.push(`%${search}%`, `%${search}%`, `%${search}%`);
     }
 
-    if (productId) {
-        conditions.push(`id IN (SELECT testimony_id FROM product_testimonies WHERE product_id = ?)`);
-        params.push(productId);
+    if (productIds && productIds.length > 0) {
+        conditions.push(`id IN (SELECT testimony_id FROM product_testimonies WHERE product_id IN (${productIds.map(() => '?').join(',')}))`);
+        params.push(...productIds);
     }
 
     return { where: conditions.length ? 'WHERE ' + conditions.join(' AND ') : '', params };
 };
 
 const getMarketingData = async (req) => {
-    const { search, product_id, category } = req.query;
+    const { search, product_id, category, companies: selectedCompanies, products: selectedProducts } = req.query;
+
+    // Normalize filters to arrays
+    const companyFilters = Array.isArray(selectedCompanies) ? selectedCompanies : (selectedCompanies ? [selectedCompanies] : []);
+    const productFilters = Array.isArray(selectedProducts) ? selectedProducts : (selectedProducts ? [selectedProducts] : (product_id ? [product_id] : []));
 
     // Materials
-    const mQ = buildWhere(search, product_id, category, 'product_marketing', 'material_id');
+    const mQ = buildWhere(search, productFilters, category, 'product_marketing', 'material_id', companyFilters);
     const [marketing] = await pool.query(`
         SELECT m.*, c.name as company_name,
         (SELECT GROUP_CONCAT(product_id) FROM product_marketing WHERE material_id = m.id) as product_ids 
@@ -84,11 +93,14 @@ const getMarketingData = async (req) => {
         LEFT JOIN affiliated_companies c ON m.company_id = c.id
         ${mQ.where} ORDER BY m.id DESC`, mQ.params);
 
-    // Events (adjusted to handle buildWhere's m. prefix if we reused it, but we won't for simplicity)
+    // Events
     const eW = [];
     const eP = [];
     if (search) { eW.push('name LIKE ?'); eP.push(`%${search}%`); }
-    if (product_id) { eW.push('id IN (SELECT event_id FROM product_events WHERE product_id = ?)'); eP.push(product_id); }
+    if (productFilters.length > 0) {
+        eW.push(`id IN (SELECT event_id FROM product_events WHERE product_id IN (${productFilters.map(() => '?').join(',')}))`);
+        eP.push(...productFilters);
+    }
     const eWhere = eW.length ? 'WHERE ' + eW.join(' AND ') : '';
 
     const [events] = await pool.query(`
@@ -97,8 +109,8 @@ const getMarketingData = async (req) => {
         (SELECT GROUP_CONCAT(CONCAT(IFNULL(title, ''), '::', url) SEPARATOR '||') FROM event_links WHERE event_id = e.id) as links 
         FROM events e ${eWhere} ORDER BY e.start_date DESC`, eP);
 
-    // Testimonies (already has buildTestimonyWhere)
-    const tQ = buildTestimonyWhere(search, product_id);
+    // Testimonies
+    const tQ = buildTestimonyWhere(search, productFilters);
     const [testimonies] = await pool.query(`
         SELECT t.*, 
         (SELECT GROUP_CONCAT(product_id) FROM product_testimonies WHERE testimony_id = t.id) as product_ids,
@@ -115,7 +127,8 @@ const getMarketingData = async (req) => {
         products,
         companies,
         search: search || '',
-        selectedProduct: product_id || '',
+        selectedProducts: productFilters,
+        selectedCompanies: companyFilters,
         selectedCategory: category || 'BROCHURE',
         MATERIAL_CATEGORIES
     };

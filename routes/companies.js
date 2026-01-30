@@ -39,8 +39,23 @@ router.use((req, res, next) => {
 
 router.get('/', async (req, res) => {
     try {
-        const [companies] = await pool.query("SELECT * FROM affiliated_companies ORDER BY name ASC");
-        res.render('companies/index', { companies, query: req.query });
+        const { search } = req.query;
+        let query = "SELECT * FROM affiliated_companies";
+        const params = [];
+
+        if (search) {
+            query += " WHERE name LIKE ? OR shortname LIKE ?";
+            const term = `%${search}%`;
+            params.push(term, term);
+        }
+
+        query += " ORDER BY name ASC";
+        const [companies] = await pool.query(query, params);
+        res.render('companies/index', {
+            companies,
+            search: search || '',
+            query: req.query
+        });
     } catch (err) {
         console.error(err);
         res.status(500).send('Server Error');

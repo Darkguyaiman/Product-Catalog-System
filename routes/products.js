@@ -37,47 +37,74 @@ function getCategoryChildIds(allCategories, parentId) {
 
 router.get('/', async (req, res) => {
     try {
-        const { search, category } = req.query;
-        let query = "SELECT * FROM products";
+        const { search, category, categories: selectedCats, suppliers: selectedSups, types: selectedTypes } = req.query;
+
+        // Normalize filters to arrays
+        const catFilters = Array.isArray(selectedCats) ? selectedCats : (selectedCats ? [selectedCats] : (category ? [category] : []));
+        const supFilters = Array.isArray(selectedSups) ? selectedSups : (selectedSups ? [selectedSups] : []);
+        const typeFilters = Array.isArray(selectedTypes) ? selectedTypes : (selectedTypes ? [selectedTypes] : []);
+
+        let query = `
+            SELECT DISTINCT p.* 
+            FROM products p
+            LEFT JOIN product_categories pc ON p.id = pc.product_id
+            LEFT JOIN product_types pt ON p.id = pt.product_id
+        `;
         const params = [];
         const conditions = [];
 
-        // Fetch all categories for filter dropdown and recursion logic
+        // Fetch all peripheral data for filters
         const [allCategories] = await pool.query("SELECT * FROM categories ORDER BY name ASC");
+        const [allSuppliers] = await pool.query("SELECT id, name FROM suppliers ORDER BY name ASC");
+        const [allTypes] = await pool.query("SELECT id, value FROM settings WHERE type = 'product_type' ORDER BY value ASC");
 
         if (search) {
-            // Simple text search
-            conditions.push("(model LIKE ? OR code LIKE ? OR description LIKE ? OR mda_reg_no LIKE ?)");
+            conditions.push("(p.model LIKE ? OR p.code LIKE ? OR p.description LIKE ? OR p.mda_reg_no LIKE ?)");
             const term = `%${search}%`;
             params.push(term, term, term, term);
         }
 
-        if (category) {
-            // Recursive category filter
-            // 1. Get all category IDs (parent + children)
-            const familyIds = getCategoryChildIds(allCategories, category);
-
-            // 2. Filter products that belong to ANY of these categories
-            if (familyIds.length > 0) {
-                // Safe injection since familyIds are integers from logic
-                conditions.push(`id IN (SELECT product_id FROM product_categories WHERE category_id IN (${familyIds.join(',')}))`);
+        if (catFilters.length > 0) {
+            let catIdsToFilter = [];
+            for (const catId of catFilters) {
+                catIdsToFilter = catIdsToFilter.concat(getCategoryChildIds(allCategories, catId));
             }
+            // Remove duplicates
+            catIdsToFilter = [...new Set(catIdsToFilter)];
+
+            if (catIdsToFilter.length > 0) {
+                conditions.push(`pc.category_id IN (${catIdsToFilter.map(() => '?').join(',')})`);
+                params.push(...catIdsToFilter);
+            }
+        }
+
+        if (supFilters.length > 0) {
+            conditions.push(`p.supplier_id IN (${supFilters.map(() => '?').join(',')})`);
+            params.push(...supFilters);
+        }
+
+        if (typeFilters.length > 0) {
+            conditions.push(`pt.type_id IN (${typeFilters.map(() => '?').join(',')})`);
+            params.push(...typeFilters);
         }
 
         if (conditions.length > 0) {
             query += " WHERE " + conditions.join(" AND ");
         }
 
-        query += " ORDER BY id DESC";
+        query += " ORDER BY p.id DESC";
 
         const [products] = await pool.query(query, params);
 
-        // Pass necessary data to view
         res.render('products/index', {
             products,
             categories: allCategories,
+            suppliers: allSuppliers,
+            types: allTypes,
             search: search || '',
-            selectedCategory: category || ''
+            selectedCategories: catFilters,
+            selectedSuppliers: supFilters,
+            selectedTypes: typeFilters
         });
     } catch (err) {
         console.error(err);

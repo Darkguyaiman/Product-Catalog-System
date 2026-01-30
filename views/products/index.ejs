@@ -1,38 +1,214 @@
-<div class="companies-page">
-    <div class="card-header companies-header"
+<div class="products-page">
+    <div class="card-header products-header"
         style="justify-content: space-between; align-items: center; border-bottom: none; margin-bottom: 1rem; padding-bottom: 2rem; margin-top: 2rem;">
         <h1 style="margin: 0;">Product Management</h1>
-        <a href="/admin/products/create" class="btn btn-primary add-company-btn">
+        <a href="/admin/products/create" class="btn btn-primary add-product-btn">
             <i class="fas fa-plus"></i> <span>Register New Product</span>
         </a>
     </div>
 
-    <!-- Desktop Table View -->
-    <div class="card desktop-only">
-        <!-- Filters / Search -->
-        <!-- Filters / Search -->
-        <form action="/admin/products" method="GET"
-            style="padding-bottom: 1.5rem; border-bottom: 1px solid var(--gray-200); margin-bottom: 1.5rem; display: flex; gap: 1rem;">
-            <div style="position: relative; flex: 2;">
+    <style>
+        .filter-row {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1.5rem;
+            border-bottom: 1px solid var(--gray-200);
+            flex-wrap: wrap;
+        }
+
+        .multiselect-container {
+            position: relative;
+            min-width: 180px;
+            flex: 1;
+        }
+
+        .multiselect-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem 1rem;
+            border: 1px solid var(--gray-300);
+            border-radius: 6px;
+            background: white;
+            cursor: pointer;
+            font-size: 0.95rem;
+            color: var(--gray-700);
+            transition: all 0.2s;
+            user-select: none;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .multiselect-header:hover {
+            border-color: var(--gray-400);
+        }
+
+        .multiselect-header.active {
+            border-color: var(--blue-medium);
+            box-shadow: 0 0 0 3px rgba(0, 91, 150, 0.1);
+        }
+
+        .multiselect-menu {
+            position: absolute;
+            top: 105%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 1px solid var(--gray-200);
+            border-radius: 8px;
+            box-shadow: var(--shadow-lg);
+            z-index: 1000;
+            max-height: 300px;
+            overflow-y: auto;
+            display: none;
+            padding: 0.5rem;
+        }
+
+        .multiselect-menu.show {
+            display: block;
+            animation: fadeIn 0.2s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .multiselect-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 0.6rem 0.8rem;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .multiselect-item:hover {
+            background: var(--gray-50);
+        }
+
+        .multiselect-item input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+            accent-color: var(--blue-medium);
+        }
+
+        .multiselect-item span {
+            font-size: 0.9rem;
+            color: var(--gray-700);
+        }
+
+        .count-badge {
+            background: var(--blue-medium);
+            color: white;
+            font-size: 0.75rem;
+            padding: 2px 6px;
+            border-radius: 10px;
+            margin-left: 5px;
+        }
+
+        @media (max-width: 1024px) {
+            .filter-row {
+                flex-direction: column;
+                align-items: stretch;
+            }
+        }
+    </style>
+
+    <div class="card" style="margin-bottom: 2rem;">
+        <!-- Search & Filter Form -->
+        <form action="/admin/products" method="GET" class="filter-row" id="productFilterForm"
+            style="margin-bottom: 0; padding-bottom: 0; border-bottom: none;">
+            <div style="position: relative; flex: 2; min-width: 250px;">
                 <i class="fas fa-search"
                     style="position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: var(--gray-400);"></i>
-                <input type="text" name="search" placeholder="Search products (Press Enter)..."
+                <input type="text" name="search" placeholder="Search products..."
                     value="<%= typeof search !== 'undefined' ? search : '' %>"
                     style="width: 100%; padding: 0.75rem 1rem 0.75rem 2.5rem; border: 1px solid var(--gray-300); border-radius: 6px;">
             </div>
-            <select name="category" onchange="this.form.submit()"
-                style="padding: 0.75rem 1rem; border: 1px solid var(--gray-300); border-radius: 6px; min-width: 150px; width: auto;">
-                <option value="">All Categories</option>
-                <% if(typeof categories !=='undefined' ) { %>
+
+            <!-- Category Multiselect -->
+            <div class="multiselect-container" id="categoryFilter">
+                <div class="multiselect-header">
+                    <span class="header-text">Filter by Category</span>
+                    <i class="fas fa-chevron-down"></i>
+                </div>
+                <div class="multiselect-menu">
                     <% categories.forEach(c=> { %>
-                        <option value="<%= c.id %>" <%=(typeof selectedCategory !=='undefined' &&
-                            selectedCategory==c.id) ? 'selected' : '' %>>
-                            <%= c.name %>
-                        </option>
+                        <label class="multiselect-item">
+                            <input type="checkbox" name="categories" value="<%= c.id %>" <%=(locals.selectedCategories
+                                && selectedCategories.includes(String(c.id))) ? 'checked' : '' %>>
+                            <span>
+                                <%= c.name %>
+                            </span>
+                        </label>
                         <% }) %>
-                            <% } %>
-            </select>
+                </div>
+            </div>
+
+            <!-- Supplier Multiselect -->
+            <div class="multiselect-container" id="supplierFilter">
+                <div class="multiselect-header">
+                    <span class="header-text">Filter by Supplier</span>
+                    <i class="fas fa-chevron-down"></i>
+                </div>
+                <div class="multiselect-menu">
+                    <% suppliers.forEach(s=> { %>
+                        <label class="multiselect-item">
+                            <input type="checkbox" name="suppliers" value="<%= s.id %>" <%=(locals.selectedSuppliers &&
+                                selectedSuppliers.includes(String(s.id))) ? 'checked' : '' %>>
+                            <span>
+                                <%= s.name %>
+                            </span>
+                        </label>
+                        <% }) %>
+                </div>
+            </div>
+
+            <!-- Product Type Multiselect -->
+            <div class="multiselect-container" id="typeFilter">
+                <div class="multiselect-header">
+                    <span class="header-text">Filter by Type</span>
+                    <i class="fas fa-chevron-down"></i>
+                </div>
+                <div class="multiselect-menu">
+                    <% types.forEach(t=> { %>
+                        <label class="multiselect-item">
+                            <input type="checkbox" name="types" value="<%= t.id %>" <%=(locals.selectedTypes &&
+                                selectedTypes.includes(String(t.id))) ? 'checked' : '' %>>
+                            <span>
+                                <%= t.value %>
+                            </span>
+                        </label>
+                        <% }) %>
+                </div>
+            </div>
+
+            <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                <button type="submit" class="btn btn-primary" style="padding: 0.75rem 1.5rem;">
+                    <i class="fas fa-filter"></i> Apply
+                </button>
+                <a href="/admin/products" class="btn btn-secondary" style="padding: 0.75rem 1.5rem;">
+                    <i class="fas fa-undo"></i> Reset
+                </a>
+            </div>
         </form>
+    </div>
+
+    <!-- Desktop Table View -->
+    <div class="card desktop-only">
 
         <div class="table-responsive">
             <table>
@@ -122,33 +298,6 @@
 
     <!-- Mobile Cards -->
     <div class="mobile-category-cards">
-        <!-- Mobile Search -->
-        <!-- Mobile Search -->
-        <div
-            style="background: white; padding: 1rem; border-radius: 12px; border: 1px solid var(--gray-200); box-shadow: var(--shadow-sm); margin-bottom: 1rem;">
-            <form action="/admin/products" method="GET">
-                <div style="position: relative; margin-bottom: 0.75rem;">
-                    <i class="fas fa-search"
-                        style="position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: var(--gray-400);"></i>
-                    <input type="text" name="search" placeholder="Search products..."
-                        value="<%= typeof search !== 'undefined' ? search : '' %>"
-                        style="width: 100%; padding: 0.75rem 1rem 0.75rem 2.5rem; border: 1px solid var(--gray-300); border-radius: 6px;">
-                </div>
-                <select name="category" onchange="this.form.submit()"
-                    style="width: 100%; padding: 0.75rem 1rem; border: 1px solid var(--gray-300); border-radius: 6px;">
-                    <option value="">All Categories</option>
-                    <% if(typeof categories !=='undefined' ) { %>
-                        <% categories.forEach(c=> { %>
-                            <option value="<%= c.id %>" <%=(typeof selectedCategory !=='undefined' &&
-                                selectedCategory==c.id) ? 'selected' : '' %>>
-                                <%= c.name %>
-                            </option>
-                            <% }) %>
-                                <% } %>
-                </select>
-            </form>
-        </div>
-
         <% products.forEach(p=> { %>
             <div class="category-card">
                 <div class="category-card-header">
@@ -200,3 +349,66 @@
             <% }) %>
     </div>
 </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const setups = [
+            { containerId: 'categoryFilter', placeholder: 'Filter by Category' },
+            { containerId: 'supplierFilter', placeholder: 'Filter by Supplier' },
+            { containerId: 'typeFilter', placeholder: 'Filter by Type' }
+        ];
+
+        setups.forEach(setup => {
+            const container = document.getElementById(setup.containerId);
+            if (!container) return;
+
+            const header = container.querySelector('.multiselect-header');
+            const menu = container.querySelector('.multiselect-menu');
+            const headerText = container.querySelector('.header-text');
+            const checkboxes = menu.querySelectorAll('input[type="checkbox"]');
+
+            header.addEventListener('click', (e) => {
+                e.stopPropagation();
+                // Close other menus
+                document.querySelectorAll('.multiselect-menu').forEach(m => {
+                    if (m !== menu) m.classList.remove('show');
+                });
+                document.querySelectorAll('.multiselect-header').forEach(h => {
+                    if (h !== header) h.classList.remove('active');
+                });
+
+                menu.classList.toggle('show');
+                header.classList.toggle('active');
+            });
+
+            menu.addEventListener('click', (e) => {
+                e.stopPropagation();
+            });
+
+            function updateHeaderText() {
+                const selected = Array.from(checkboxes).filter(cb => cb.checked);
+                if (selected.length === 0) {
+                    headerText.textContent = setup.placeholder;
+                } else if (selected.length === 1) {
+                    const label = selected[0].nextElementSibling.textContent;
+                    headerText.textContent = label;
+                } else {
+                    headerText.innerHTML = `${setup.placeholder} <span class="count-badge">${selected.length} Selected</span>`;
+                }
+            }
+
+            checkboxes.forEach(cb => {
+                cb.addEventListener('change', updateHeaderText);
+            });
+
+            // Initial text
+            updateHeaderText();
+        });
+
+        // Close on outside click
+        document.addEventListener('click', () => {
+            document.querySelectorAll('.multiselect-menu').forEach(m => m.classList.remove('show'));
+            document.querySelectorAll('.multiselect-header').forEach(h => h.classList.remove('active'));
+        });
+    });
+</script>
