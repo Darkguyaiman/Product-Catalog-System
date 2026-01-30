@@ -121,7 +121,7 @@ router.post('/upload-chunk', chunkUpload.single('chunk'), async (req, res) => {
 });
 
 router.post('/add', handleUpload('logo'), async (req, res) => {
-    const { name, subdomain, reg_no, reg_date, address, website, email, contact_number, logo_path } = req.body;
+    const { name, shortname, reg_no, reg_date, address, website, email, contact_number, logo_path } = req.body;
     let logo = logo_path || null;
 
     if (req.file && !logo) {
@@ -145,18 +145,18 @@ router.post('/add', handleUpload('logo'), async (req, res) => {
 
     try {
         await pool.query(
-            "INSERT INTO affiliated_companies (name, subdomain, logo, reg_no, reg_date, address, website, email, contact_number) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-            [name, subdomain, logo, reg_no, reg_date, address, website, email, contact_number]
+            "INSERT INTO affiliated_companies (name, shortname, logo, reg_no, reg_date, address, website, email, contact_number) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            [name, shortname, logo, reg_no, reg_date, address, website, email, contact_number]
         );
         res.redirect('/admin/companies');
     } catch (err) {
         console.error(err);
-        res.redirect('/admin/companies?error=Failed to add company. Subdomain might already be taken.');
+        res.redirect('/admin/companies?error=Failed to add company. Shortname might already be taken.');
     }
 });
 
 router.post('/edit/:id', handleUpload('logo'), async (req, res) => {
-    const { name, subdomain, reg_no, reg_date, address, website, email, contact_number, existing_logo, logo_path } = req.body;
+    const { name, shortname, reg_no, reg_date, address, website, email, contact_number, existing_logo, logo_path } = req.body;
     let logo = logo_path || existing_logo;
 
     // Handle logo replacement via chunked upload
@@ -204,8 +204,8 @@ router.post('/edit/:id', handleUpload('logo'), async (req, res) => {
 
     try {
         await pool.query(
-            "UPDATE affiliated_companies SET name = ?, subdomain = ?, logo = ?, reg_no = ?, reg_date = ?, address = ?, website = ?, email = ?, contact_number = ? WHERE id = ?",
-            [name, subdomain, logo, reg_no, reg_date, address, website, email, contact_number, req.params.id]
+            "UPDATE affiliated_companies SET name = ?, shortname = ?, logo = ?, reg_no = ?, reg_date = ?, address = ?, website = ?, email = ?, contact_number = ? WHERE id = ?",
+            [name, shortname, logo, reg_no, reg_date, address, website, email, contact_number, req.params.id]
         );
         res.redirect('/admin/companies');
     } catch (err) {

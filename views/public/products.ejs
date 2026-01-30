@@ -6,13 +6,16 @@
                 <p>Browse our comprehensive range of medical equipment and supplies</p>
             </div>
             <div class="header-controls">
-                <form method="GET" action="/products" class="search-form">
+                <form method="GET"
+                    action="<%= typeof companyBasePath !== 'undefined' ? companyBasePath + '/products' : '/products' %>"
+                    class="search-form">
                     <div class="search-wrapper">
                         <i class="fa-solid fa-magnifying-glass"></i>
-                        <input type="text" name="search" placeholder="Search products..." id="productSearch" value="<%= typeof search !== 'undefined' ? search : '' %>">
+                        <input type="text" name="search" placeholder="Search products..." id="productSearch"
+                            value="<%= typeof search !== 'undefined' ? search : '' %>">
                         <% if (selectedCategory) { %>
                             <input type="hidden" name="category" value="<%= selectedCategory %>">
-                        <% } %>
+                            <% } %>
                     </div>
                     <select class="sort-select" id="productSort" name="sort">
                         <option value="newest">Newest</option>
@@ -31,96 +34,112 @@
                 <nav class="category-nav">
                     <ul class="category-list">
                         <li>
-                            <a href="/products" class="category-item <%= !selectedCategory ? 'active' : '' %>">
+                            <a href="<%= typeof companyBasePath !== 'undefined' ? companyBasePath + '/products' : '/products' %>"
+                                class="category-item <%= !selectedCategory ? 'active' : '' %>">
                                 <span>All Products</span>
-                                <span class="category-count"><%= products.length %></span>
+                                <span class="category-count">
+                                    <%= products.length %>
+                                </span>
                             </a>
                         </li>
                         <% categories.filter(c=> !c.parent_id).forEach(c => { %>
                             <li>
-                                <a href="?category=<%= c.id %>" class="category-item <%= selectedCategory == c.id ? 'active' : '' %>">
-                                    <span><%= c.name %></span>
+                                <a href="?category=<%= c.id %>"
+                                    class="category-item <%= selectedCategory == c.id ? 'active' : '' %>">
+                                    <span>
+                                        <%= c.name %>
+                                    </span>
                                     <i class="fa-solid fa-chevron-right"></i>
                                 </a>
                                 <% const subs=categories.filter(s=> s.parent_id === c.id); %>
-                                <% if(subs.length > 0) { %>
-                                    <ul class="subcategory-list">
-                                        <% subs.forEach(s=> { %>
-                                            <li>
-                                                <a href="?category=<%= s.id %>" class="subcategory-item <%= selectedCategory == s.id ? 'active' : '' %>">
-                                                    <%= s.name %>
-                                                </a>
-                                            </li>
-                                        <% }) %>
-                                    </ul>
-                                <% } %>
+                                    <% if(subs.length> 0) { %>
+                                        <ul class="subcategory-list">
+                                            <% subs.forEach(s=> { %>
+                                                <li>
+                                                    <a href="?category=<%= s.id %>"
+                                                        class="subcategory-item <%= selectedCategory == s.id ? 'active' : '' %>">
+                                                        <%= s.name %>
+                                                    </a>
+                                                </li>
+                                                <% }) %>
+                                        </ul>
+                                        <% } %>
                             </li>
-                        <% }) %>
+                            <% }) %>
                     </ul>
                 </nav>
             </div>
         </aside>
 
         <main class="products-content">
-            <% if (products.length === 0) { %>
+            <% if (products.length===0) { %>
                 <div class="empty-state">
                     <div class="empty-icon">
                         <i class="fa-solid fa-inbox"></i>
                     </div>
                     <h3>No products found</h3>
                     <p>Try adjusting your search or filter criteria</p>
-                    <a href="/products" class="btn-clear">Clear filters</a>
+                    <a href="<%= typeof companyBasePath !== 'undefined' ? companyBasePath + '/products' : '/products' %>"
+                        class="btn-clear">Clear filters</a>
                 </div>
-            <% } else { %>
-                <div class="products-grid" id="productsGrid">
-                    <% products.forEach(p=> { %>
-                        <a href="/product/<%= p.id %>" class="product-item">
-                            <div class="product-image-wrapper">
-                                <% if (p.main_image) { %>
-                                    <img src="<%= p.main_image %>" alt="<%= p.model %>" loading="lazy">
-                                <% } else { %>
-                                    <div class="product-image-placeholder">
-                                        <i class="fa-solid fa-image"></i>
-                                    </div>
-                                <% } %>
-                                <div class="product-overlay">
-                                    <span class="overlay-btn">View Details</span>
+                <% } else { %>
+                    <div class="products-grid" id="productsGrid">
+                        <% products.forEach(p=> { %>
+                            <a href="<%= typeof companyBasePath !== 'undefined' ? companyBasePath + '/product/' + p.id : '/product/' + p.id %>"
+                                class="product-item">
+                                <div class="product-image-wrapper">
+                                    <% if (p.main_image) { %>
+                                        <img src="<%= p.main_image %>" alt="<%= p.model %>" loading="lazy">
+                                        <% } else { %>
+                                            <div class="product-image-placeholder">
+                                                <i class="fa-solid fa-image"></i>
+                                            </div>
+                                            <% } %>
+                                                <div class="product-overlay">
+                                                    <span class="overlay-btn">View Details</span>
+                                                </div>
                                 </div>
-                            </div>
-                            <div class="product-body">
-                                <div class="product-header">
-                                    <span class="product-code"><%= p.code %></span>
-                                    <% if(p.mda_reg_no) { %>
-                                        <span class="product-badge" title="MDA Registered">
-                                            <i class="fa-solid fa-certificate"></i> MDA
+                                <div class="product-body">
+                                    <div class="product-header">
+                                        <span class="product-code">
+                                            <%= p.code %>
                                         </span>
-                                    <% } %>
+                                        <% if(p.mda_reg_no) { %>
+                                            <span class="product-badge" title="MDA Registered">
+                                                <i class="fa-solid fa-certificate"></i> MDA
+                                            </span>
+                                            <% } %>
+                                    </div>
+                                    <h3 class="product-name" title="<%= p.model %>">
+                                        <%= p.model %>
+                                    </h3>
+                                    <p class="product-desc">
+                                    <%= p.description ? (p.description.length > 10 ? p.description.substring(0, 100) + '...' : p.description) : 'Professional medical equipment designed for clinical use.' %>
+                                    </p>
+                                    <span class="product-link">View Product <i
+                                            class="fa-solid fa-arrow-right"></i></span>
                                 </div>
-                                <h3 class="product-name" title="<%= p.model %>"><%= p.model %></h3>
-                                <p class="product-desc">
-                                    <%= p.description ? (p.description.length > 100 ? p.description.substring(0, 100) + '...' : p.description) : 'Professional medical equipment designed for clinical use.' %>
-                                </p>
-                                <span class="product-link">View Product <i class="fa-solid fa-arrow-right"></i></span>
-                            </div>
-                        </a>
-                    <% }) %>
-                </div>
+                            </a>
+                            <% }) %>
+                    </div>
 
-                <div class="products-footer">
-                    <div class="results-count">
-                        <span><%= products.length %></span> product<%= products.length !== 1 ? 's' : '' %> found
+                    <div class="products-footer">
+                        <div class="results-count">
+                            <span>
+                                <%= products.length %>
+                            </span> product<%= products.length !==1 ? 's' : '' %> found
+                        </div>
+                        <div class="pagination">
+                            <button class="pagination-btn" disabled>
+                                <i class="fa-solid fa-chevron-left"></i>
+                            </button>
+                            <span class="pagination-page active">1</span>
+                            <button class="pagination-btn" disabled>
+                                <i class="fa-solid fa-chevron-right"></i>
+                            </button>
+                        </div>
                     </div>
-                    <div class="pagination">
-                        <button class="pagination-btn" disabled>
-                            <i class="fa-solid fa-chevron-left"></i>
-                        </button>
-                        <span class="pagination-page active">1</span>
-                        <button class="pagination-btn" disabled>
-                            <i class="fa-solid fa-chevron-right"></i>
-                        </button>
-                    </div>
-                </div>
-            <% } %>
+                    <% } %>
         </main>
     </div>
 </section>
@@ -263,7 +282,7 @@
         margin: 0;
     }
 
-    .category-list > li {
+    .category-list>li {
         margin-bottom: 0.25rem;
     }
 
@@ -811,7 +830,7 @@
 </style>
 
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('DOMContentLoaded', function () {
         const searchInput = document.getElementById('productSearch');
         const sortSelect = document.getElementById('productSort');
         const searchForm = document.querySelector('.search-form');
@@ -819,7 +838,7 @@
 
         // Handle search input with debounce
         if (searchInput) {
-            searchInput.addEventListener('input', function() {
+            searchInput.addEventListener('input', function () {
                 clearTimeout(searchTimeout);
                 searchTimeout = setTimeout(() => {
                     searchForm.submit();
@@ -827,7 +846,7 @@
             });
 
             // Also submit on Enter key
-            searchInput.addEventListener('keypress', function(e) {
+            searchInput.addEventListener('keypress', function (e) {
                 if (e.key === 'Enter') {
                     e.preventDefault();
                     clearTimeout(searchTimeout);
@@ -838,7 +857,7 @@
 
         // Handle sort change
         if (sortSelect) {
-            sortSelect.addEventListener('change', function() {
+            sortSelect.addEventListener('change', function () {
                 // For now, just submit the form
                 // You can add client-side sorting later if needed
                 searchForm.submit();

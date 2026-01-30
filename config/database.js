@@ -67,7 +67,7 @@ async function initializeDatabase() {
             CREATE TABLE IF NOT EXISTS affiliated_companies (
                 id INT AUTO_INCREMENT PRIMARY KEY,
                 name VARCHAR(255) NOT NULL,
-                subdomain VARCHAR(100) UNIQUE,
+                shortname VARCHAR(100) UNIQUE,
                 logo VARCHAR(255),
                 reg_no VARCHAR(100),
                 reg_date DATE,
@@ -144,9 +144,12 @@ async function initializeDatabase() {
             CREATE TABLE IF NOT EXISTS marketing_materials (
                 id INT AUTO_INCREMENT PRIMARY KEY,
                 name VARCHAR(255),
+                category VARCHAR(50) DEFAULT 'BROCHURE',
+                company_id INT DEFAULT NULL,
                 file_path VARCHAR(255) NOT NULL,
                 file_type VARCHAR(255),
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (company_id) REFERENCES affiliated_companies(id) ON DELETE SET NULL
             );
 
             CREATE TABLE IF NOT EXISTS product_marketing (
@@ -381,22 +384,36 @@ async function initializeDatabase() {
             console.log('Migration check skipped (table may not exist yet)');
         }
 
-        // Migration: Add subdomain column to affiliated_companies if it doesn't exist
+        // Migration: Add shortname column to affiliated_companies (renamed from subdomain)
         try {
-            const [subdomainColumns] = await connection.query(`
+            const [shortnameColumns] = await connection.query(`
                 SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS 
-                WHERE TABLE_SCHEMA = ? AND TABLE_NAME = 'affiliated_companies' AND COLUMN_NAME = 'subdomain'
+                WHERE TABLE_SCHEMA = ? AND TABLE_NAME = 'affiliated_companies' AND COLUMN_NAME = 'shortname'
             `, [process.env.DB_NAME || 'product_catalog']);
 
-            if (subdomainColumns.length === 0) {
-                await connection.query(`
-                    ALTER TABLE affiliated_companies 
-                    ADD COLUMN subdomain VARCHAR(100) UNIQUE AFTER name
-                `);
-                console.log('✓ Added subdomain column to affiliated_companies table');
+            if (shortnameColumns.length === 0) {
+                // Check if old 'subdomain' column exists to rename it
+                const [oldSubdomainColumns] = await connection.query(`
+                    SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS 
+                    WHERE TABLE_SCHEMA = ? AND TABLE_NAME = 'affiliated_companies' AND COLUMN_NAME = 'subdomain'
+                `, [process.env.DB_NAME || 'product_catalog']);
+
+                if (oldSubdomainColumns.length > 0) {
+                    await connection.query(`
+                        ALTER TABLE affiliated_companies 
+                        RENAME COLUMN subdomain TO shortname
+                    `);
+                    console.log('✓ Renamed column subdomain to shortname');
+                } else {
+                    await connection.query(`
+                        ALTER TABLE affiliated_companies 
+                        ADD COLUMN shortname VARCHAR(100) UNIQUE AFTER name
+                    `);
+                    console.log('✓ Added shortname column to affiliated_companies table');
+                }
             }
         } catch (migrationError) {
-            console.log('Migration check for subdomain skipped (table may not exist yet)');
+            console.log('Migration check for shortname skipped:', migrationError.message);
         }
 
         // Migration: Add supplier_id column to products table if it doesn't exist
@@ -452,6 +469,30 @@ async function initializeDatabase() {
             }
         } catch (migrationError) {
             console.log('Migration check for packages enhancements failed:', migrationError.message);
+        }
+
+        // Migration: Add category and company_id to marketing_materials
+        try {
+            const dbName = process.env.DB_NAME || 'product_catalog';
+            const [materialColumns] = await connection.query(`
+                SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS 
+                WHERE TABLE_SCHEMA = ? AND TABLE_NAME = 'marketing_materials' AND COLUMN_NAME IN ('category', 'company_id')
+            `, [dbName]);
+
+            if (materialColumns.length < 2) {
+                const existingCols = materialColumns.map(c => c.COLUMN_NAME);
+                if (!existingCols.includes('category')) {
+                    await connection.query("ALTER TABLE marketing_materials ADD COLUMN category VARCHAR(50) DEFAULT 'BROCHURE' AFTER name");
+                    console.log('✓ Added category column to marketing_materials');
+                }
+                if (!existingCols.includes('company_id')) {
+                    await connection.query("ALTER TABLE marketing_materials ADD COLUMN company_id INT DEFAULT NULL AFTER category");
+                    await connection.query("ALTER TABLE marketing_materials ADD FOREIGN KEY (company_id) REFERENCES affiliated_companies(id) ON DELETE SET NULL");
+                    console.log('✓ Added company_id column to marketing_materials');
+                }
+            }
+        } catch (migrationError) {
+            console.log('Migration for marketing_materials category/company failed or skipped:', migrationError.message);
         }
 
         const [rows] = await connection.query('SELECT * FROM users WHERE email = ?', ['admin@admin.com']);

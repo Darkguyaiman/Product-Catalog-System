@@ -30,8 +30,8 @@
         <table>
             <thead>
                 <tr>
-                    <th>Category Name</th>
                     <th>Relationship</th>
+                    <th>Category Name</th>
                     <th style="width: 120px;">Action</th>
                 </tr>
             </thead>
@@ -42,11 +42,11 @@
 
                     <% topLevel.forEach(function(parent) { %>
                         <tr style="background-color: var(--gray-50);">
+                            <td><span class="badge badge-primary">Main</span></td>
                             <td style="font-weight: 700; color: var(--blue-darkest);">
                                 <i class="fas fa-folder" style="margin-right: 8px; color: var(--blue-medium);"></i>
                                 <%= parent.name %>
                             </td>
-                            <td><span class="badge badge-primary">Main</span></td>
                             <td>
                                 <div style="display: flex; gap: 5px;">
                                     <button onclick="openEditModal('<%= parent.id %>', '<%= parent.name %>', '')"
@@ -64,15 +64,15 @@
 
                         <% children.filter(child=> child.parent_id === parent.id).forEach(function(child) { %>
                             <tr>
-                                <td style="padding-left: 2.5rem;">
-                                    <i class="fas fa-level-up-alt fa-rotate-90"
-                                        style="margin-right: 8px; color: var(--gray-400);"></i>
-                                    <%= child.name %>
-                                </td>
                                 <td>
                                     <span class="badge"
                                         style="background-color: var(--gray-100); color: var(--gray-600);">Sub of <%=
                                             parent.name %></span>
+                                </td>
+                                <td style="padding-left: 2.5rem;">
+                                    <i class="fas fa-level-up-alt fa-rotate-90"
+                                        style="margin-right: 8px; color: var(--gray-400);"></i>
+                                    <%= child.name %>
                                 </td>
                                 <td>
                                     <div style="display: flex; gap: 5px;">
@@ -96,11 +96,11 @@
                                         if (orphans.length > 0) {
                                         orphans.forEach(function(orphan) { %>
                                         <tr>
+                                            <td><span class="badge badge-danger">Broken Main Ref</span></td>
                                             <td style="padding-left: 2.5rem; color: var(--danger);">
                                                 <i class="fas fa-exclamation-triangle" style="margin-right: 8px;"></i>
                                                 <%= orphan.name %> (Orphan)
                                             </td>
-                                            <td><span class="badge badge-danger">Broken Main Ref</span></td>
                                             <td>
                                                 <div style="display: flex; gap: 5px;">
                                                     <button

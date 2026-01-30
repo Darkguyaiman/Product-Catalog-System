@@ -20,159 +20,364 @@
 </head>
 
 <body class="<%= path === '/auth/login' ? 'auth-page' : '' %>">
-    <% if (locals.user) { %>
-        <!-- Mobile Sidebar Toggle -->
-        <button id="sidebarToggle" class="sidebar-toggle" aria-label="Toggle Menu">
-            <i class="fa-solid fa-bars"></i>
-        </button>
+    <% const isAdminPage=path.startsWith('/admin'); const showAdminSidebar=locals.user && isAdminPage; %>
+        <% if (showAdminSidebar) { %>
+            <!-- Mobile Sidebar Toggle -->
+            <button id="sidebarToggle" class="sidebar-toggle" aria-label="Toggle Menu">
+                <i class="fa-solid fa-bars"></i>
+            </button>
 
-        <!-- Sidebar Backdrop -->
-        <div id="sidebarBackdrop" class="sidebar-backdrop"></div>
+            <!-- Sidebar Backdrop -->
+            <div id="sidebarBackdrop" class="sidebar-backdrop"></div>
 
-        <div class="main-wrapper">
-            <nav class="sidebar">
-                <div class="sidebar-header">
-                    <img src="<%= brandLogo %>" alt="Logo"
-                        style="height: 35px; margin-bottom: 10px; object-fit: contain;">
-                    <span style="font-size: 1.1rem; font-weight: 700; letter-spacing: -0.5px; text-align: center;">
-                        <%= brandName %>
-                    </span>
-                </div>
-                <div class="sidebar-nav">
-                    <a href="/admin" class="sidebar-link <%= path === '/admin' ? 'active' : '' %>">
-                        <i class="fa-solid fa-chart-line"></i> Dashboard
-                    </a>
-                    <a href="/admin/marketing/materials"
-                        class="sidebar-link <%= path.startsWith('/admin/marketing/materials') ? 'active' : '' %>">
-                        <i class="fa-solid fa-file-pdf"></i> Materials
-                    </a>
-                    <a href="/admin/marketing/events"
-                        class="sidebar-link <%= path.startsWith('/admin/marketing/events') ? 'active' : '' %>">
-                        <i class="fa-solid fa-calendar-days"></i> Events
-                    </a>
-                    <a href="/admin/marketing/testimonies"
-                        class="sidebar-link <%= path.startsWith('/admin/marketing/testimonies') ? 'active' : '' %>">
-                        <i class="fa-solid fa-comment-dots"></i> Testimonies
-                    </a>
-                    <a href="/admin/packages"
-                        class="sidebar-link <%= path.startsWith('/admin/packages') ? 'active' : '' %>">
-                        <i class="fa-solid fa-box-open"></i> Packages
-                    </a>
-                    <a href="/admin/products"
-                        class="sidebar-link <%= path.startsWith('/admin/products') ? 'active' : '' %>">
-                        <i class="fa-solid fa-boxes-stacked"></i> Products
-                    </a>
-                    <a href="/admin/suppliers"
-                        class="sidebar-link <%= path.startsWith('/admin/suppliers') ? 'active' : '' %>">
-                        <i class="fa-solid fa-truck-field"></i> Suppliers
-                    </a>
-                    <a href="/admin/companies"
-                        class="sidebar-link <%= path.startsWith('/admin/companies') ? 'active' : '' %>">
-                        <i class="fa-solid fa-building"></i> Companies
-                    </a>
-                    <a href="/admin/settings"
-                        class="sidebar-link <%= path.startsWith('/admin/settings') ? 'active' : '' %>">
-                        <i class="fa-solid fa-gear"></i> Settings
-                    </a>
-                </div>
-                <div class="sidebar-footer">
-                    <a href="/home" target="_blank" class="sidebar-link">
-                        <i class="fa-solid fa-external-link-alt"></i> View Public Site
-                    </a>
-                    <a href="/auth/logout" class="sidebar-link">
-                        <i class="fa-solid fa-sign-out-alt"></i> Logout
-                    </a>
-                </div>
-            </nav>
-
-            <!-- Main Content -->
-            <main class="main-content">
-                <div class="container">
-                    <%- body %>
-                </div>
-            </main>
-        </div>
-        <% } else { %>
-            <!-- Public Navbar -->
-            <% if (path !=='/auth/login' ) { %>
-                <nav class="public-navbar">
-                    <div class="container">
-                        <a href="/home" class="nav-brand">
-                            <img src="<%= brandLogo %>" alt="Logo"
-                                style="height: 32px; margin-right: 10px; vertical-align: middle; object-fit: contain;">
-                            <span>
-                                <%= brandName %>
-                            </span>
-                        </a>
-                        <div class="nav-links">
-                            <a href="/home"
-                                class="nav-link <%= path === '/home' || path === '/' || path.startsWith('/products') || path.startsWith('/product/') ? 'active' : '' %>">
-                                <i class="fa-solid fa-boxes-stacked"></i>
-                                <span>Home</span>
-                            </a>
-                            <a href="/packages"
-                                class="nav-link <%= path.startsWith('/packages') || path.startsWith('/package/') ? 'active' : '' %>">
-                                <i class="fa-solid fa-box-open"></i>
-                                <span>Packages</span>
-                            </a>
-                            <a href="/auth/login" class="nav-link <%= path === '/auth/login' ? 'active' : '' %>">
-                                <i class="fa-solid fa-user-shield"></i>
-                                <span>Login</span>
-                            </a>
+            <div class="main-wrapper">
+                <nav class="sidebar no-transition">
+                    <script>
+                        // Prevent animation on page load
+                        (function () {
+                            const sections = ['marketingSection', 'catalogSection'];
+                            sections.forEach(id => {
+                                const savedState = localStorage.getItem('sidebar-section-' + id);
+                                if (savedState) {
+                                    document.addEventListener('DOMContentLoaded', function () {
+                                        const el = document.getElementById(id);
+                                        if (el) {
+                                            if (savedState === 'expanded') el.classList.remove('collapsed');
+                                            else el.classList.add('collapsed');
+                                        }
+                                    });
+                                }
+                            });
+                        })();
+                    </script>
+                    <div class="sidebar-header">
+                        <div class="sidebar-icon-box">
+                            <i class="fa-solid fa-box-open"></i>
                         </div>
+                        <span style="font-size: 1.1rem; font-weight: 700; letter-spacing: -0.5px; text-align: center;">
+                            <%= brandName %>
+                        </span>
+                    </div>
+                    <div class="sidebar-nav">
+                        <a href="/admin" class="sidebar-link <%= path === '/admin' ? 'active' : '' %>">
+                            <i class="fa-solid fa-chart-line"></i> Dashboard
+                        </a>
+
+                        <!-- Marketing Section -->
+                        <% const isMarketingActive=path.startsWith('/admin/marketing'); %>
+                            <div id="marketingSection"
+                                class="sidebar-section <%= isMarketingActive ? '' : 'collapsed' %>">
+                                <div class="sidebar-section-header">
+                                    <span>Marketing & Materials</span>
+                                    <i class="fa-solid fa-chevron-down chevron"></i>
+                                </div>
+                                <div class="sidebar-section-content">
+                                    <a href="/admin/marketing/materials?category=BROCHURE"
+                                        class="sidebar-link <%= (path === '/admin/marketing/materials' && query.category === 'BROCHURE') ? 'active' : '' %>">
+                                        <i class="fa-solid fa-book-open"></i> Brochures
+                                    </a>
+                                    <a href="/admin/marketing/materials?category=FLIERS"
+                                        class="sidebar-link <%= (path === '/admin/marketing/materials' && query.category === 'FLIERS') ? 'active' : '' %>">
+                                        <i class="fa-solid fa-paper-plane"></i> Fliers
+                                    </a>
+                                    <a href="/admin/marketing/materials?category=ROLL-UP"
+                                        class="sidebar-link <%= (path === '/admin/marketing/materials' && query.category === 'ROLL-UP') ? 'active' : '' %>">
+                                        <i class="fa-solid fa-scroll"></i> Roll-Ups
+                                    </a>
+                                    <a href="/admin/marketing/materials?category=POSTER"
+                                        class="sidebar-link <%= (path === '/admin/marketing/materials' && query.category === 'POSTER') ? 'active' : '' %>">
+                                        <i class="fa-solid fa-image"></i> Posters
+                                    </a>
+                                    <a href="/admin/marketing/materials?category=BACK-DROP"
+                                        class="sidebar-link <%= (path === '/admin/marketing/materials' && query.category === 'BACK-DROP') ? 'active' : '' %>">
+                                        <i class="fa-solid fa-panorama"></i> Back-Drops
+                                    </a>
+                                    <a href="/admin/marketing/events"
+                                        class="sidebar-link <%= path.startsWith('/admin/marketing/events') ? 'active' : '' %>">
+                                        <i class="fa-solid fa-calendar-days"></i> Events
+                                    </a>
+                                    <a href="/admin/marketing/testimonies"
+                                        class="sidebar-link <%= path.startsWith('/admin/marketing/testimonies') ? 'active' : '' %>">
+                                        <i class="fa-solid fa-comment-dots"></i> Testimonies
+                                    </a>
+                                </div>
+                            </div>
+
+                            <!-- Product Management Section -->
+                            <% const isCatalogActive=path.startsWith('/admin/products') ||
+                                path.startsWith('/admin/packages') || path.startsWith('/admin/suppliers') ||
+                                path.startsWith('/admin/companies'); %>
+                                <div id="catalogSection"
+                                    class="sidebar-section <%= isCatalogActive ? '' : 'collapsed' %>">
+                                    <div class="sidebar-section-header">
+                                        <span>Catalog Management</span>
+                                        <i class="fa-solid fa-chevron-down chevron"></i>
+                                    </div>
+                                    <div class="sidebar-section-content">
+                                        <a href="/admin/packages"
+                                            class="sidebar-link <%= path.startsWith('/admin/packages') ? 'active' : '' %>">
+                                            <i class="fa-solid fa-box-open"></i> Packages
+                                        </a>
+                                        <a href="/admin/products"
+                                            class="sidebar-link <%= path.startsWith('/admin/products') ? 'active' : '' %>">
+                                            <i class="fa-solid fa-boxes-stacked"></i> Products
+                                        </a>
+                                        <a href="/admin/suppliers"
+                                            class="sidebar-link <%= path.startsWith('/admin/suppliers') ? 'active' : '' %>">
+                                            <i class="fa-solid fa-truck-field"></i> Suppliers
+                                        </a>
+                                        <a href="/admin/companies"
+                                            class="sidebar-link <%= path.startsWith('/admin/companies') ? 'active' : '' %>">
+                                            <i class="fa-solid fa-building"></i> Companies
+                                        </a>
+                                    </div>
+                                </div>
+
+                                <a href="/admin/settings"
+                                    class="sidebar-link <%= path.startsWith('/admin/settings') ? 'active' : '' %>">
+                                    <i class="fa-solid fa-gear"></i> Settings
+                                </a>
+                    </div>
+                    <div class="sidebar-footer">
+                        <a href="/home" target="_blank" class="sidebar-link">
+                            <i class="fa-solid fa-external-link-alt"></i> View Public Site
+                        </a>
+                        <a href="/auth/logout" class="sidebar-link">
+                            <i class="fa-solid fa-sign-out-alt"></i> Logout
+                        </a>
                     </div>
                 </nav>
-                <% } %>
 
-                    <%- body %>
-
-                        <% if (path !=='/auth/login' ) { %>
-                            <footer
-                                style="background-color: var(--blue-darkest); color: var(--blue-lightest); padding: 3rem 0; margin-top: 4rem;">
-                                <div class="container text-center">
-                                    <p>&copy; <%= new Date().getFullYear() %>
-                                            <%= brandName %> System. All
-                                                rights
-                                                reserved.</p>
-                                </div>
-                            </footer>
-                            <% } %>
-                                <% } %>
-
-                                    <% if (locals.user) { %>
-                                        <script>
-                                            document.addEventListener('DOMContentLoaded', () => {
-                                                const sidebar = document.querySelector('.sidebar');
-                                                const sidebarToggle = document.querySelector('#sidebarToggle');
-                                                const backdrop = document.querySelector('#sidebarBackdrop');
-
-                                                if (sidebarToggle) {
-                                                    sidebarToggle.addEventListener('click', () => {
-                                                        sidebar.classList.toggle('open');
-                                                        backdrop.classList.toggle('active');
-
-                                                        const icon = sidebarToggle.querySelector('i');
-                                                        if (sidebar.classList.contains('open')) {
-                                                            icon.className = 'fa-solid fa-xmark';
-                                                        } else {
-                                                            icon.className = 'fa-solid fa-bars';
-                                                        }
-                                                    });
-                                                }
-
-                                                if (backdrop) {
-                                                    backdrop.addEventListener('click', () => {
-                                                        sidebar.classList.remove('open');
-                                                        backdrop.classList.remove('active');
-                                                        const icon = sidebarToggle.querySelector('i');
-                                                        if (icon) {
-                                                            icon.className = 'fa-solid fa-bars';
-                                                        }
-                                                    });
-                                                }
-                                            });
-                                        </script>
+                <!-- Main Content -->
+                <main class="main-content">
+                    <div class="container">
+                        <%- body %>
+                    </div>
+                </main>
+            </div>
+            <% } else { %>
+                <!-- Public Navbar -->
+                <% if (path !=='/auth/login' ) { %>
+                    <nav class="public-navbar">
+                        <div class="container">
+                            <a href="<%= typeof companyBasePath !== 'undefined' ? companyBasePath + '/home' : '/home' %>"
+                                class="nav-brand">
+                                <img src="<%= brandLogo %>" alt="Logo"
+                                    style="height: 32px; margin-right: 10px; vertical-align: middle; object-fit: contain;">
+                                <span>
+                                    <%= brandName %>
+                                </span>
+                            </a>
+                            <div class="nav-links">
+                                <a href="<%= typeof companyBasePath !== 'undefined' ? companyBasePath + '/home' : '/home' %>"
+                                    class="nav-link <%= path.includes('/home') || path.includes('/products') || path.includes('/product/') ? 'active' : '' %>">
+                                    <i class="fa-solid fa-boxes-stacked"></i>
+                                    <span>Home</span>
+                                </a>
+                                <a href="<%= typeof companyBasePath !== 'undefined' ? companyBasePath + '/packages' : '/packages' %>"
+                                    class="nav-link <%= path.includes('/packages') || path.includes('/package/') ? 'active' : '' %>">
+                                    <i class="fa-solid fa-box-open"></i>
+                                    <span>Packages</span>
+                                </a>
+                                <% if (locals.user) { %>
+                                    <a href="/admin" class="nav-link">
+                                        <i class="fa-solid fa-gauge-high"></i>
+                                        <span>Panel</span>
+                                    </a>
+                                    <% } else { %>
+                                        <a href="/auth/login"
+                                            class="nav-link <%= path === '/auth/login' ? 'active' : '' %>">
+                                            <i class="fa-solid fa-user-shield"></i>
+                                            <span>Login</span>
+                                        </a>
                                         <% } %>
+                            </div>
+                        </div>
+                    </nav>
+                    <% } %>
+
+                        <%- body %>
+
+                            <% if (path !=='/auth/login' ) { %>
+                                <footer class="main-footer">
+                                    <!-- Decorative SVG Pattern -->
+                                    <div class="footer-decorative-pattern">
+                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="none">
+                                            <path
+                                                d="M 128 256 L 64 256 L 64 192 L 128 192 Z M 256 256 L 192 256 L 192 192 L 256 192 Z M 64 192 L 0 192 L 0 128 L 64 128 Z M 192 192 L 128 192 L 128 128 L 192 128 Z M 128 128 L 64 128 L 64 64 L 128 64 Z M 256 128 L 192 128 L 192 64 L 256 64 Z M 64 64 L 0 64 L 0 0 L 64 0 Z M 192 64 L 128 64 L 128 0 L 192 0 Z"
+                                                fill="white"></path>
+                                        </svg>
+                                    </div>
+                                    <div class="container">
+                                        <div class="footer-grid">
+                                            <!-- Brand Column -->
+                                            <div class="footer-brand">
+                                                <a href="<%= typeof companyBasePath !== 'undefined' ? companyBasePath + '/home' : '/home' %>"
+                                                    class="footer-logo">
+                                                    <img src="<%= brandLogo %>" alt="Logo">
+                                                    <span>
+                                                        <%= brandName %>
+                                                    </span>
+                                                </a>
+                                                <p class="footer-description">
+                                                    Leading provider of innovative healthcare solutions and high-quality
+                                                    medical equipment. Committed to excellence in patient care and
+                                                    medical technology.
+                                                </p>
+                                            </div>
+
+                                            <!-- Quick Links -->
+                                            <div>
+                                                <h4 class="footer-title">Quick Links</h4>
+                                                <ul class="footer-links">
+                                                    <li><a
+                                                            href="<%= typeof companyBasePath !== 'undefined' ? companyBasePath + '/home' : '/home' %>"><i
+                                                                class="fa-solid fa-chevron-right"></i> Home</a></li>
+                                                    <li><a
+                                                            href="<%= typeof companyBasePath !== 'undefined' ? companyBasePath + '/products' : '/products' %>"><i
+                                                                class="fa-solid fa-chevron-right"></i> Our Products</a>
+                                                    </li>
+                                                    <li><a
+                                                            href="<%= typeof companyBasePath !== 'undefined' ? companyBasePath + '/packages' : '/packages' %>"><i
+                                                                class="fa-solid fa-chevron-right"></i> Special
+                                                            Packages</a></li>
+                                                </ul>
+                                            </div>
+
+                                            <!-- Contact Info -->
+                                            <div>
+                                                <h4 class="footer-title">Contact Us</h4>
+                                                <% if (locals.currentCompany) { %>
+                                                    <% if (currentCompany.address) { %>
+                                                        <div class="footer-contact-item">
+                                                            <div class="contact-icon"><i
+                                                                    class="fa-solid fa-location-dot"></i></div>
+                                                            <div class="contact-text">
+                                                                <strong>Address</strong>
+                                                                <%= currentCompany.address %>
+                                                            </div>
+                                                        </div>
+                                                        <% } %>
+                                                            <% if (currentCompany.contact_number) { %>
+                                                                <div class="footer-contact-item">
+                                                                    <div class="contact-icon"><i
+                                                                            class="fa-solid fa-phone"></i></div>
+                                                                    <div class="contact-text">
+                                                                        <strong>Phone</strong>
+                                                                        <%= currentCompany.contact_number %>
+                                                                    </div>
+                                                                </div>
+                                                                <% } %>
+                                                                    <% if (currentCompany.email) { %>
+                                                                        <div class="footer-contact-item">
+                                                                            <div class="contact-icon"><i
+                                                                                    class="fa-solid fa-envelope"></i>
+                                                                            </div>
+                                                                            <div class="contact-text">
+                                                                                <strong>Email</strong>
+                                                                                <%= currentCompany.email %>
+                                                                            </div>
+                                                                        </div>
+                                                                        <% } %>
+                                                                            <% } else { %>
+                                                                                <div class="footer-contact-item">
+                                                                                    <div class="contact-icon"><i
+                                                                                            class="fa-solid fa-location-dot"></i>
+                                                                                    </div>
+                                                                                    <div class="contact-text">
+                                                                                        <strong>Address</strong>
+                                                                                        QSS Healthcare Solutions, Global
+                                                                                        HQ
+                                                                                    </div>
+                                                                                </div>
+                                                                                <div class="footer-contact-item">
+                                                                                    <div class="contact-icon"><i
+                                                                                            class="fa-solid fa-envelope"></i>
+                                                                                    </div>
+                                                                                    <div class="contact-text">
+                                                                                        <strong>Email</strong>
+                                                                                        info@qsshealthcare.com
+                                                                                    </div>
+                                                                                </div>
+                                                                                <% } %>
+                                            </div>
+                                        </div>
+
+                                        <div class="footer-bottom">
+                                            <div>
+                                                &copy; <%= new Date().getFullYear() %> <strong>
+                                                        <%= brandName %>
+                                                    </strong>.
+                                                    <% if (locals.currentCompany && currentCompany.reg_no) { %>
+                                                        <span class="footer-reg-no">
+                                                            Reg No: <%= currentCompany.reg_no %>
+                                                        </span>
+                                                        <% } %>
+                                            </div>
+                                            <div>
+                                                All rights reserved.
+                                            </div>
+                                        </div>
+                                    </div>
+                                </footer>
+                                <% } %>
+                                    <% } %>
+
+                                        <% if (showAdminSidebar) { %>
+                                            <script>
+                                                document.addEventListener('DOMContentLoaded', () => {
+                                                    const sidebar = document.querySelector('.sidebar');
+                                                    const sidebarToggle = document.querySelector('#sidebarToggle');
+                                                    const backdrop = document.querySelector('#sidebarBackdrop');
+
+                                                    // Remove no-transition after initial state is applied
+                                                    setTimeout(() => {
+                                                        sidebar.classList.remove('no-transition');
+                                                    }, 100);
+
+                                                    if (sidebarToggle) {
+                                                        sidebarToggle.addEventListener('click', () => {
+                                                            sidebar.classList.toggle('open');
+                                                            backdrop.classList.toggle('active');
+
+                                                            const icon = sidebarToggle.querySelector('i');
+                                                            if (sidebar.classList.contains('open')) {
+                                                                icon.className = 'fa-solid fa-xmark';
+                                                            } else {
+                                                                icon.className = 'fa-solid fa-bars';
+                                                            }
+                                                        });
+                                                    }
+
+                                                    if (backdrop) {
+                                                        backdrop.addEventListener('click', () => {
+                                                            sidebar.classList.remove('open');
+                                                            backdrop.classList.remove('active');
+                                                            const icon = sidebarToggle.querySelector('i');
+                                                            if (icon) {
+                                                                icon.className = 'fa-solid fa-bars';
+                                                            }
+                                                        });
+                                                    }
+
+                                                    // Collapsible Sections
+                                                    document.querySelectorAll('.sidebar-section-header').forEach(header => {
+                                                        const section = header.parentElement;
+                                                        const sectionId = section.id;
+
+                                                        header.addEventListener('click', () => {
+                                                            section.classList.toggle('collapsed');
+
+                                                            // Save state
+                                                            if (sectionId) {
+                                                                const isCollapsed = section.classList.contains('collapsed');
+                                                                localStorage.setItem('sidebar-section-' + sectionId, isCollapsed ? 'collapsed' : 'expanded');
+                                                            }
+                                                        });
+                                                    });
+                                                });
+                                            </script>
+                                            <% } %>
 </body>
 
 </html>

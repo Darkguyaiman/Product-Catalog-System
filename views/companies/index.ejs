@@ -14,7 +14,7 @@
                     <tr>
                         <th style="width: 80px;">Logo</th>
                         <th>Company Name</th>
-                        <th>Subdomain</th>
+                        <th>Shortname</th>
                         <th>Registration Info</th>
                         <th>Contact Info</th>
                         <th style="width: 120px; text-align: center;">Actions</th>
@@ -51,18 +51,24 @@
                                         </div>
                                     </td>
                                     <td>
-                                        <% if(c.subdomain) { %>
+                                        <% if(c.shortname) { %>
                                             <code
                                                 style="background: var(--gray-100); padding: 2px 6px; border-radius: 4px; font-size: 0.85rem; color: var(--blue-medium);">
-                                                <%= c.subdomain %>
+                                                <%= c.shortname %>
                                             </code>
-                                            <div style="font-size: 0.75rem; color: var(--gray-400); margin-top: 4px;">
-                                                <a href="http://<%= c.subdomain %>.<%= baseDomain %>:<%= port %>"
-                                                    target="_blank"
+                                            <div
+                                                style="font-size: 0.75rem; color: var(--gray-400); margin-top: 4px; display: flex; gap: 8px; align-items: center;">
+                                                <a href="/<%= c.shortname %>/home" target="_blank"
                                                     style="color: var(--blue-medium); text-decoration: none;">
                                                     <i class="fas fa-external-link-alt" style="font-size: 0.7rem;"></i>
                                                     Open
                                                 </a>
+                                                <button onclick="copyFullUrl('<%= c.shortname %>')"
+                                                    style="background: none; border: none; color: var(--gray-500); cursor: pointer; font-size: 0.75rem; padding: 0; display: flex; align-items: center; gap: 4px;"
+                                                    title="Copy full URL">
+                                                    <i class="fas fa-copy" style="font-size: 0.7rem;"></i>
+                                                    Copy URL
+                                                </button>
                                             </div>
                                             <% } else { %>
                                                 <span style="color: var(--gray-400); font-size: 0.85rem;">None</span>
@@ -158,6 +164,18 @@
                                     <%= c.website %>
                                 </div>
                                 <% } %>
+                                    <% if(c.shortname) { %>
+                                        <div style="margin-top: 10px; display: flex; gap: 10px;">
+                                            <a href="/<%= c.shortname %>/home" target="_blank"
+                                                class="btn btn-secondary btn-sm" style="font-size: 0.75rem;">
+                                                <i class="fas fa-external-link-alt"></i> Open Catalog
+                                            </a>
+                                            <button onclick="copyFullUrl('<%= c.shortname %>')"
+                                                class="btn btn-secondary btn-sm" style="font-size: 0.75rem;">
+                                                <i class="fas fa-copy"></i> Copy URL
+                                            </button>
+                                        </div>
+                                        <% } %>
                 </div>
             </div>
             <% }) %>
@@ -197,6 +215,41 @@
 
     function closeAllModals() {
         document.getElementById('modalOverlay').style.display = 'none';
+    }
+
+    function copyFullUrl(shortname) {
+        const fullUrl = window.location.origin + '/' + shortname + '/home';
+        navigator.clipboard.writeText(fullUrl).then(() => {
+            showToast('URL Copied to clipboard!');
+        }).catch(err => {
+            console.error('Failed to copy: ', err);
+        });
+    }
+
+    function showToast(message) {
+        // Simple toast implementation
+        const toast = document.createElement('div');
+        toast.style.position = 'fixed';
+        toast.style.bottom = '20px';
+        toast.style.left = '50%';
+        toast.style.transform = 'translateX(-50%)';
+        toast.style.background = 'var(--blue-darkest)';
+        toast.style.color = 'white';
+        toast.style.padding = '10px 20px';
+        toast.style.borderRadius = '8px';
+        toast.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
+        toast.style.zIndex = '9999';
+        toast.style.fontSize = '0.9rem';
+        toast.style.fontWeight = '500';
+        toast.innerHTML = `<i class="fas fa-check-circle" style="margin-right: 8px; color: #4ade80;"></i> ${message}`;
+
+        document.body.appendChild(toast);
+
+        setTimeout(() => {
+            toast.style.opacity = '0';
+            toast.style.transition = 'opacity 0.5s';
+            setTimeout(() => toast.remove(), 500);
+        }, 3000);
     }
 
     window.onclick = function (event) {

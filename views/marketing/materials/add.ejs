@@ -1,7 +1,10 @@
 <div class="companies-page">
     <div class="card-header companies-header">
-        <h1>Add Marketing Material</h1>
-        <a href="/admin/marketing/materials" class="btn btn-secondary btn-sm" title="Go Back">
+        <h1 id="pageTitle">Add <%= selectedCategory ? (selectedCategory.charAt(0) +
+                selectedCategory.slice(1).toLowerCase()) : 'Marketing Material' %>
+        </h1>
+        <a href="/admin/marketing/materials<%= selectedCategory ? '?category=' + selectedCategory : '' %>"
+            class="btn btn-secondary btn-sm" title="Go Back">
             <i class="fas fa-arrow-left"></i>
         </a>
     </div>
@@ -11,6 +14,39 @@
             <div class="form-group">
                 <label>Title/Name <span style="color: var(--danger);">*</span></label>
                 <input type="text" name="name" required placeholder="e.g. Q4 Product Catalog">
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                <% if (!selectedCategory) { %>
+                    <div class="form-group">
+                        <label>Material Category <span style="color: var(--danger);">*</span></label>
+                        <select name="category" id="categoryInput" required>
+                            <% MATERIAL_CATEGORIES.forEach(cat=> { %>
+                                <option value="<%= cat %>" <%=(typeof selectedCategory !=='undefined' &&
+                                    selectedCategory===cat) ? 'selected' : '' %>>
+                                    <%= cat %>
+                                </option>
+                                <% }) %>
+                        </select>
+                    </div>
+                    <% } else { %>
+                        <input type="hidden" name="category" id="categoryInput" value="<%= selectedCategory %>">
+                        <% } %>
+
+                            <div class="form-group" id="companyGroup" style="display: block;">
+                                <label>Affiliated Company</label>
+                                <select name="company_id">
+                                    <option value="">General (All Companies)</option>
+                                    <% companies.forEach(c=> { %>
+                                        <option value="<%= c.id %>">
+                                            <%= c.name %>
+                                        </option>
+                                        <% }) %>
+                                </select>
+                                <p style="font-size: 0.75rem; color: var(--gray-500); margin-top: 4px;">
+                                    Specify a company if this brochure is tailored for them.
+                                </p>
+                            </div>
             </div>
 
             <div class="form-group">
@@ -121,6 +157,36 @@
 
 <script>
     document.addEventListener('DOMContentLoaded', () => {
+        // Toggle Company Select logic
+        const categoryInput = document.getElementById('categoryInput');
+        const companyGroup = document.getElementById('companyGroup');
+
+        function toggleCompanyGroup() {
+            if (categoryInput.value === 'BROCHURE') {
+                companyGroup.style.display = 'block';
+            } else {
+                companyGroup.style.display = 'none';
+            }
+        }
+
+        function updatePageTitle() {
+            const val = categoryInput.value;
+            const pageTitle = document.getElementById('pageTitle');
+            if (val) {
+                const formatted = val.charAt(0) + val.slice(1).toLowerCase();
+                pageTitle.textContent = 'Add ' + formatted;
+            } else {
+                pageTitle.textContent = 'Add Marketing Material';
+            }
+        }
+
+        categoryInput.addEventListener('change', () => {
+            toggleCompanyGroup();
+            updatePageTitle();
+        });
+        toggleCompanyGroup();
+        updatePageTitle();
+
         // Chip Logic
         const wrapper = document.getElementById('productChipWrapper');
         const selectInput = document.getElementById('productSelectInput');

@@ -2,9 +2,10 @@
     <div class="package-hero-v2">
         <div class="container">
             <nav class="breadcrumb-v2">
-                <a href="/home">Home</a>
+                <a href="<%= typeof companyBasePath !== 'undefined' ? companyBasePath + '/home' : '/home' %>">Home</a>
                 <span class="sep">/</span>
-                <a href="/packages">Packages</a>
+                <a
+                    href="<%= typeof companyBasePath !== 'undefined' ? companyBasePath + '/packages' : '/packages' %>">Packages</a>
                 <span class="sep">/</span>
                 <span class="active">
                     <%= package.name %>
@@ -93,7 +94,8 @@
 
         <div class="products-grid">
             <% package.products.forEach(p=> { %>
-                <a href="/product/<%= p.id %>" class="product-card">
+                <a href="<%= typeof companyBasePath !== 'undefined' ? companyBasePath + '/product/' + p.id : '/product/' + p.id %>"
+                    class="product-card">
                     <div class="product-image-box">
                         <% if (p.main_image) { %>
                             <img src="<%= p.main_image %>" alt="<%= p.model %>">

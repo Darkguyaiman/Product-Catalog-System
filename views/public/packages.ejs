@@ -6,7 +6,9 @@
             <p class="header-subtitle">Optimized bundles for professional medical environments.</p>
         </div>
         <div class="header-actions">
-            <form method="GET" action="/packages" class="search-form-v2">
+            <form method="GET"
+                action="<%= typeof companyBasePath !== 'undefined' ? companyBasePath + '/packages' : '/packages' %>"
+                class="search-form-v2">
                 <div class="search-input-wrapper">
                     <i class="fa-solid fa-magnifying-glass"></i>
                     <input type="text" name="search" placeholder="Search bundles..."
@@ -24,11 +26,13 @@
             <% if (typeof search !=='undefined' && search) { %>
                 <h3>No bundles match your search</h3>
                 <p>Try using different keywords or browse all our available medical packages.</p>
-                <a href="/packages" class="btn-clear-v2">Clear Search</a>
+                <a href="<%= typeof companyBasePath !== 'undefined' ? companyBasePath + '/packages' : '/packages' %>"
+                    class="btn-clear-v2">Clear Search</a>
                 <% } else { %>
                     <h3>No bundles available yet</h3>
                     <p>We are currently curating new packages. Please check back soon.</p>
-                    <a href="/products" class="btn-clear-v2">Browse All Products</a>
+                    <a href="<%= typeof companyBasePath !== 'undefined' ? companyBasePath + '/products' : '/products' %>"
+                        class="btn-clear-v2">Browse All Products</a>
                     <% } %>
         </div>
         <% } else { %>
@@ -64,8 +68,8 @@
                                                 <% } %>
                             </div>
 
-                            <a href="/package/<%= pkg.id %>" class="btn-package">View Bundle Details <i
-                                    class="fa-solid fa-arrow-right"></i></a>
+                            <a href="<%= typeof companyBasePath !== 'undefined' ? companyBasePath + '/package/' + pkg.id : '/package/' + pkg.id %>"
+                                class="btn-package">View Bundle Details <i class="fa-solid fa-arrow-right"></i></a>
                         </div>
 
                         <div class="package-preview">

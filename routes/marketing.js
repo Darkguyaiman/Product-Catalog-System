@@ -6,6 +6,8 @@ const path = require('path');
 const sharp = require('sharp');
 const fs = require('fs');
 
+const MATERIAL_CATEGORIES = ['BROCHURE', 'FLIERS', 'ROLL-UP', 'POSTER', 'BACK-DROP'];
+
 // Configure Multer for Marketing Uploads
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
@@ -31,18 +33,23 @@ router.use((req, res, next) => {
 });
 
 // Helper to build WHERE clause
-const buildWhere = (search, productId, linkTable, linkIdCol) => {
+const buildWhere = (search, productId, category, linkTable, linkIdCol) => {
     let conditions = [];
     let params = [];
 
     if (search) {
-        conditions.push(`(name LIKE ?)`);
+        conditions.push(`(m.name LIKE ?)`);
         params.push(`%${search}%`);
     }
 
     if (productId) {
-        conditions.push(`id IN (SELECT ${linkIdCol} FROM ${linkTable} WHERE product_id = ?)`);
+        conditions.push(`m.id IN (SELECT ${linkIdCol} FROM ${linkTable} WHERE product_id = ?)`);
         params.push(productId);
+    }
+
+    if (category) {
+        conditions.push(`m.category = ?`);
+        params.push(category);
     }
 
     return { where: conditions.length ? 'WHERE ' + conditions.join(' AND ') : '', params };
@@ -66,24 +73,31 @@ const buildTestimonyWhere = (search, productId) => {
 };
 
 const getMarketingData = async (req) => {
-    const { search, product_id } = req.query;
+    const { search, product_id, category } = req.query;
 
     // Materials
-    const mQ = buildWhere(search, product_id, 'product_marketing', 'material_id');
+    const mQ = buildWhere(search, product_id, category, 'product_marketing', 'material_id');
     const [marketing] = await pool.query(`
-        SELECT m.*, 
+        SELECT m.*, c.name as company_name,
         (SELECT GROUP_CONCAT(product_id) FROM product_marketing WHERE material_id = m.id) as product_ids 
-        FROM marketing_materials m ${mQ.where} ORDER BY m.id DESC`, mQ.params);
+        FROM marketing_materials m 
+        LEFT JOIN affiliated_companies c ON m.company_id = c.id
+        ${mQ.where} ORDER BY m.id DESC`, mQ.params);
 
-    // Events
-    const eQ = buildWhere(search, product_id, 'product_events', 'event_id');
+    // Events (adjusted to handle buildWhere's m. prefix if we reused it, but we won't for simplicity)
+    const eW = [];
+    const eP = [];
+    if (search) { eW.push('name LIKE ?'); eP.push(`%${search}%`); }
+    if (product_id) { eW.push('id IN (SELECT event_id FROM product_events WHERE product_id = ?)'); eP.push(product_id); }
+    const eWhere = eW.length ? 'WHERE ' + eW.join(' AND ') : '';
+
     const [events] = await pool.query(`
         SELECT e.*, 
         (SELECT GROUP_CONCAT(product_id) FROM product_events WHERE event_id = e.id) as product_ids,
         (SELECT GROUP_CONCAT(CONCAT(IFNULL(title, ''), '::', url) SEPARATOR '||') FROM event_links WHERE event_id = e.id) as links 
-        FROM events e ${eQ.where} ORDER BY e.start_date DESC`, eQ.params);
+        FROM events e ${eWhere} ORDER BY e.start_date DESC`, eP);
 
-    // Testimonies
+    // Testimonies (already has buildTestimonyWhere)
     const tQ = buildTestimonyWhere(search, product_id);
     const [testimonies] = await pool.query(`
         SELECT t.*, 
@@ -92,8 +106,19 @@ const getMarketingData = async (req) => {
         FROM testimonies t ${tQ.where} ORDER BY t.start_date DESC`, tQ.params);
 
     const [products] = await pool.query("SELECT id, code, model FROM products ORDER BY code ASC");
+    const [companies] = await pool.query("SELECT id, name FROM affiliated_companies ORDER BY name ASC");
 
-    return { marketing, events, testimonies, products, search: search || '', selectedProduct: product_id || '' };
+    return {
+        marketing,
+        events,
+        testimonies,
+        products,
+        companies,
+        search: search || '',
+        selectedProduct: product_id || '',
+        selectedCategory: category || 'BROCHURE',
+        MATERIAL_CATEGORIES
+    };
 };
 
 router.get('/', (req, res) => {
@@ -102,6 +127,9 @@ router.get('/', (req, res) => {
 
 router.get('/materials', async (req, res) => {
     try {
+        if (!req.query.category) {
+            return res.redirect('/admin/marketing/materials?category=BROCHURE');
+        }
         const data = await getMarketingData(req);
         res.render('marketing/index', { ...data, activeTab: 'materials' });
     } catch (err) {
@@ -211,11 +239,13 @@ router.post('/upload-chunk', chunkUpload.single('chunk'), async (req, res) => {
 
 router.get('/materials/add', async (req, res) => {
     const [products] = await pool.query("SELECT id, code, model FROM products ORDER BY code ASC");
-    res.render('marketing/materials/add', { products });
+    const [companies] = await pool.query("SELECT id, name FROM affiliated_companies ORDER BY name ASC");
+    const selectedCategory = req.query.category || '';
+    res.render('marketing/materials/add', { products, companies, MATERIAL_CATEGORIES, selectedCategory });
 });
 
 router.post('/materials/add', upload.single('file'), async (req, res) => {
-    const { name, product_ids, file_path, file_mime } = req.body;
+    const { name, category, company_id, product_ids, file_path, file_mime } = req.body;
     let filePath = file_path;
     let mimeType = file_mime;
 
@@ -252,7 +282,10 @@ router.post('/materials/add', upload.single('file'), async (req, res) => {
         connection = await pool.getConnection();
         await connection.beginTransaction();
 
-        const [result] = await connection.query("INSERT INTO marketing_materials (name, file_path, file_type) VALUES (?, ?, ?)", [name, filePath, mimeType || 'unknown']);
+        const [result] = await connection.query(
+            "INSERT INTO marketing_materials (name, category, company_id, file_path, file_type) VALUES (?, ?, ?, ?, ?)",
+            [name, category || 'BROCHURE', company_id || null, filePath, mimeType || 'unknown']
+        );
         const materialId = result.insertId;
 
         if (product_ids) {
@@ -280,12 +313,13 @@ router.get('/materials/edit/:id', async (req, res) => {
         if (rows.length === 0) return res.redirect('/admin/marketing/materials');
 
         const [products] = await pool.query("SELECT id, code, model FROM products ORDER BY code ASC");
+        const [companies] = await pool.query("SELECT id, name FROM affiliated_companies ORDER BY name ASC");
         const [related] = await pool.query("SELECT product_id FROM product_marketing WHERE material_id = ?", [req.params.id]);
 
         const material = rows[0];
         material.product_ids = related.map(r => r.product_id);
 
-        res.render('marketing/materials/edit', { material, products });
+        res.render('marketing/materials/edit', { material, products, companies, MATERIAL_CATEGORIES });
     } catch (err) {
         console.error(err);
         res.redirect('/admin/marketing/materials');
@@ -293,7 +327,7 @@ router.get('/materials/edit/:id', async (req, res) => {
 });
 
 router.post('/materials/edit/:id', upload.single('file'), async (req, res) => {
-    const { name, product_ids, existing_file, file_path, file_mime } = req.body;
+    const { name, category, company_id, product_ids, existing_file, file_path, file_mime } = req.body;
 
     let connection;
     try {
@@ -348,8 +382,8 @@ router.post('/materials/edit/:id', upload.single('file'), async (req, res) => {
             }
         }
 
-        let query = "UPDATE marketing_materials SET name = ?";
-        let params = [name];
+        let query = "UPDATE marketing_materials SET name = ?, category = ?, company_id = ?";
+        let params = [name, category || 'BROCHURE', company_id || null];
         if (finalFileType) {
             query += ", file_path = ?, file_type = ?";
             params.push(finalFilePath, finalFileType);
