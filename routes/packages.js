@@ -5,18 +5,16 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 
+const sharp = require('sharp');
+
 // Configure Multer for package image
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-        const dir = 'public/uploads/packages';
-        if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-        cb(null, dir);
-    },
-    filename: (req, file, cb) => {
-        cb(null, Date.now() + path.extname(file.originalname));
-    }
+const storage = multer.memoryStorage();
+const upload = multer({
+    storage: storage,
+    limits: { fileSize: 5 * 1024 * 1024 } // 5MB limit for normal uploads
 });
-const upload = multer({ storage: storage });
+
+const chunkUpload = multer({ storage: multer.memoryStorage() });
 
 router.use((req, res, next) => {
     if (!req.session.user) return res.redirect('/auth/login');
@@ -46,6 +44,65 @@ router.get('/', async (req, res) => {
     }
 });
 
+// Chunked Upload Route for Packages
+router.post('/upload-chunk', chunkUpload.single('chunk'), async (req, res) => {
+    try {
+        const { fileId, chunkIndex, totalChunks, fileName } = req.body;
+        const chunkDir = path.join(__dirname, '../temp/chunks', fileId);
+
+        if (!fs.existsSync(chunkDir)) {
+            fs.mkdirSync(chunkDir, { recursive: true });
+        }
+
+        const chunkPath = path.join(chunkDir, `chunk-${chunkIndex}`);
+        fs.writeFileSync(chunkPath, req.file.buffer);
+
+        const uploadedChunks = fs.readdirSync(chunkDir).length;
+
+        if (uploadedChunks === parseInt(totalChunks)) {
+            // Reassemble
+            const chunks = [];
+            let totalSize = 0;
+            for (let i = 0; i < totalChunks; i++) {
+                const chunkData = fs.readFileSync(path.join(chunkDir, `chunk-${i}`));
+                totalSize += chunkData.length;
+                if (totalSize > 5 * 1024 * 1024) { // 5MB limit
+                    fs.rmSync(chunkDir, { recursive: true, force: true });
+                    return res.status(400).json({ success: false, error: 'File too large. Max 5MB.' });
+                }
+                chunks.push(chunkData);
+            }
+            const completeBuffer = Buffer.concat(chunks);
+
+            // Process with Sharp
+            const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+            const uploadDir = path.join(__dirname, '../public/uploads/packages');
+            if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
+
+            const filename = `pkg-${uniqueSuffix}.webp`;
+            await sharp(completeBuffer)
+                .resize({ width: 1200, height: 1200, fit: 'inside', withoutEnlargement: true })
+                .webp({ quality: 75, effort: 6 })
+                .toFile(path.join(uploadDir, filename));
+
+            const finalPath = '/uploads/packages/' + filename;
+
+            // Clean up chunks
+            fs.rmSync(chunkDir, { recursive: true, force: true });
+
+            return res.json({
+                success: true,
+                filePath: finalPath
+            });
+        }
+
+        res.json({ success: true, message: 'Chunk uploaded' });
+    } catch (err) {
+        console.error('Package chunk upload error:', err);
+        res.status(500).json({ success: false, error: 'Chunk upload failed' });
+    }
+});
+
 // Create package form
 router.get('/create', async (req, res) => {
     try {
@@ -59,8 +116,20 @@ router.get('/create', async (req, res) => {
 
 // Create package action
 router.post('/create', upload.single('main_image'), async (req, res) => {
-    const { name, description, bundle_label, product_ids, spec_icons, spec_texts } = req.body;
-    const main_image = req.file ? `/uploads/packages/${req.file.filename}` : null;
+    const { name, description, bundle_label, product_ids, spec_icons, spec_texts, main_image_path } = req.body;
+    let main_image = main_image_path || null;
+
+    if (req.file && !main_image) {
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+        const uploadDir = path.join(__dirname, '../public/uploads/packages');
+        if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
+        const filename = `pkg-${uniqueSuffix}.webp`;
+        await sharp(req.file.buffer)
+            .resize({ width: 1200, height: 1200, fit: 'inside', withoutEnlargement: true })
+            .webp({ quality: 75, effort: 6 })
+            .toFile(path.join(uploadDir, filename));
+        main_image = '/uploads/packages/' + filename;
+    }
 
     let connection;
     try {
@@ -145,24 +214,48 @@ router.get('/edit/:id', async (req, res) => {
 
 // Edit package action
 router.post('/edit/:id', upload.single('main_image'), async (req, res) => {
-    const { name, description, bundle_label, product_ids, spec_icons, spec_texts } = req.body;
+    const { name, description, bundle_label, product_ids, spec_icons, spec_texts, main_image_path, remove_main_image } = req.body;
     const packageId = req.params.id;
 
     let connection;
     try {
         connection = await pool.getConnection();
-        await connection.beginTransaction();
 
-        // Handle image update
-        let imageUpdateSql = 'UPDATE packages SET name = ?, description = ?, bundle_label = ? WHERE id = ?';
-        let imageUpdateParams = [name, description, bundle_label, packageId];
+        // Fetch current package for cleanup
+        const [currentRow] = await connection.query('SELECT main_image FROM packages WHERE id = ?', [packageId]);
+        const currentImage = currentRow.length > 0 ? currentRow[0].main_image : null;
 
-        if (req.file) {
-            imageUpdateSql = 'UPDATE packages SET name = ?, description = ?, bundle_label = ?, main_image = ? WHERE id = ?';
-            imageUpdateParams = [name, description, bundle_label, `/uploads/packages/${req.file.filename}`, packageId];
+        let main_image = main_image_path || currentImage;
+        if (remove_main_image === 'true') {
+            main_image = null;
         }
 
-        await connection.query(imageUpdateSql, imageUpdateParams);
+        if (req.file) {
+            const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+            const uploadDir = path.join(__dirname, '../public/uploads/packages');
+            if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
+            const filename = `pkg-${uniqueSuffix}.webp`;
+            await sharp(req.file.buffer)
+                .resize({ width: 1200, height: 1200, fit: 'inside', withoutEnlargement: true })
+                .webp({ quality: 75, effort: 6 })
+                .toFile(path.join(uploadDir, filename));
+            main_image = '/uploads/packages/' + filename;
+        }
+
+        // Cleanup old file if changed or removed
+        if (currentImage && (main_image !== currentImage || remove_main_image === 'true')) {
+            const oldPath = path.join(__dirname, '../public', currentImage);
+            if (fs.existsSync(oldPath)) {
+                try { fs.unlinkSync(oldPath); } catch (e) { console.error('Error deleting old package image:', e); }
+            }
+        }
+
+        await connection.beginTransaction();
+
+        await connection.query(
+            'UPDATE packages SET name = ?, description = ?, bundle_label = ?, main_image = ? WHERE id = ?',
+            [name, description, bundle_label, main_image, packageId]
+        );
 
         // Update products: delete old ones and insert new ones with order
         await connection.query('DELETE FROM package_products WHERE package_id = ?', [packageId]);
@@ -204,7 +297,15 @@ router.post('/edit/:id', upload.single('main_image'), async (req, res) => {
 
 // Delete package
 router.post('/delete/:id', async (req, res) => {
+    if (req.session.user.role !== 'Super Admin') return res.status(403).send('Unauthorized');
     try {
+        const [rows] = await pool.query('SELECT main_image FROM packages WHERE id = ?', [req.params.id]);
+        if (rows.length > 0 && rows[0].main_image) {
+            const p = path.join(__dirname, '../public', rows[0].main_image);
+            if (fs.existsSync(p)) {
+                try { fs.unlinkSync(p); } catch (e) { console.error('Error deleting package image on delete:', e); }
+            }
+        }
         await pool.query('DELETE FROM packages WHERE id = ?', [req.params.id]);
         res.redirect('/admin/packages');
     } catch (err) {

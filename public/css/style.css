@@ -460,6 +460,25 @@ a:hover {
     color: var(--gray-900);
 }
 
+.btn-outline-primary {
+    background-color: transparent;
+    color: var(--blue-medium);
+    border: 2px solid var(--blue-medium);
+}
+
+.btn-outline-primary:hover {
+    background-color: var(--blue-medium);
+    color: var(--white);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 6px rgba(0, 91, 150, 0.4);
+}
+
+.btn-lg {
+    padding: 1.25rem 2.5rem;
+    font-size: 1.1rem;
+    border-radius: var(--border-radius-lg);
+}
+
 .btn-danger {
     background-color: var(--danger);
     color: var(--white);
@@ -701,6 +720,21 @@ tr:hover td {
 .badge-success {
     background-color: #ecfdf5;
     color: #059669;
+}
+
+.badge-info {
+    background-color: #e0f2fe;
+    color: #0284c7;
+}
+
+.badge-danger {
+    background-color: #fef2f2;
+    color: #dc2626;
+}
+
+.badge-dark {
+    background-color: #1f2937;
+    color: #f9fafb;
 }
 
 .badge-outline {
@@ -1428,7 +1462,7 @@ tr:hover td {
     background: linear-gradient(135deg, var(--blue-darkest) 0%, #00122e 100%);
     color: var(--blue-lightest);
     padding: 5rem 0 2rem;
-    margin-top: 6rem;
+    margin-top: 3rem;
     position: relative;
     overflow: hidden;
 }
@@ -1515,20 +1549,20 @@ tr:hover td {
 }
 
 .footer-decorative-pattern svg path {
-    animation: svg-glow-flicker 8s infinite ease-in-out;
+    animation: svg-glow-flicker 6s infinite ease-in-out;
 }
 
 @keyframes svg-glow-flicker {
 
     0%,
     100% {
-        fill: rgba(255, 255, 255, 0.2);
-        filter: drop-shadow(0 0 8px rgba(0, 150, 255, 0.2));
+        fill: rgba(255, 255, 255, 0.15);
+        filter: drop-shadow(0 0 5px rgba(0, 150, 255, 0.15));
     }
 
     50% {
-        fill: rgba(255, 255, 255, 0.3);
-        filter: drop-shadow(0 0 15px rgba(0, 150, 255, 0.4));
+        fill: rgba(255, 255, 255, 0.45);
+        filter: drop-shadow(0 0 20px rgba(0, 150, 255, 0.6));
     }
 }
 

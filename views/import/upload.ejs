@@ -1,0 +1,643 @@
+<div class="page-header">
+    <div class="header-container-wrapper">
+        <div class="header-main-info">
+            <a href="/admin/import" class="back-btn" title="Back to selection">
+                <i class="fas fa-chevron-left"></i>
+            </a>
+            <div class="header-text-block">
+                <h1 class="page-title">
+                    Import <span style="color: <%= color %>;">
+                        <%= type %>
+                    </span>
+                </h1>
+                <p class="page-subtitle">Upload your spreadsheet to batch-process records.</p>
+            </div>
+        </div>
+        <a href="<%= templateUrl %>" target="_blank" class="download-template-btn">
+            <i class="fas fa-file-download"></i> <span class="d-none-mobile">Get Google Sheets Template</span><span
+                class="d-only-mobile">Template</span>
+        </a>
+    </div>
+</div>
+
+<% if (error) { %>
+    <div class="alert alert-danger pulse"
+        style="margin-bottom: 2rem; border-radius: 12px; display: flex; align-items: center; gap: 1rem;">
+        <i class="fas fa-exclamation-circle" style="font-size: 1.25rem;"></i>
+        <div>
+            <%= error %>
+        </div>
+    </div>
+    <% } %>
+
+        <% if (success) { %>
+            <div class="alert alert-success slideIn"
+                style="margin-bottom: 2rem; border-radius: 12px; display: flex; align-items: center; gap: 1rem;">
+                <i class="fas fa-check-circle" style="font-size: 1.25rem;"></i>
+                <div>
+                    <%= success %>
+                </div>
+            </div>
+            <% } %>
+
+                <!-- Results Modal -->
+                <% if (locals.results) { %>
+                    <div class="result-modal-backdrop" id="resultModal">
+                        <div class="result-modal slideIn">
+                            <div class="modal-header">
+                                <div class="header-main">
+                                    <div class="icon-circle <%= results.skipCount > 0 ? 'warning' : 'success' %>">
+                                        <i
+                                            class="fas <%= results.skipCount > 0 ? 'fa-exclamation-triangle' : 'fa-check-circle' %>"></i>
+                                    </div>
+                                    <div>
+                                        <h2>Import Results</h2>
+                                        <p>
+                                            <%= results.type %> synchronization complete
+                                        </p>
+                                    </div>
+                                </div>
+                                <button class="close-modal" onclick="closeModal()">&times;</button>
+                            </div>
+
+                            <div class="modal-body">
+                                <div class="stats-row">
+                                    <div class="stat-card success">
+                                        <span class="label">Added Successfully</span>
+                                        <span class="value">
+                                            <%= results.addedCount %>
+                                        </span>
+                                    </div>
+                                    <div class="stat-card <%= results.skipCount > 0 ? 'skipped' : 'none' %>">
+                                        <span class="label">Skipped Entries</span>
+                                        <span class="value">
+                                            <%= results.skipCount %>
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <% if (results.skippedItems && results.skippedItems.length> 0) { %>
+                                    <div class="error-list-container">
+                                        <div class="error-list-header">
+                                            <span>Skipped Items & Reasons</span>
+                                            <span class="badge">
+                                                <%= results.skippedItems.length %> items
+                                            </span>
+                                        </div>
+                                        <div class="error-list">
+                                            <% results.skippedItems.forEach(item=> { %>
+                                                <div class="error-item">
+                                                    <div class="item-name">
+                                                        <%= item.item %>
+                                                    </div>
+                                                    <div class="item-reason">
+                                                        <%= item.reason %>
+                                                    </div>
+                                                </div>
+                                                <% }) %>
+                                        </div>
+                                    </div>
+                                    <% } %>
+                            </div>
+
+                            <div class="modal-footer">
+                                <button class="btn btn-primary" style="width: 100%; height: 50px;"
+                                    onclick="closeModal()">
+                                    Got it, thanks!
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <% } %>
+
+                        <div class="upload-layout">
+                            <div class="upload-main">
+                                <div class="card" style="padding: 0; overflow: hidden; border-radius: 20px;">
+                                    <form action="<%= action %>" method="POST" enctype="multipart/form-data"
+                                        id="uploadForm">
+                                        <div class="drop-zone" id="dropZone"
+                                            style="border-width: 0; border-radius: 0; background: white; padding: 4rem 2rem;">
+                                            <input type="file" name="file" id="fileInput" accept=".xlsx, .xls, .csv"
+                                                class="hidden-input">
+
+                                            <div class="drop-zone-idle" id="idleState">
+                                                <div class="mega-icon-box"
+                                                    style="background: <%= color %>15; color: <%= color %>;">
+                                                    <i class="fas <%= icon %>"></i>
+                                                </div>
+                                                <h2 style="margin: 1.5rem 0 0.5rem 0;">Ready to upload?</h2>
+                                                <p
+                                                    style="color: var(--gray-500); max-width: 300px; margin: 0 auto 1.5rem auto;">
+                                                    Drag your saved spreadsheet here or click to browse your computer.
+                                                </p>
+                                                <button type="button" class="btn btn-secondary select-file-trigger">
+                                                    <i class="fas fa-folder-open"></i> Select File
+                                                </button>
+                                            </div>
+
+                                            <div class="drop-zone-active" id="activeState" style="display: none;">
+                                                <div class="mega-icon-box"
+                                                    style="background: <%= color %>; color: white;">
+                                                    <i class="fas fa-file-excel"></i>
+                                                </div>
+                                                <h2 id="stagedFileName"
+                                                    style="margin: 1.5rem 0 0.5rem 0; word-break: break-all; padding: 0 1rem;">
+                                                </h2>
+                                                <p style="color: var(--gray-500);">File ready for processing</p>
+                                                <div
+                                                    style="display: flex; gap: 1rem; justify-content: center; margin-top: 1.5rem;">
+                                                    <button type="button" class="btn btn-outline" id="clearFile">
+                                                        <i class="fas fa-times"></i> Change
+                                                    </button>
+                                                    <button type="submit" class="btn btn-primary"
+                                                        style="background: <%= color %>; border-color: <%= color %>;">
+                                                        <i class="fas fa-bolt"></i> Start Import
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+
+                            <div class="upload-sidebar">
+                                <div class="card" style="border-radius: 20px;">
+                                    <h3 style="margin-top: 0; margin-bottom: 1.5rem;">Instructions</h3>
+                                    <ul class="instruction-list">
+                                        <li><i class="fas fa-check-circle"></i> Use the provided template for best
+                                            results.</li>
+                                        <li><i class="fas fa-check-circle"></i> Don't change column headers in row 1.
+                                        </li>
+                                        <li><i class="fas fa-check-circle"></i> System will skip duplicates
+                                            automatically.</li>
+                                        <li><i class="fas fa-check-circle"></i> Supported formats: .xlsx, .csv, .xls
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+
+                        <style>
+                            /* Header & General */
+                            .header-container-wrapper {
+                                display: flex;
+                                align-items: center;
+                                justify-content: space-between;
+                                width: 100%;
+                                flex-wrap: wrap;
+                                gap: 1.25rem;
+                            }
+
+                            .header-main info {
+                                display: flex;
+                                align-items: center;
+                                gap: 1.25rem;
+                            }
+
+                            .header-text-block h1 {
+                                margin: 0;
+                                font-size: 1.75rem;
+                                display: flex;
+                                align-items: center;
+                                gap: 0.75rem;
+                            }
+
+                            .header-text-block p {
+                                margin: 0;
+                            }
+
+                            .back-btn {
+                                width: 44px;
+                                height: 44px;
+                                border-radius: 12px;
+                                background: var(--gray-50);
+                                display: flex;
+                                align-items: center;
+                                justify-content: center;
+                                color: var(--gray-600);
+                                text-decoration: none;
+                                transition: all 0.2s;
+                                flex-shrink: 0;
+                            }
+
+                            .back-btn:hover {
+                                background: var(--gray-200);
+                                color: var(--blue-medium);
+                            }
+
+                            .download-template-btn {
+                                text-decoration: none;
+                                color: var(--gray-600);
+                                font-weight: 600;
+                                font-size: 0.9rem;
+                                display: flex;
+                                align-items: center;
+                                gap: 0.6rem;
+                                padding: 0.75rem 1.25rem;
+                                border-radius: 12px;
+                                background: white;
+                                border: 1px solid var(--gray-200);
+                                transition: all 0.2s;
+                                white-space: nowrap;
+                            }
+
+                            .download-template-btn:hover {
+                                border-color: var(--blue-medium);
+                                color: var(--blue-medium);
+                                box-shadow: var(--shadow-sm);
+                            }
+
+                            .d-only-mobile {
+                                display: none;
+                            }
+
+                            /* Modal Styling */
+                            .result-modal-backdrop {
+                                position: fixed;
+                                top: 0;
+                                left: 0;
+                                width: 100vw;
+                                height: 100vh;
+                                background: rgba(15, 23, 42, 0.75);
+                                backdrop-filter: blur(8px);
+                                z-index: 9999;
+                                display: flex;
+                                align-items: center;
+                                justify-content: center;
+                                padding: 1.5rem;
+                                transition: opacity 0.3s ease;
+                            }
+
+                            .result-modal {
+                                background: white;
+                                width: 100%;
+                                max-width: 500px;
+                                border-radius: 24px;
+                                overflow: hidden;
+                                box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+                                transform: scale(1);
+                                transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+                            }
+
+                            .modal-header {
+                                padding: 1.75rem;
+                                background: var(--gray-50);
+                                border-bottom: 1px solid var(--gray-100);
+                                display: flex;
+                                justify-content: space-between;
+                                align-items: flex-start;
+                            }
+
+                            .header-main {
+                                display: flex;
+                                gap: 1rem;
+                                align-items: center;
+                            }
+
+                            .icon-circle {
+                                width: 48px;
+                                height: 48px;
+                                border-radius: 50%;
+                                display: flex;
+                                align-items: center;
+                                justify-content: center;
+                                font-size: 1.25rem;
+                            }
+
+                            .icon-circle.success {
+                                background: #dcfce7;
+                                color: #166534;
+                            }
+
+                            .icon-circle.warning {
+                                background: #fef3c7;
+                                color: #92400e;
+                            }
+
+                            .header-main h2 {
+                                margin: 0;
+                                font-size: 1.25rem;
+                                color: var(--gray-900);
+                            }
+
+                            .header-main p {
+                                margin: 0;
+                                font-size: 0.85rem;
+                                color: var(--gray-500);
+                            }
+
+                            .close-modal {
+                                background: none;
+                                border: none;
+                                font-size: 1.75rem;
+                                color: var(--gray-400);
+                                cursor: pointer;
+                                line-height: 1;
+                            }
+
+                            .modal-body {
+                                padding: 1.75rem;
+                            }
+
+                            .stats-row {
+                                display: grid;
+                                grid-template-columns: 1fr 1fr;
+                                gap: 1rem;
+                                margin-bottom: 1.5rem;
+                            }
+
+                            .stat-card {
+                                padding: 1.25rem;
+                                border-radius: 16px;
+                                display: flex;
+                                flex-direction: column;
+                                gap: 0.25rem;
+                            }
+
+                            .stat-card.success {
+                                background: #f0fdf4;
+                                border: 1px solid #dcfce7;
+                            }
+
+                            .stat-card.skipped {
+                                background: #fffbeb;
+                                border: 1px solid #fef3c7;
+                            }
+
+                            .stat-card.none {
+                                background: var(--gray-50);
+                                border: 1px solid var(--gray-100);
+                                opacity: 0.6;
+                            }
+
+                            .stat-card .label {
+                                font-size: 0.75rem;
+                                font-weight: 600;
+                                color: var(--gray-500);
+                                text-transform: uppercase;
+                            }
+
+                            .stat-card .value {
+                                font-size: 1.75rem;
+                                font-weight: 700;
+                                color: var(--gray-900);
+                            }
+
+                            .error-list-container {
+                                background: var(--gray-50);
+                                border: 1px solid var(--gray-200);
+                                border-radius: 12px;
+                                overflow: hidden;
+                            }
+
+                            .error-list-header {
+                                padding: 0.75rem 1rem;
+                                background: white;
+                                border-bottom: 1px solid var(--gray-200);
+                                display: flex;
+                                justify-content: space-between;
+                                align-items: center;
+                                font-size: 0.85rem;
+                                font-weight: 600;
+                                color: var(--gray-700);
+                            }
+
+                            .error-list-header .badge {
+                                background: #fee2e2;
+                                color: #991b1b;
+                                padding: 2px 8px;
+                                border-radius: 20px;
+                                font-size: 0.75rem;
+                            }
+
+                            .error-list {
+                                max-height: 200px;
+                                overflow-y: auto;
+                                padding: 0.5rem;
+                            }
+
+                            .error-item {
+                                padding: 0.75rem;
+                                border-radius: 8px;
+                                display: flex;
+                                flex-direction: column;
+                                gap: 0.2rem;
+                            }
+
+                            .error-item:not(:last-child) {
+                                border-bottom: 1px solid var(--gray-100);
+                            }
+
+                            .item-name {
+                                font-size: 0.9rem;
+                                font-weight: 600;
+                                color: var(--gray-800);
+                            }
+
+                            .item-reason {
+                                font-size: 0.8rem;
+                                color: #991b1b;
+                            }
+
+                            .modal-footer {
+                                padding: 0 1.75rem 1.75rem 1.75rem;
+                            }
+
+                            /* Layout & Component Styling */
+                            .upload-layout {
+                                display: grid;
+                                grid-template-columns: 1fr 300px;
+                                gap: 2rem;
+                                margin-top: 1rem;
+                            }
+
+                            .mega-icon-box {
+                                width: 100px;
+                                height: 100px;
+                                border-radius: 30px;
+                                margin: 0 auto;
+                                display: flex;
+                                align-items: center;
+                                justify-content: center;
+                                font-size: 3rem;
+                                transition: transform 0.3s;
+                            }
+
+                            .drop-zone {
+                                text-align: center;
+                                transition: all 0.3s;
+                                cursor: pointer;
+                                outline: 2px dashed transparent;
+                                outline-offset: -10px;
+                            }
+
+                            .drop-zone.dragover {
+                                outline-color: <%=color %>;
+                                background: <%=color %>05 !important;
+                            }
+
+                            .drop-zone.dragover .mega-icon-box {
+                                transform: scale(1.1);
+                            }
+
+                            .hidden-input {
+                                display: none;
+                            }
+
+                            .instruction-list {
+                                list-style: none;
+                                padding: 0;
+                                margin: 0;
+                            }
+
+                            .instruction-list li {
+                                display: flex;
+                                gap: 0.75rem;
+                                margin-bottom: 1rem;
+                                font-size: 0.9rem;
+                                color: var(--gray-600);
+                                line-height: 1.4;
+                            }
+
+                            .instruction-list i {
+                                color: <%=color %>;
+                                margin-top: 3px;
+                            }
+
+                            /* Responsive */
+                            @media (max-width: 1024px) {
+                                .upload-layout {
+                                    grid-template-columns: 1fr;
+                                }
+
+                                .upload-sidebar {
+                                    order: 2;
+                                }
+
+                                .upload-main {
+                                    order: 1;
+                                }
+                            }
+
+                            @media (max-width: 640px) {
+                                .header-main info {
+                                    gap: 0.75rem;
+                                    width: 100%;
+                                }
+
+                                .back-btn {
+                                    width: 36px;
+                                    height: 36px;
+                                    border-radius: 8px;
+                                }
+
+                                .header-text-block h1 {
+                                    font-size: 1.4rem;
+                                }
+
+                                .header-text-block p {
+                                    font-size: 0.8rem;
+                                }
+
+                                .download-template-btn {
+                                    width: 100%;
+                                    justify-content: center;
+                                    padding: 0.8rem;
+                                }
+
+                                .d-none-mobile {
+                                    display: none;
+                                }
+
+                                .d-only-mobile {
+                                    display: inline;
+                                }
+
+                                .drop-zone {
+                                    padding: 2rem 1rem !important;
+                                }
+
+                                .mega-icon-box {
+                                    width: 80px;
+                                    height: 80px;
+                                    font-size: 2.5rem;
+                                }
+
+                                .stats-row {
+                                    grid-template-columns: 1fr;
+                                }
+                            }
+                        </style>
+
+                        <script>
+                            document.addEventListener('DOMContentLoaded', () => {
+                                const dropZone = document.getElementById('dropZone');
+                                const fileInput = document.getElementById('fileInput');
+                                const idleState = document.getElementById('idleState');
+                                const activeState = document.getElementById('activeState');
+                                const fileNameDisp = document.getElementById('stagedFileName');
+                                const clearBtn = document.getElementById('clearFile');
+                                const trigger = document.querySelector('.select-file-trigger');
+
+                                trigger.addEventListener('click', (e) => {
+                                    e.stopPropagation();
+                                    fileInput.click();
+                                });
+
+                                dropZone.addEventListener('click', () => {
+                                    if (activeState.style.display === 'none') {
+                                        fileInput.click();
+                                    }
+                                });
+
+                                ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                                    dropZone.addEventListener(eventName, e => {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+                                    });
+                                });
+
+                                ['dragenter', 'dragover'].forEach(eventName => {
+                                    dropZone.addEventListener(eventName, () => dropZone.classList.add('dragover'));
+                                });
+
+                                ['dragleave', 'drop'].forEach(eventName => {
+                                    dropZone.addEventListener(eventName, () => dropZone.classList.remove('dragover'));
+                                });
+
+                                dropZone.addEventListener('drop', e => {
+                                    const dt = e.dataTransfer;
+                                    const files = dt.files;
+                                    if (files.length) {
+                                        fileInput.files = files;
+                                        handleFileSelect(files[0]);
+                                    }
+                                });
+
+                                fileInput.addEventListener('change', () => {
+                                    if (fileInput.files.length) handleFileSelect(fileInput.files[0]);
+                                });
+
+                                function handleFileSelect(file) {
+                                    fileNameDisp.textContent = file.name;
+                                    idleState.style.display = 'none';
+                                    activeState.style.display = 'block';
+                                }
+
+                                clearBtn.addEventListener('click', (e) => {
+                                    e.stopPropagation();
+                                    fileInput.value = '';
+                                    idleState.style.display = 'block';
+                                    activeState.style.display = 'none';
+                                });
+                            });
+
+                            function closeModal() {
+                                const modal = document.getElementById('resultModal');
+                                if (modal) {
+                                    modal.style.opacity = '0';
+                                    modal.querySelector('.result-modal').style.transform = 'scale(0.95)';
+                                    setTimeout(() => modal.remove(), 300);
+                                }
+                            }
+                        </script>

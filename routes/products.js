@@ -516,6 +516,7 @@ router.post('/edit/:id', handleUploads, async (req, res) => {
 });
 
 router.post('/delete/:id', async (req, res) => {
+    if (req.session.user.role !== 'Super Admin') return res.status(403).send('Unauthorized');
     try {
         // Cleanup files
         const [rows] = await pool.query("SELECT mda_cert, product_image FROM products WHERE id = ?", [req.params.id]);

@@ -233,11 +233,13 @@
                                                 title="Edit">
                                                 <i class="fas fa-edit"></i>
                                             </a>
-                                            <button
-                                                onclick="openDeleteModal('/admin/suppliers/delete/<%= s.id %>', 'Delete supplier \'<%= s.name %>\'?')"
-                                                class="btn btn-danger btn-sm" title="Delete">
-                                                <i class="fas fa-trash"></i>
-                                            </button>
+                                            <% if (user.role==='Super Admin' ) { %>
+                                                <button
+                                                    onclick="openDeleteModal('/admin/suppliers/delete/<%= s.id %>', 'Delete supplier \'<%= s.name %>\'?')"
+                                                    class="btn btn-danger btn-sm" title="Delete">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                                <% } %>
                                         </div>
                                     </td>
                                 </tr>
@@ -259,11 +261,13 @@
                         <a href="/admin/suppliers/edit/<%= s.id %>" class="btn btn-secondary btn-sm">
                             <i class="fas fa-edit"></i>
                         </a>
-                        <button
-                            onclick="openDeleteModal('/admin/suppliers/delete/<%= s.id %>', 'Delete supplier \'<%= s.name %>\'?')"
-                            class="btn btn-danger btn-sm">
-                            <i class="fas fa-trash"></i>
-                        </button>
+                        <% if (user.role==='Super Admin' ) { %>
+                            <button
+                                onclick="openDeleteModal('/admin/suppliers/delete/<%= s.id %>', 'Delete supplier \'<%= s.name %>\'?')"
+                                class="btn btn-danger btn-sm">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                            <% } %>
                     </div>
                 </div>
                 <div class="category-card-details" style="flex-direction: column; align-items: flex-start; gap: 8px;">

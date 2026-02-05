@@ -5,7 +5,7 @@
     </div>
 
     <div class="card" style="margin-top: 2rem;">
-        <form action="/admin/packages/create" method="POST" enctype="multipart/form-data">
+        <form id="packageForm" action="/admin/packages/create" method="POST" enctype="multipart/form-data">
             <div class="form-grid">
                 <!-- Basic Info -->
                 <div class="form-group" style="grid-column: span 1;">
@@ -26,8 +26,28 @@
 
                 <div class="form-group" style="grid-column: span 2;">
                     <label for="main_image">Package Main Image (Optional)</label>
-                    <input type="file" id="main_image" name="main_image" accept="image/*">
-                    <p style="font-size: 0.75rem; color: var(--gray-500); margin-top: 0.25rem;">This image will replace
+                    <div class="image-upload-dropzone" id="dropzone">
+                        <input type="file" id="main_image" accept="image/*" hidden>
+                        <input type="hidden" name="main_image_path" id="main_image_path">
+                        <div class="dropzone-content" id="dropzone-content">
+                            <i class="fas fa-cloud-upload-alt"></i>
+                            <p>Drag & drop your image here or <span>click to browse</span></p>
+                            <span class="upload-hint">Supports: JPG, PNG, WebP (Max 5MB)</span>
+                        </div>
+                        <div id="image-preview-container" class="image-preview-container hidden">
+                            <img id="image-preview" src="" alt="Preview">
+                            <button type="button" class="remove-image-btn" id="remove-image-btn" title="Remove image">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+
+                        <div id="uploadProgressContainer" class="upload-progress-container"
+                            style="display: none; position: absolute; bottom: 10px; left: 10px; right: 10px;">
+                            <div class="upload-progress-bar"></div>
+                            <span class="upload-status-text">Uploading...</span>
+                        </div>
+                    </div>
+                    <p style="font-size: 0.75rem; color: var(--gray-500); margin-top: 0.5rem;">This image will replace
                         the dynamic product stack in the hero section.</p>
                 </div>
 
@@ -97,7 +117,7 @@
 
             <div
                 style="margin-top: 2.5rem; display: flex; gap: 1rem; padding-top: 1.5rem; border-top: 1px solid var(--gray-200);">
-                <button type="submit" class="btn btn-primary">
+                <button type="submit" class="btn btn-primary" id="submitBtn">
                     <i class="fas fa-save" style="margin-right: 0.5rem;"></i> Create Package
                 </button>
                 <a href="/admin/packages" class="btn btn-outline"
@@ -216,6 +236,148 @@
     .chosen-item .remove-btn:hover {
         color: var(--danger);
     }
+
+    /* Modern Image Upload Styles */
+    .image-upload-dropzone {
+        border: 2px dashed var(--gray-300);
+        border-radius: 12px;
+        padding: 2.5rem 2rem;
+        text-align: center;
+        background: var(--gray-50);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        cursor: pointer;
+        position: relative;
+        overflow: hidden;
+        min-height: 200px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-top: 0.5rem;
+    }
+
+    .upload-progress-container {
+        width: calc(100% - 20px);
+        background-color: var(--gray-200);
+        border-radius: 8px;
+        overflow: hidden;
+        position: relative;
+        height: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 30;
+    }
+
+    .upload-progress-bar {
+        height: 100%;
+        width: 0%;
+        background-color: var(--blue-medium);
+        border-radius: 8px;
+        transition: width 0.3s ease-in-out;
+        position: absolute;
+        left: 0;
+        top: 0;
+    }
+
+    .upload-status-text {
+        position: relative;
+        z-index: 1;
+        color: var(--gray-700);
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+
+    .image-upload-dropzone:hover {
+        border-color: var(--blue-medium);
+        background: var(--white);
+    }
+
+    .image-upload-dropzone.drag-over {
+        border-color: var(--blue-medium);
+        background: rgba(0, 91, 150, 0.05);
+        transform: scale(1.01);
+        box-shadow: var(--shadow-md);
+    }
+
+    .dropzone-content {
+        transition: var(--transition-base);
+    }
+
+    .dropzone-content i {
+        font-size: 3.5rem;
+        color: var(--blue-light);
+        margin-bottom: 1.25rem;
+        display: block;
+        opacity: 0.8;
+    }
+
+    .dropzone-content p {
+        font-weight: 600;
+        color: var(--gray-700);
+        margin-bottom: 0.5rem;
+        font-size: 1.1rem;
+    }
+
+    .dropzone-content p span {
+        color: var(--blue-medium);
+        text-decoration: underline;
+    }
+
+    .upload-hint {
+        font-size: 0.85rem;
+        color: var(--gray-400);
+        display: block;
+    }
+
+    .image-preview-container {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 10;
+        padding: 1rem;
+    }
+
+    .image-preview-container img {
+        max-width: 100%;
+        max-height: 100%;
+        object-fit: contain;
+        border-radius: 8px;
+        box-shadow: var(--shadow-sm);
+    }
+
+    .image-preview-container.hidden {
+        display: none;
+    }
+
+    .remove-image-btn {
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+        background: var(--danger);
+        color: white;
+        border: none;
+        border-radius: 50%;
+        width: 36px;
+        height: 36px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.2s;
+        box-shadow: var(--shadow-md);
+        z-index: 20;
+    }
+
+    .remove-image-btn:hover {
+        transform: scale(1.1) rotate(90deg);
+        background: #c82333;
+    }
 </style>
 
 <!-- Using SortableJS for product reordering -->
@@ -322,6 +484,135 @@
 
         // Add an initial spec row
         addSpecRow('fa-solid fa-list-check', '');
+
+        // Image Upload Logic
+        const dropzone = document.getElementById('dropzone');
+        const fileInput = document.getElementById('main_image');
+        const previewContainer = document.getElementById('image-preview-container');
+        const previewImage = document.getElementById('image-preview');
+        const removeBtn = document.getElementById('remove-image-btn');
+        const dropzoneContent = document.getElementById('dropzone-content');
+
+        dropzone.addEventListener('click', () => fileInput.click());
+
+        dropzone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropzone.classList.add('drag-over');
+        });
+
+        ['dragleave', 'dragend'].forEach(type => {
+            dropzone.addEventListener(type, () => {
+                dropzone.classList.remove('drag-over');
+            });
+        });
+
+        dropzone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropzone.classList.remove('drag-over');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                fileInput.files = files;
+                handleFileSelect(files[0]);
+            }
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                handleFileSelect(e.target.files[0]);
+            }
+        });
+
+        function handleFileSelect(file) {
+            if (!file.type.startsWith('image/')) {
+                alert('Please select an image file.');
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                previewImage.src = e.target.result;
+                previewContainer.classList.remove('hidden');
+                dropzoneContent.classList.add('hidden');
+            };
+            reader.readAsDataURL(file);
+        }
+
+        removeBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            fileInput.value = '';
+            document.getElementById('main_image_path').value = '';
+            previewContainer.classList.add('hidden');
+            dropzoneContent.classList.remove('hidden');
+            previewImage.src = '';
+            document.getElementById('uploadProgressContainer').style.display = 'none';
+        });
+
+        async function uploadFileInChunks(file, progressContainerId) {
+            const chunkSize = 750 * 1024; // 750KB
+            const totalChunks = Math.ceil(file.size / chunkSize);
+            const fileId = Date.now() + '-' + Math.round(Math.random() * 1e9);
+
+            const container = document.getElementById(progressContainerId);
+            const progressBar = container.querySelector('.upload-progress-bar');
+            const statusText = container.querySelector('.upload-status-text');
+
+            container.style.display = 'flex';
+
+            for (let i = 0; i < totalChunks; i++) {
+                const start = i * chunkSize;
+                const end = Math.min(start + chunkSize, file.size);
+                const chunk = file.slice(start, end);
+
+                const formData = new FormData();
+                formData.append('chunk', chunk);
+                formData.append('chunkIndex', i);
+                formData.append('totalChunks', totalChunks);
+                formData.append('fileId', fileId);
+                formData.append('fileName', file.name);
+
+                try {
+                    const response = await fetch('/admin/packages/upload-chunk', {
+                        method: 'POST',
+                        body: formData
+                    });
+
+                    const result = await response.json();
+                    if (!result.success) throw new Error(result.error || 'Upload failed');
+
+                    const percent = Math.round(((i + 1) / totalChunks) * 100);
+                    progressBar.style.width = percent + '%';
+                    statusText.textContent = `Uploading: ${percent}%`;
+
+                    if (result.filePath) {
+                        return result.filePath;
+                    }
+                } catch (error) {
+                    console.error('Upload Error:', error);
+                    throw error;
+                }
+            }
+        }
+
+        const packageForm = document.getElementById('packageForm');
+        packageForm.addEventListener('submit', async function (e) {
+            if (fileInput.files.length > 0 && !document.getElementById('main_image_path').value) {
+                e.preventDefault();
+                const submitBtn = document.getElementById('submitBtn');
+                const originalText = submitBtn.innerHTML;
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Uploading Image...';
+
+                try {
+                    const filePath = await uploadFileInChunks(fileInput.files[0], 'uploadProgressContainer');
+                    document.getElementById('main_image_path').value = filePath;
+                    packageForm.submit();
+                } catch (err) {
+                    alert('Image upload failed: ' + err.message);
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = originalText;
+                }
+            }
+        });
 
         // Search in available products
         const searchInput = document.getElementById('productSearch');

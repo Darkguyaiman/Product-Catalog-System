@@ -6,7 +6,8 @@
     </div>
 
     <div class="card" style="margin-top: 2rem;">
-        <form action="/admin/packages/edit/<%= package.id %>" method="POST" enctype="multipart/form-data">
+        <form id="packageForm" action="/admin/packages/edit/<%= package.id %>" method="POST"
+            enctype="multipart/form-data">
             <div class="form-grid">
                 <!-- Basic Info -->
                 <div class="form-group" style="grid-column: span 1;">
@@ -27,108 +28,123 @@
 
                 <div class="form-group" style="grid-column: span 2;">
                     <label for="main_image">Package Main Image</label>
-                    <% if (package.main_image) { %>
-                        <div style="margin-bottom: 1rem;">
-                            <img src="<%= package.main_image %>" alt="Current Image"
-                                style="height: 100px; border-radius: 8px; border: 1px solid var(--gray-200);">
+                    <div class="image-upload-dropzone" id="dropzone">
+                        <input type="file" id="main_image" accept="image/*" hidden>
+                        <input type="hidden" name="main_image_path" id="main_image_path">
+                        <input type="hidden" id="remove_main_image" name="remove_main_image" value="false">
+                        <div class="dropzone-content <%= package.main_image ? 'hidden' : '' %>" id="dropzone-content">
+                            <i class="fas fa-cloud-upload-alt"></i>
+                            <p>Drag & drop your image here or <span>click to browse</span></p>
+                            <span class="upload-hint">Supports: JPG, PNG, WebP (Max 5MB)</span>
                         </div>
-                        <% } %>
-                            <input type="file" id="main_image" name="main_image" accept="image/*">
-                </div>
+                        <div id="image-preview-container"
+                            class="image-preview-container <%= package.main_image ? '' : 'hidden' %>">
+                            <img id="image-preview" src="<%= package.main_image || '' %>" alt="Preview">
+                            <button type="button" class="remove-image-btn" id="remove-image-btn" title="Remove image">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
 
-                <!-- Key Specs / Highlights -->
-                <div class="form-group" style="grid-column: span 2;">
-                    <label>Key Specs / Highlights</label>
-                    <div id="specsContainer">
-                        <!-- Dynamic specs will be added here -->
+                        <div id="uploadProgressContainer" class="upload-progress-container"
+                            style="display: none; position: absolute; bottom: 10px; left: 10px; right: 10px;">
+                            <div class="upload-progress-bar"></div>
+                            <span class="upload-status-text">Uploading...</span>
+                        </div>
                     </div>
-                    <button type="button" class="btn btn-secondary btn-sm" onclick="addSpecRow()"
-                        style="margin-top: 0.5rem;">
-                        <i class="fas fa-plus"></i> Add Highlight Point
-                    </button>
                 </div>
+                <p style="font-size: 0.75rem; color: var(--gray-500); margin-top: 0.5rem;">This image will replace
+                    the dynamic product stack in the hero section.</p>
+            </div>
 
-                <script id="specsData" type="application/json">
+            <!-- Key Specs / Highlights -->
+            <div class="form-group" style="grid-column: span 2;">
+                <label>Key Specs / Highlights</label>
+                <div id="specsContainer">
+                    <!-- Dynamic specs will be added here -->
+                </div>
+                <button type="button" class="btn btn-secondary btn-sm" onclick="addSpecRow()"
+                    style="margin-top: 0.5rem;">
+                    <i class="fas fa-plus"></i> Add Highlight Point
+                </button>
+            </div>
+
+            <script id="specsData" type="application/json">
                     <%- JSON.stringify(specs) %>
                 </script>
 
-                <!-- Product Selection & Ordering -->
-                <div class="form-group" style="grid-column: span 2;">
-                    <label>Select & Order Products</label>
-                    <div class="product-selector-wrapper"
-                        style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
-                        <!-- Available Products -->
-                        <div>
-                            <div style="position: relative; margin-bottom: 0.5rem;">
-                                <i class="fas fa-search"
-                                    style="position: absolute; left: 0.75rem; top: 50%; transform: translateY(-50%); color: var(--gray-400);"></i>
-                                <input type="text" id="productSearch" placeholder="Search available products..."
-                                    style="padding-left: 2.5rem; margin-bottom: 0;">
-                            </div>
-                            <div id="availableProducts"
-                                style="max-height: 400px; overflow-y: auto; border: 1px solid var(--gray-300); border-radius: 8px; padding: 1rem; background: var(--gray-50);">
-                                <% products.forEach(product=> { %>
-                                    <% const isSelected=selectedProductIds.includes(product.id); %>
-                                        <div class="product-selection-item <%= isSelected ? 'disabled' : '' %>"
-                                            data-id="<%= product.id %>" data-model="<%= product.model.toLowerCase() %>"
-                                            data-code="<%= product.code.toLowerCase() %>"
-                                            onclick="toggleProductSelection(this)"
-                                            style="display: flex; align-items: center; margin-bottom: 0.5rem; background: white; padding: 0.75rem; border-radius: 6px; border: 1px solid var(--gray-200); cursor: pointer; transition: all 0.2s;">
-                                            <i class="fas fa-plus"
-                                                style="margin-right: 1rem; color: var(--gray-300);"></i>
-                                            <div style="display: flex; flex-direction: column;">
-                                                <span style="font-weight: 600; color: var(--blue-darkest);">
-                                                    <%= product.model %>
-                                                </span>
-                                                <span style="font-size: 0.75rem; color: var(--gray-500);">
-                                                    <%= product.code %>
-                                                </span>
-                                            </div>
-                                        </div>
-                                        <% }) %>
-                            </div>
+            <!-- Product Selection & Ordering -->
+            <div class="form-group" style="grid-column: span 2;">
+                <label>Select & Order Products</label>
+                <div class="product-selector-wrapper" style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+                    <!-- Available Products -->
+                    <div>
+                        <div style="position: relative; margin-bottom: 0.5rem;">
+                            <i class="fas fa-search"
+                                style="position: absolute; left: 0.75rem; top: 50%; transform: translateY(-50%); color: var(--gray-400);"></i>
+                            <input type="text" id="productSearch" placeholder="Search available products..."
+                                style="padding-left: 2.5rem; margin-bottom: 0;">
                         </div>
-
-                        <!-- Chosen Products (Ordered) -->
-                        <div>
-                            <div id="chosenProducts"
-                                style="min-height: 400px; border: 2px dashed var(--gray-300); border-radius: 8px; padding: 1rem; background: var(--white);">
-                                <% products.filter(p=> selectedProductIds.includes(p.id)).sort((a,b) =>
-                                    selectedProductIds.indexOf(a.id) - selectedProductIds.indexOf(b.id)).forEach(p => {
-                                    %>
-                                    <div class="chosen-item" data-id="<%= p.id %>">
-                                        <i class="fas fa-grip-vertical" style="margin-right: 1rem; opacity: 0.5;"></i>
+                        <div id="availableProducts"
+                            style="max-height: 400px; overflow-y: auto; border: 1px solid var(--gray-300); border-radius: 8px; padding: 1rem; background: var(--gray-50);">
+                            <% products.forEach(product=> { %>
+                                <% const isSelected=selectedProductIds.includes(product.id); %>
+                                    <div class="product-selection-item <%= isSelected ? 'disabled' : '' %>"
+                                        data-id="<%= product.id %>" data-model="<%= product.model.toLowerCase() %>"
+                                        data-code="<%= product.code.toLowerCase() %>"
+                                        onclick="toggleProductSelection(this)"
+                                        style="display: flex; align-items: center; margin-bottom: 0.5rem; background: white; padding: 0.75rem; border-radius: 6px; border: 1px solid var(--gray-200); cursor: pointer; transition: all 0.2s;">
+                                        <i class="fas fa-plus" style="margin-right: 1rem; color: var(--gray-300);"></i>
                                         <div style="display: flex; flex-direction: column;">
-                                            <span style="font-weight: 600;">
-                                                <%= p.model %>
+                                            <span style="font-weight: 600; color: var(--blue-darkest);">
+                                                <%= product.model %>
                                             </span>
-                                            <span style="font-size: 0.7rem; opacity: 0.8;">
-                                                <%= p.code %>
+                                            <span style="font-size: 0.75rem; color: var(--gray-500);">
+                                                <%= product.code %>
                                             </span>
-                                        </div>
-                                        <input type="hidden" name="product_ids" value="<%= p.id %>">
-                                        <div class="remove-btn"
-                                            onclick="removeProduct('<%= p.id %>', this.parentElement)">
-                                            <i class="fas fa-trash"></i>
                                         </div>
                                     </div>
                                     <% }) %>
-                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Chosen Products (Ordered) -->
+                    <div>
+                        <div id="chosenProducts"
+                            style="min-height: 400px; border: 2px dashed var(--gray-300); border-radius: 8px; padding: 1rem; background: var(--white);">
+                            <% products.filter(p=> selectedProductIds.includes(p.id)).sort((a,b) =>
+                                selectedProductIds.indexOf(a.id) - selectedProductIds.indexOf(b.id)).forEach(p => {
+                                %>
+                                <div class="chosen-item" data-id="<%= p.id %>">
+                                    <i class="fas fa-grip-vertical" style="margin-right: 1rem; opacity: 0.5;"></i>
+                                    <div style="display: flex; flex-direction: column;">
+                                        <span style="font-weight: 600;">
+                                            <%= p.model %>
+                                        </span>
+                                        <span style="font-size: 0.7rem; opacity: 0.8;">
+                                            <%= p.code %>
+                                        </span>
+                                    </div>
+                                    <input type="hidden" name="product_ids" value="<%= p.id %>">
+                                    <div class="remove-btn" onclick="removeProduct('<%= p.id %>', this.parentElement)">
+                                        <i class="fas fa-trash"></i>
+                                    </div>
+                                </div>
+                                <% }) %>
                         </div>
                     </div>
                 </div>
             </div>
-
-            <div
-                style="margin-top: 2.5rem; display: flex; gap: 1rem; padding-top: 1.5rem; border-top: 1px solid var(--gray-200);">
-                <button type="submit" class="btn btn-primary">
-                    <i class="fas fa-save" style="margin-right: 0.5rem;"></i> Save Changes
-                </button>
-                <a href="/admin/packages" class="btn btn-outline"
-                    style="text-decoration: none; text-align: center;">Cancel</a>
-            </div>
-        </form>
     </div>
+
+    <div
+        style="margin-top: 2.5rem; display: flex; gap: 1rem; padding-top: 1.5rem; border-top: 1px solid var(--gray-200);">
+        <button type="submit" class="btn btn-primary" id="submitBtn">
+            <i class="fas fa-save" style="margin-right: 0.5rem;"></i> Save Changes
+        </button>
+        <a href="/admin/packages" class="btn btn-outline" style="text-decoration: none; text-align: center;">Cancel</a>
+    </div>
+    </form>
+</div>
 </div>
 
 <style>
@@ -236,6 +252,152 @@
     .chosen-item .remove-btn:hover {
         color: var(--danger);
     }
+
+    /* Modern Image Upload Styles */
+    .image-upload-dropzone {
+        border: 2px dashed var(--gray-300);
+        border-radius: 12px;
+        padding: 2.5rem 2rem;
+        text-align: center;
+        background: var(--gray-50);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        cursor: pointer;
+        position: relative;
+        overflow: hidden;
+        min-height: 200px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-top: 0.5rem;
+    }
+
+    .image-upload-dropzone:hover {
+        border-color: var(--blue-medium);
+        background: var(--white);
+    }
+
+    .image-upload-dropzone.drag-over {
+        border-color: var(--blue-medium);
+        background: rgba(0, 91, 150, 0.05);
+        transform: scale(1.01);
+        box-shadow: var(--shadow-md);
+    }
+
+    .dropzone-content {
+        transition: var(--transition-base);
+    }
+
+    .dropzone-content.hidden {
+        display: none;
+    }
+
+    .dropzone-content i {
+        font-size: 3.5rem;
+        color: var(--blue-light);
+        margin-bottom: 1.25rem;
+        display: block;
+        opacity: 0.8;
+    }
+
+    .dropzone-content p {
+        font-weight: 600;
+        color: var(--gray-700);
+        margin-bottom: 0.5rem;
+        font-size: 1.1rem;
+    }
+
+    .dropzone-content p span {
+        color: var(--blue-medium);
+        text-decoration: underline;
+    }
+
+    .upload-hint {
+        font-size: 0.85rem;
+        color: var(--gray-400);
+        display: block;
+    }
+
+    .image-preview-container {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 10;
+        padding: 1rem;
+    }
+
+    .image-preview-container img {
+        max-width: 100%;
+        max-height: 100%;
+        object-fit: contain;
+        border-radius: 8px;
+        box-shadow: var(--shadow-sm);
+    }
+
+    .image-preview-container.hidden {
+        display: none;
+    }
+
+    .remove-image-btn {
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+        background: var(--danger);
+        color: white;
+        border: none;
+        border-radius: 50%;
+        width: 36px;
+        height: 36px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.2s;
+        box-shadow: var(--shadow-md);
+        z-index: 20;
+    }
+
+    .remove-image-btn:hover {
+        transform: scale(1.1) rotate(90deg);
+        background: #c82333;
+    }
+
+    .upload-progress-container {
+        width: calc(100% - 20px);
+        background-color: var(--gray-200);
+        border-radius: 8px;
+        overflow: hidden;
+        position: relative;
+        height: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 30;
+    }
+
+    .upload-progress-bar {
+        height: 100%;
+        width: 0%;
+        background-color: var(--blue-medium);
+        border-radius: 8px;
+        transition: width 0.3s ease-in-out;
+        position: absolute;
+        left: 0;
+        top: 0;
+    }
+
+    .upload-status-text {
+        position: relative;
+        z-index: 1;
+        color: var(--gray-700);
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
 </style>
 
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
@@ -324,6 +486,137 @@
         } else {
             addSpecRow('fa-solid fa-list-check', '');
         }
+
+        // Image Upload Logic
+        const dropzone = document.getElementById('dropzone');
+        const fileInput = document.getElementById('main_image');
+        const previewContainer = document.getElementById('image-preview-container');
+        const previewImage = document.getElementById('image-preview');
+        const removeBtn = document.getElementById('remove-image-btn');
+        const dropzoneContent = document.getElementById('dropzone-content');
+
+        dropzone.addEventListener('click', () => fileInput.click());
+
+        dropzone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropzone.classList.add('drag-over');
+        });
+
+        ['dragleave', 'dragend'].forEach(type => {
+            dropzone.addEventListener(type, () => {
+                dropzone.classList.remove('drag-over');
+            });
+        });
+
+        dropzone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropzone.classList.remove('drag-over');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                fileInput.files = files;
+                handleFileSelect(files[0]);
+            }
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                handleFileSelect(e.target.files[0]);
+            }
+        });
+
+        function handleFileSelect(file) {
+            if (!file.type.startsWith('image/')) {
+                alert('Please select an image file.');
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                previewImage.src = e.target.result;
+                previewContainer.classList.remove('hidden');
+                dropzoneContent.classList.add('hidden');
+                document.getElementById('remove_main_image').value = 'false';
+            };
+            reader.readAsDataURL(file);
+        }
+
+        removeBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            fileInput.value = '';
+            document.getElementById('main_image_path').value = '';
+            document.getElementById('remove_main_image').value = 'true';
+            previewContainer.classList.add('hidden');
+            dropzoneContent.classList.remove('hidden');
+            previewImage.src = '';
+            document.getElementById('uploadProgressContainer').style.display = 'none';
+        });
+
+        async function uploadFileInChunks(file, progressContainerId) {
+            const chunkSize = 750 * 1024; // 750KB
+            const totalChunks = Math.ceil(file.size / chunkSize);
+            const fileId = Date.now() + '-' + Math.round(Math.random() * 1e9);
+
+            const container = document.getElementById(progressContainerId);
+            const progressBar = container.querySelector('.upload-progress-bar');
+            const statusText = container.querySelector('.upload-status-text');
+
+            container.style.display = 'flex';
+
+            for (let i = 0; i < totalChunks; i++) {
+                const start = i * chunkSize;
+                const end = Math.min(start + chunkSize, file.size);
+                const chunk = file.slice(start, end);
+
+                const formData = new FormData();
+                formData.append('chunk', chunk);
+                formData.append('chunkIndex', i);
+                formData.append('totalChunks', totalChunks);
+                formData.append('fileId', fileId);
+                formData.append('fileName', file.name);
+
+                try {
+                    const response = await fetch('/admin/packages/upload-chunk', {
+                        method: 'POST',
+                        body: formData
+                    });
+
+                    const result = await response.json();
+                    if (!result.success) throw new Error(result.error || 'Upload failed');
+
+                    const percent = Math.round(((i + 1) / totalChunks) * 100);
+                    progressBar.style.width = percent + '%';
+                    statusText.textContent = `Uploading: ${percent}%`;
+
+                    if (result.filePath) {
+                        return result.filePath;
+                    }
+                } catch (error) {
+                    console.error('Upload Error:', error);
+                    throw error;
+                }
+            }
+        }
+
+        const packageForm = document.getElementById('packageForm');
+        packageForm.addEventListener('submit', async function (e) {
+            if (fileInput.files.length > 0 && !document.getElementById('main_image_path').value) {
+                e.preventDefault();
+                const submitBtn = document.getElementById('submitBtn');
+                const originalText = submitBtn.innerHTML;
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Uploading Image...';
+
+                try {
+                    const filePath = await uploadFileInChunks(fileInput.files[0], 'uploadProgressContainer');
+                    document.getElementById('main_image_path').value = filePath;
+                    packageForm.submit();
+                } catch (err) {
+                    alert('Image upload failed: ' + err.message);
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = originalText;
+                }
+            }
+        });
 
         const searchInput = document.getElementById('productSearch');
         searchInput.addEventListener('input', function () {

@@ -1,0 +1,206 @@
+<div class="page-header">
+    <div class="header-container">
+        <div class="header-icon-box">
+            <i class="fas fa-file-import"></i>
+        </div>
+        <div>
+            <h1 class="page-title" style="margin: 0;">Bulk Data Import</h1>
+            <p class="page-subtitle" style="margin: 0;">Choose a category to start importing your data.</p>
+        </div>
+    </div>
+</div>
+
+<div class="selection-grid">
+    <!-- Countries -->
+    <a href="/admin/import/countries" class="selection-card">
+        <div class="card-icon country">
+            <i class="fas fa-globe-americas"></i>
+        </div>
+        <div class="card-info">
+            <h3>Countries</h3>
+            <p>Import country lists for shipping and address settings.</p>
+            <div class="card-footer-info">
+                <span><i class="fas fa-file-excel"></i> XLSX, CSV</span>
+                <i class="fas fa-arrow-right arrow"></i>
+            </div>
+        </div>
+    </a>
+
+    <!-- Product Types -->
+    <a href="/admin/import/product-types" class="selection-card">
+        <div class="card-icon type">
+            <i class="fas fa-tags"></i>
+        </div>
+        <div class="card-info">
+            <h3>Product Types</h3>
+            <p>Standardize technical specifications across your product line.</p>
+            <div class="card-footer-info">
+                <span><i class="fas fa-file-excel"></i> XLSX, CSV</span>
+                <i class="fas fa-arrow-right arrow"></i>
+            </div>
+        </div>
+    </a>
+
+    <!-- Categories -->
+    <a href="/admin/import/categories" class="selection-card">
+        <div class="card-icon category">
+            <i class="fas fa-folder-tree"></i>
+        </div>
+        <div class="card-info">
+            <h3>Categories</h3>
+            <p>Sync your product hierarchy and main-category relationships.</p>
+            <div class="card-footer-info">
+                <span><i class="fas fa-file-excel"></i> XLSX, CSV</span>
+                <i class="fas fa-arrow-right arrow"></i>
+            </div>
+        </div>
+    </a>
+</div>
+
+<style>
+    .header-container {
+        display: flex;
+        align-items: center;
+        gap: 1.25rem;
+    }
+
+    .header-icon-box {
+        width: 48px;
+        height: 48px;
+        background: var(--blue-medium);
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        box-shadow: var(--shadow-md);
+        flex-shrink: 0;
+        font-size: 1.5rem;
+    }
+
+    @media (max-width: 640px) {
+        .header-container {
+            gap: 0.75rem;
+        }
+
+        .header-icon-box {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            font-size: 1.1rem;
+        }
+
+        .page-title {
+            font-size: 1.5rem !important;
+        }
+
+        .page-subtitle {
+            font-size: 0.8rem !important;
+        }
+    }
+
+    .selection-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 2rem;
+        margin-top: 2rem;
+    }
+
+    .selection-card {
+        background: white;
+        border-radius: 20px;
+        padding: 2rem;
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+        text-decoration: none;
+        color: inherit;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        border: 1px solid var(--gray-100);
+        box-shadow: var(--shadow-sm);
+        position: relative;
+    }
+
+    .selection-card:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+        border-color: var(--blue-medium);
+    }
+
+    .card-icon {
+        width: 64px;
+        height: 64px;
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.75rem;
+        color: white;
+        box-shadow: 0 8px 16px -4px rgba(0, 0, 0, 0.1);
+    }
+
+    .card-icon.country {
+        background: linear-gradient(135deg, #005b96, #013e66);
+    }
+
+    .card-icon.type {
+        background: linear-gradient(135deg, #009688, #00695c);
+    }
+
+    .card-icon.category {
+        background: linear-gradient(135deg, #7b1fa2, #4a148c);
+    }
+
+    .card-info h3 {
+        margin: 0 0 0.5rem 0;
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--gray-800);
+    }
+
+    .card-info p {
+        margin: 0;
+        font-size: 0.95rem;
+        color: var(--gray-500);
+        line-height: 1.5;
+    }
+
+    .card-footer-info {
+        margin-top: 1.5rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding-top: 1.5rem;
+        border-top: 1px solid var(--gray-50);
+    }
+
+    .card-footer-info span {
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: var(--gray-400);
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .arrow {
+        color: var(--blue-medium);
+        font-size: 1.25rem;
+        transition: transform 0.3s;
+    }
+
+    .selection-card:hover .arrow {
+        transform: translateX(5px);
+    }
+
+    @media (max-width: 768px) {
+        .selection-grid {
+            grid-template-columns: 1fr;
+            gap: 1rem;
+        }
+
+        .selection-card {
+            padding: 1.5rem;
+        }
+    }
+</style>

@@ -230,6 +230,7 @@ router.post('/edit/:id', handleUpload('logo'), async (req, res) => {
 });
 
 router.post('/delete/:id', async (req, res) => {
+    if (req.session.user.role !== 'Super Admin') return res.status(403).send('Unauthorized');
     try {
         // Get logo path before deleting the record
         const [companies] = await pool.query("SELECT logo FROM affiliated_companies WHERE id = ?", [req.params.id]);

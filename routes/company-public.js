@@ -146,26 +146,12 @@ router.get('/product/:id', async (req, res) => {
         if (products.length === 0) return res.status(404).send('Product not found');
         const product = products[0];
 
-        // Fetch Categories
+        // Fetch All Categories for the product (for chips)
         const [productCategories] = await pool.query(`
             SELECT c.* FROM categories c
             JOIN product_categories pc ON c.id = pc.category_id
             WHERE pc.product_id = ?
         `, [product.id]);
-
-        let category = null;
-        let subcategory = null;
-        for (let cat of productCategories) {
-            if (cat.parent_id === null) {
-                category = cat;
-            } else {
-                subcategory = cat;
-                const [parentCat] = await pool.query("SELECT * FROM categories WHERE id = ?", [cat.parent_id]);
-                if (parentCat.length > 0) {
-                    category = parentCat[0];
-                }
-            }
-        }
 
         // Fetch Supplier
         let supplier = null;
@@ -188,12 +174,21 @@ router.get('/product/:id', async (req, res) => {
         // Specs
         const [specs] = await pool.query("SELECT * FROM product_specifications WHERE product_id = ?", [product.id]);
 
-        // Materials
-        const [materials] = await pool.query(`
+        // Materials (categorized)
+        const [allMaterials] = await pool.query(`
             SELECT m.* FROM marketing_materials m
             JOIN product_marketing pm ON m.id = pm.material_id
             WHERE pm.product_id = ?
         `, [product.id]);
+
+        const materials = {
+            flyers: allMaterials.filter(m => m.category === 'FLIERS'),
+            backdrops: allMaterials.filter(m => m.category === 'BACK-DROP'),
+            posters: allMaterials.filter(m => m.category === 'POSTER'),
+            rollups: allMaterials.filter(m => m.category === 'ROLL-UP'),
+            others: allMaterials.filter(m => !['FLIERS', 'BACK-DROP', 'POSTER', 'ROLL-UP', 'BROCHURE'].includes(m.category)),
+            brochures: allMaterials.filter(m => m.category === 'BROCHURE')
+        };
 
         // Events with links
         const [events] = await pool.query(`
@@ -203,16 +198,23 @@ router.get('/product/:id', async (req, res) => {
         `, [product.id]);
 
         for (let event of events) {
-            const [links] = await pool.query("SELECT url FROM event_links WHERE event_id = ? LIMIT 1", [event.id]);
-            event.link = links.length > 0 ? links[0].url : null;
+            const [links] = await pool.query("SELECT * FROM event_links WHERE event_id = ?", [event.id]);
+            event.links = links;
+            event.video_link = links.find(l => l.url && (l.url.includes('youtube.com') || l.url.includes('youtu.be') || l.url.includes('vimeo.com')));
         }
 
-        // Testimonies
+        // Testimonies with video links
         const [testimonies] = await pool.query(`
             SELECT t.* FROM testimonies t
             JOIN product_testimonies pt ON t.id = pt.testimony_id
             WHERE pt.product_id = ?
         `, [product.id]);
+
+        for (let testimony of testimonies) {
+            const [links] = await pool.query("SELECT * FROM testimony_links WHERE testimony_id = ?", [testimony.id]);
+            testimony.links = links;
+            testimony.video_link = links.find(l => l.url && (l.url.includes('youtube.com') || l.url.includes('youtu.be') || l.url.includes('vimeo.com')));
+        }
 
         // Product Images
         const [productImages] = await pool.query(
@@ -225,10 +227,10 @@ router.get('/product/:id', async (req, res) => {
             SELECT m.* FROM marketing_materials m
             JOIN product_marketing pm ON m.id = pm.material_id
             WHERE pm.product_id = ? AND m.category = 'BROCHURE'
-            AND (m.company_id = ? OR m.company_id IS NULL)
-            ORDER BY (m.company_id = ?) DESC, m.created_at DESC
+            AND m.company_id = ?
+            ORDER BY m.created_at DESC
             LIMIT 1
-        `, [product.id, res.locals.currentCompany.id, res.locals.currentCompany.id]);
+        `, [product.id, res.locals.currentCompany.id]);
 
         res.render('public/product_detail', {
             product,
@@ -237,8 +239,7 @@ router.get('/product/:id', async (req, res) => {
             events,
             testimonies,
             productImages,
-            category,
-            subcategory,
+            productCategories,
             supplier,
             companyBrochure: brochures.length > 0 ? brochures[0] : null
         });
@@ -368,6 +369,44 @@ router.get('/package/:id', async (req, res) => {
         pkg.specs = specs;
 
         res.render('public/package_detail', { package: pkg });
+    } catch (err) {
+        console.error(err);
+        res.status(500).send('Server Error');
+    }
+});
+
+// Watch Video Page
+router.get('/watch/:type/:id', async (req, res) => {
+    try {
+        const { type, id } = req.params;
+        let videoUrl = null;
+        let title = '';
+
+        if (type === 'event') {
+            const [links] = await pool.query("SELECT * FROM event_links WHERE id = ?", [id]);
+            if (links.length > 0) {
+                videoUrl = links[0].url;
+                title = links[0].title || 'Event Video';
+            }
+        } else if (type === 'testimony') {
+            const [links] = await pool.query("SELECT * FROM testimony_links WHERE id = ?", [id]);
+            if (links.length > 0) {
+                videoUrl = links[0].url;
+                title = links[0].title || 'Testimony Video';
+            }
+        }
+
+        if (!videoUrl) return res.status(404).send('Video not found');
+
+        // Convert YouTube URL to embed URL if needed
+        let embedUrl = videoUrl;
+        if (videoUrl.includes('youtube.com/watch?v=')) {
+            embedUrl = videoUrl.replace('watch?v=', 'embed/');
+        } else if (videoUrl.includes('youtu.be/')) {
+            embedUrl = videoUrl.replace('youtu.be/', 'youtube.com/embed/');
+        }
+
+        res.render('public/watch_video', { videoUrl: embedUrl, title });
     } catch (err) {
         console.error(err);
         res.status(500).send('Server Error');

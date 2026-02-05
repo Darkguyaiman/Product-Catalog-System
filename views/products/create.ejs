@@ -175,9 +175,23 @@
                 </div>
             </div>
 
-            <button type="button" class="btn btn-secondary btn-sm" onclick="addSpecRow()" style="margin-bottom: 2rem;">
-                <i class="fas fa-plus"></i> Add Specification
-            </button>
+            <div style="display: flex; gap: 1rem; align-items: center; margin-bottom: 2rem;">
+                <button type="button" class="btn btn-secondary btn-sm" onclick="addSpecRow()">
+                    <i class="fas fa-plus"></i> Add Specification
+                </button>
+                <div style="height: 20px; width: 1px; background: var(--gray-200);"></div>
+                <button type="button" class="btn btn-outline btn-sm"
+                    onclick="document.getElementById('specExcelInput').click()"
+                    style="color: var(--blue-medium); border-color: var(--blue-medium);">
+                    <i class="fas fa-file-excel"></i> Import Specs from Excel
+                </button>
+                <input type="file" id="specExcelInput" accept=".xlsx, .xls, .csv" style="display: none;"
+                    onchange="handleSpecExcel(this)">
+                <a href="<%= templates.specs %>" target="_blank"
+                    style="font-size: 0.8rem; color: var(--gray-500); text-decoration: underline;">
+                    Download Template
+                </a>
+            </div>
 
             <div
                 style="display: flex; gap: 15px; margin-top: 2rem; border-top: 1px solid var(--gray-100); padding-top: 2rem;">
@@ -378,6 +392,7 @@
         background: transparent;
     }
 </style>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
 <script>
     async function uploadFileInChunks(file, type, progressContainerId) {
@@ -657,15 +672,77 @@
     setupChips('typeChipWrapper', 'typeSelectInput', 'typeHiddenSelect');
     setupChips('categoryChipWrapper', 'categorySelectInput', 'categoryHiddenSelect');
 
-    function addSpecRow() {
+    function addSpecRow(key = '', value = '') {
         const container = document.getElementById('specs-container');
         const div = document.createElement('div');
         div.className = 'grid spec-row';
         div.style.gridTemplateColumns = '1fr 1fr auto';
         div.style.gap = '1rem';
         div.style.marginBottom = '1rem';
-        div.innerHTML = `<div><input type="text" name="spec_key" placeholder="Specification Name"></div><div><input type="text" name="spec_value" placeholder="Value"></div><button type="button" class="btn btn-danger btn-sm" onclick="this.parentElement.remove()"><i class="fas fa-trash"></i></button>`;
+        div.innerHTML = `
+            <div><input type="text" name="spec_key" placeholder="Specification Name" value="${key}"></div>
+            <div><input type="text" name="spec_value" placeholder="Value" value="${value}"></div>
+            <button type="button" class="btn btn-danger btn-sm" onclick="this.parentElement.remove()">
+                <i class="fas fa-trash"></i>
+            </button>
+        `;
         container.appendChild(div);
+    }
+
+    function handleSpecExcel(input) {
+        if (!input.files || !input.files[0]) return;
+        const file = input.files[0];
+        const reader = new FileReader();
+
+        reader.onload = function (e) {
+            try {
+                const data = new Uint8Array(e.target.result);
+                const workbook = XLSX.read(data, { type: 'array' });
+                const firstSheetName = workbook.SheetNames[0];
+                const worksheet = workbook.Sheets[firstSheetName];
+
+                // Convert to JSON (Header index 1 means it starts reading from row 2 if opt header:1 is used, 
+                // but usually sheet_to_json handles header automatically. User said A2:A is name, B2:B is value)
+                const rows = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+
+                // Skip header (row 1)
+                const dataRows = rows.slice(1);
+
+                if (dataRows.length === 0) {
+                    alert('No data found in the Excel file.');
+                    return;
+                }
+
+                const container = document.getElementById('specs-container');
+                // If the first row is empty, we might want to clear it or use it. 
+                // For simplicity, let's just add new rows and the user can delete empty ones.
+                // Or we can check if there's only one row and it's empty.
+                const existingRows = container.querySelectorAll('.spec-row');
+                if (existingRows.length === 1) {
+                    const firstKey = existingRows[0].querySelector('input[name="spec_key"]').value;
+                    const firstVal = existingRows[0].querySelector('input[name="spec_value"]').value;
+                    if (!firstKey && !firstVal) {
+                        existingRows[0].remove();
+                    }
+                }
+
+                dataRows.forEach(row => {
+                    const key = row[0] ? row[0].toString().trim() : '';
+                    const val = row[1] ? row[1].toString().trim() : '';
+                    if (key || val) {
+                        addSpecRow(key, val);
+                    }
+                });
+
+                // Reset input
+                input.value = '';
+            } catch (err) {
+                console.error(err);
+                alert('Failed to parse Excel file. Please ensure it follows the template.');
+            }
+        };
+
+        reader.readAsArrayBuffer(file);
     }
 
     document.getElementById('addProductForm').addEventListener('submit', async function (e) {

@@ -46,7 +46,7 @@ async function initializeDatabase() {
                 id INT AUTO_INCREMENT PRIMARY KEY,
                 email VARCHAR(255) NOT NULL UNIQUE,
                 password VARCHAR(255) NOT NULL,
-                role ENUM('Admin', 'Product Specialist', 'User') NOT NULL DEFAULT 'User',
+                role ENUM('Super Admin', 'Admin', 'Product Specialist', 'Graphic Designer') NOT NULL DEFAULT 'Product Specialist',
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             );
 
@@ -495,11 +495,33 @@ async function initializeDatabase() {
             console.log('Migration for marketing_materials category/company failed or skipped:', migrationError.message);
         }
 
+        // Migration: Update users role enum
+        try {
+            // First update any existing 'User' roles to 'Product Specialist' to prevent data loss
+            await connection.query("UPDATE users SET role = 'Product Specialist' WHERE role = 'User'");
+
+            await connection.query(`
+                ALTER TABLE users 
+                MODIFY COLUMN role ENUM('Super Admin', 'Admin', 'Product Specialist', 'Graphic Designer') 
+                NOT NULL DEFAULT 'Product Specialist'
+            `);
+            console.log('✓ Updated users role enum to include Super Admin');
+        } catch (err) {
+            console.log('Migration for users role enum skipped:', err.message);
+        }
+
         const [rows] = await connection.query('SELECT * FROM users WHERE email = ?', ['admin@admin.com']);
         if (rows.length === 0) {
             const hashedPassword = await bcrypt.hash('1234567890', 10);
             await connection.query('INSERT INTO users (email, password, role) VALUES (?, ?, ?)',
-                ['admin@admin.com', hashedPassword, 'Admin']);
+                ['admin@admin.com', hashedPassword, 'Super Admin']);
+        }
+
+        const [superAdminRows] = await connection.query('SELECT * FROM users WHERE email = ?', ['superadmin@admin.com']);
+        if (superAdminRows.length === 0) {
+            const hashedSuperPassword = await bcrypt.hash('1234567890', 10);
+            await connection.query('INSERT INTO users (email, password, role) VALUES (?, ?, ?)',
+                ['superadmin@admin.com', hashedSuperPassword, 'Super Admin']);
         }
 
     } catch (error) {

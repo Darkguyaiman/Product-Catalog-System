@@ -160,6 +160,7 @@ router.post('/edit/:id', async (req, res) => {
 });
 
 router.post('/delete/:id', async (req, res) => {
+    if (req.session.user.role !== 'Super Admin') return res.status(403).send('Unauthorized');
     try {
         await pool.query("DELETE FROM suppliers WHERE id = ?", [req.params.id]);
         res.redirect('/admin/suppliers');

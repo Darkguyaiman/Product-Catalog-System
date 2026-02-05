@@ -1,4 +1,4 @@
-<div class="container product-detail-container" style="padding-top: 3rem; padding-bottom: 5rem;">
+<div class="container product-detail-container" style="padding-top: 3rem; padding-bottom: 2rem;">
     <!-- Modern Breadcrumb -->
     <nav class="breadcrumb-nav mb-4">
         <a href="/products" class="back-link">
@@ -80,7 +80,7 @@
                             Code: <%= product.code %>
                         </span>
                         <% if (product.mda_reg_no) { %>
-                            <a href="/product/<%= product.id %>/mda-cert" target="_blank" class="badge badge-outline"
+                            <a href="<%= product.mda_cert %>" target="_blank" class="badge badge-outline"
                                 style="text-decoration: none; cursor: pointer;">
                                 <i class="fa-solid fa-shield-halved mr-1"></i> MDA: <%= product.mda_reg_no %>
                             </a>
@@ -91,39 +91,18 @@
                     </h1>
                     <% %>
 
-                        <!-- Category and Subcategory -->
-                        <% if (category || subcategory) { %>
+                        <!-- Category Chips -->
+                        <% if (productCategories && productCategories.length> 0) { %>
                             <div class="product-categories-wrapper mb-3">
-                                <div class="category-path">
-                                    <% if (category) { %>
-                                        <div class="category-item main-category">
-                                            <div class="category-icon">
-                                                <i class="fa-solid fa-layer-group"></i>
-                                            </div>
-                                            <div class="category-content">
-                                                <span class="category-label">Category</span>
-                                                <span class="category-name">
-                                                    <%= category.name %>
-                                                </span>
-                                            </div>
+                                <div class="category-chips">
+                                    <% productCategories.forEach(cat=> { %>
+                                        <div class="category-chip">
+                                            <i class="fa-solid fa-tag"></i>
+                                            <span>
+                                                <%= cat.name %>
+                                            </span>
                                         </div>
-                                        <% } %>
-                                            <% if (subcategory) { %>
-                                                <div class="category-connector">
-                                                    <i class="fa-solid fa-chevron-right"></i>
-                                                </div>
-                                                <div class="category-item sub-category">
-                                                    <div class="category-icon">
-                                                        <i class="fa-solid fa-tags"></i>
-                                                    </div>
-                                                    <div class="category-content">
-                                                        <span class="category-label">Subcategory</span>
-                                                        <span class="category-name">
-                                                            <%= subcategory.name %>
-                                                        </span>
-                                                    </div>
-                                                </div>
-                                                <% } %>
+                                        <% }) %>
                                 </div>
                             </div>
                             <% } %>
@@ -197,15 +176,37 @@
             <button class="tab-trigger active" data-tab="specs">
                 <i class="fa-solid fa-list-check"></i> Specifications
             </button>
-            <button class="tab-trigger" data-tab="marketing">
-                <i class="fa-solid fa-file"></i> Resources
-            </button>
-            <button class="tab-trigger" data-tab="events">
-                <i class="fa-solid fa-calendar-days"></i> Events
-            </button>
-            <button class="tab-trigger" data-tab="testimonies">
-                <i class="fa-solid fa-star"></i> Testimonies
-            </button>
+            <% if (materials.flyers.length> 0) { %>
+                <button class="tab-trigger" data-tab="flyers">
+                    <i class="fa-solid fa-file-pdf"></i> Flyers
+                </button>
+                <% } %>
+                    <% if (materials.backdrops.length> 0) { %>
+                        <button class="tab-trigger" data-tab="backdrops">
+                            <i class="fa-solid fa-panorama"></i> Backdrops
+                        </button>
+                        <% } %>
+                            <% if (materials.posters.length> 0) { %>
+                                <button class="tab-trigger" data-tab="posters">
+                                    <i class="fa-solid fa-image"></i> Posters
+                                </button>
+                                <% } %>
+                                    <% if (materials.rollups.length> 0) { %>
+                                        <button class="tab-trigger" data-tab="rollups">
+                                            <i class="fa-solid fa-scroll"></i> Roll Ups
+                                        </button>
+                                        <% } %>
+                                            <% if (materials.others.length> 0) { %>
+                                                <button class="tab-trigger" data-tab="others">
+                                                    <i class="fa-solid fa-box-archive"></i> Resources
+                                                </button>
+                                                <% } %>
+                                                    <button class="tab-trigger" data-tab="events">
+                                                        <i class="fa-solid fa-calendar-days"></i> Events
+                                                    </button>
+                                                    <button class="tab-trigger" data-tab="testimonies">
+                                                        <i class="fa-solid fa-star"></i> Testimonies
+                                                    </button>
         </div>
 
         <div class="tab-content-container">
@@ -244,119 +245,273 @@
                         <% } %>
             </div>
 
-            <!-- Marketing Materials -->
-            <div class="tab-pane" id="marketing">
-                <% if (materials.length> 0) { %>
+            <!-- Flyers -->
+            <% if (materials.flyers.length> 0) { %>
+                <div class="tab-pane" id="flyers">
                     <div class="grid grid-3">
-                        <% materials.forEach(m=> { %>
+                        <% materials.flyers.forEach(m=> { %>
                             <a href="<%= m.file_path %>" target="_blank" class="resource-card">
                                 <div class="resource-icon">
-                                    <% const fileExt=m.file_path ? m.file_path.split('.').pop().toLowerCase() : '' ; let
-                                        iconClass='fa-file' ; if (fileExt==='pdf' ) iconClass='fa-file-pdf' ; else if
-                                        (['doc', 'docx' ].includes(fileExt)) iconClass='fa-file-word' ; else if
-                                        (['xls', 'xlsx' ].includes(fileExt)) iconClass='fa-file-excel' ; else if
-                                        (['ppt', 'pptx' ].includes(fileExt)) iconClass='fa-file-powerpoint' ; else if
-                                        (['jpg', 'jpeg' , 'png' , 'gif' , 'webp' ].includes(fileExt))
-                                        iconClass='fa-file-image' ; %>
-                                        <i class="fa-solid <%= iconClass %>"></i>
+                                    <i class="fa-solid fa-file-pdf"></i>
                                 </div>
                                 <div class="resource-info">
                                     <h4 class="resource-title">
                                         <%= m.name %>
                                     </h4>
-                                    <span class="resource-action">
-                                        Read <%= m.name %> <i class="fa-solid fa-arrow-right"></i>
-                                    </span>
+                                    <span class="resource-action">Download Flyer <i
+                                            class="fa-solid fa-download"></i></span>
                                 </div>
                             </a>
                             <% }) %>
                     </div>
-                    <% } else { %>
-                        <div class="pane-empty">
-                            <i class="fa-solid fa-folder-open"></i>
-                            <p>Brochures and user manuals will be available soon.</p>
-                        </div>
-                        <% } %>
-            </div>
+                </div>
+                <% } %>
 
-            <!-- Events -->
-            <div class="tab-pane" id="events">
-                <% if (events.length> 0) { %>
-                    <div class="grid grid-2">
-                        <% events.forEach(e=> { %>
-                            <a href="<%= e.link || '#' %>" class="event-capsule" <%=e.link ? 'target="_blank"' : '' %>>
-                                <div class="event-date">
-                                    <span class="month">
-                                        <%= e.start_date ? new Date(e.start_date).toLocaleString('default', {
-                                            month: 'short' }) : '---' %>
-                                    </span>
-                                    <span class="day">
-                                        <%= e.start_date ? new Date(e.start_date).getDate() : '--' %>
-                                    </span>
-                                    <span class="year">
-                                        <%= e.start_date ? new Date(e.start_date).getFullYear() : '----' %>
-                                    </span>
-                                </div>
-                                <div class="event-body">
-                                    <h4>
-                                        <%= e.name %>
-                                    </h4>
-                                    <p class="location"><i class="fa-solid fa-location-dot"></i>
-                                        <%= e.location %>
-                                    </p>
-                                </div>
-                                <div class="event-link">
-                                    <i class="fa-solid fa-chevron-right"></i>
-                                </div>
-                            </a>
-                            <% }) %>
-                    </div>
-                    <% } else { %>
-                        <div class="pane-empty">
-                            <i class="fa-solid fa-calendar-xmark"></i>
-                            <p>No upcoming events or workshops for this product.</p>
-                        </div>
-                        <% } %>
-            </div>
-
-            <!-- Testimonies -->
-            <div class="tab-pane" id="testimonies">
-                <% if (testimonies.length> 0) { %>
-                    <div class="grid grid-2">
-                        <% testimonies.forEach(t=> { %>
-                            <div class="testimony-card">
-                                <div class="testimony-quote">
-                                    <i class="fa-solid fa-quote-right"></i>
-                                    <p>"<%= t.content || 'Exceptional precision and reliability in clinical settings.'
-                                            %>"</p>
-                                </div>
-                                <div class="testimony-author">
-                                    <div class="author-avatar">
-                                        <%= t.client_name.charAt(0) %>
-                                    </div>
-                                    <div class="author-info">
-                                        <h5>
-                                            <%= t.client_name %>
-                                        </h5>
-                                        <% if (t.treatment) { %>
-                                            <span class="treatment-info">
-                                                <em>Treatment: <%= t.treatment %></em>
-                                            </span>
-                                            <% } else { %>
-                                                <span>Healthcare Professional</span>
-                                                <% } %>
-                                    </div>
-                                </div>
+                    <!-- Backdrops -->
+                    <% if (materials.backdrops.length> 0) { %>
+                        <div class="tab-pane" id="backdrops">
+                            <div class="grid grid-3">
+                                <% materials.backdrops.forEach(m=> { %>
+                                    <a href="<%= m.file_path %>" target="_blank" class="resource-card">
+                                        <div class="resource-icon">
+                                            <i class="fa-solid fa-panorama"></i>
+                                        </div>
+                                        <div class="resource-info">
+                                            <h4 class="resource-title">
+                                                <%= m.name %>
+                                            </h4>
+                                            <span class="resource-action">View Backdrop <i
+                                                    class="fa-solid fa-eye"></i></span>
+                                        </div>
+                                    </a>
+                                    <% }) %>
                             </div>
-                            <% }) %>
-                    </div>
-                    <% } else { %>
-                        <div class="pane-empty">
-                            <i class="fa-solid fa-comment-slash"></i>
-                            <p>Be the first to share your experience with this product.</p>
                         </div>
                         <% } %>
-            </div>
+
+                            <!-- Posters -->
+                            <% if (materials.posters.length> 0) { %>
+                                <div class="tab-pane" id="posters">
+                                    <div class="grid grid-3">
+                                        <% materials.posters.forEach(m=> { %>
+                                            <a href="<%= m.file_path %>" target="_blank" class="resource-card">
+                                                <div class="resource-icon">
+                                                    <i class="fa-solid fa-image"></i>
+                                                </div>
+                                                <div class="resource-info">
+                                                    <h4 class="resource-title">
+                                                        <%= m.name %>
+                                                    </h4>
+                                                    <span class="resource-action">View Poster <i
+                                                            class="fa-solid fa-expand"></i></span>
+                                                </div>
+                                            </a>
+                                            <% }) %>
+                                    </div>
+                                </div>
+                                <% } %>
+
+                                    <!-- Roll Ups -->
+                                    <% if (materials.rollups.length> 0) { %>
+                                        <div class="tab-pane" id="rollups">
+                                            <div class="grid grid-3">
+                                                <% materials.rollups.forEach(m=> { %>
+                                                    <a href="<%= m.file_path %>" target="_blank" class="resource-card">
+                                                        <div class="resource-icon">
+                                                            <i class="fa-solid fa-scroll"></i>
+                                                        </div>
+                                                        <div class="resource-info">
+                                                            <h4 class="resource-title">
+                                                                <%= m.name %>
+                                                            </h4>
+                                                            <span class="resource-action">View Roll Up <i
+                                                                    class="fa-solid fa-scroll"></i></span>
+                                                        </div>
+                                                    </a>
+                                                    <% }) %>
+                                            </div>
+                                        </div>
+                                        <% } %>
+
+                                            <!-- Other Resources -->
+                                            <% if (materials.others.length> 0) { %>
+                                                <div class="tab-pane" id="others">
+                                                    <div class="grid grid-3">
+                                                        <% materials.others.forEach(m=> { %>
+                                                            <a href="<%= m.file_path %>" target="_blank"
+                                                                class="resource-card">
+                                                                <div class="resource-icon">
+                                                                    <% const fileExt=m.file_path ?
+                                                                        m.file_path.split('.').pop().toLowerCase() : ''
+                                                                        ; let iconClass='fa-file' ; if (fileExt==='pdf'
+                                                                        ) iconClass='fa-file-pdf' ; else if
+                                                                        (['doc', 'docx' ].includes(fileExt))
+                                                                        iconClass='fa-file-word' ; else if
+                                                                        (['xls', 'xlsx' ].includes(fileExt))
+                                                                        iconClass='fa-file-excel' ; else if
+                                                                        (['ppt', 'pptx' ].includes(fileExt))
+                                                                        iconClass='fa-file-powerpoint' ; else if
+                                                                        (['jpg', 'jpeg' , 'png' , 'gif' , 'webp'
+                                                                        ].includes(fileExt)) iconClass='fa-file-image' ;
+                                                                        %>
+                                                                        <i class="fa-solid <%= iconClass %>"></i>
+                                                                </div>
+                                                                <div class="resource-info">
+                                                                    <h4 class="resource-title">
+                                                                        <%= m.name %>
+                                                                    </h4>
+                                                                    <span class="resource-action">View Resources <i
+                                                                            class="fa-solid fa-arrow-right"></i></span>
+                                                                </div>
+                                                            </a>
+                                                            <% }) %>
+                                                    </div>
+                                                </div>
+                                                <% } %>
+
+                                                    <!-- Events -->
+                                                    <div class="tab-pane" id="events">
+                                                        <% if (events.length> 0) { %>
+                                                            <div class="grid grid-2">
+                                                                <% events.forEach(e=> { %>
+                                                                    <div class="event-capsule">
+                                                                        <div class="event-date">
+                                                                            <span class="month">
+                                                                                <%= e.start_date ? new
+                                                                                    Date(e.start_date).toLocaleString('default',
+                                                                                    { month: 'short' }) : '---' %>
+                                                                            </span>
+                                                                            <span class="day">
+                                                                                <%= e.start_date ? new
+                                                                                    Date(e.start_date).getDate() : '--'
+                                                                                    %>
+                                                                            </span>
+                                                                            <span class="year">
+                                                                                <%= e.start_date ? new
+                                                                                    Date(e.start_date).getFullYear()
+                                                                                    : '----' %>
+                                                                            </span>
+                                                                        </div>
+                                                                        <div class="event-body">
+                                                                            <h4>
+                                                                                <%= e.name %>
+                                                                            </h4>
+                                                                            <p class="location"><i
+                                                                                    class="fa-solid fa-location-dot"></i>
+                                                                                <%= e.location %>
+                                                                            </p>
+                                                                            <div class="event-actions mt-3">
+                                                                                <% if (e.video_link) { %>
+                                                                                    <a href="<%= companyBasePath %>/watch/event/<%= e.video_link.id %>"
+                                                                                        class="btn btn-sm btn-outline-primary">
+                                                                                        <i class="fa-solid fa-play"></i>
+                                                                                        Watch Video
+                                                                                    </a>
+                                                                                    <% } %>
+                                                                                        <% if (e.links &&
+                                                                                            e.links.length> 0) { %>
+                                                                                            <% e.links.forEach(link=> {
+                                                                                                %>
+                                                                                                <% if (!e.video_link ||
+                                                                                                    link.id
+                                                                                                    !==e.video_link.id)
+                                                                                                    { %>
+                                                                                                    <a href="<%= link.url %>"
+                                                                                                        target="_blank"
+                                                                                                        class="btn btn-sm btn-link">
+                                                                                                        <i
+                                                                                                            class="fa-solid fa-link"></i>
+                                                                                                        <%= link.title
+                                                                                                            || 'Link' %>
+                                                                                                    </a>
+                                                                                                    <% } %>
+                                                                                                        <% }) %>
+                                                                                                            <% } %>
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                    <% }) %>
+                                                            </div>
+                                                            <% } else { %>
+                                                                <div class="pane-empty">
+                                                                    <i class="fa-solid fa-calendar-xmark"></i>
+                                                                    <p>No upcoming events or workshops for this product.
+                                                                    </p>
+                                                                </div>
+                                                                <% } %>
+                                                    </div>
+
+                                                    <!-- Testimonies -->
+                                                    <div class="tab-pane" id="testimonies">
+                                                        <% if (testimonies.length> 0) { %>
+                                                            <div class="grid grid-2">
+                                                                <% testimonies.forEach(t=> { %>
+                                                                    <div class="testimony-card">
+                                                                        <div class="testimony-quote">
+                                                                            <i class="fa-solid fa-quote-right"></i>
+                                                                            <p>"<%= t.content
+                                                                                    || 'Exceptional precision and reliability in clinical settings.'
+                                                                                    %>"</p>
+                                                                        </div>
+                                                                        <div class="testimony-footer">
+                                                                            <div class="testimony-author">
+                                                                                <div class="author-avatar-wrapper">
+                                                                                    <div class="author-avatar">
+                                                                                        <%= t.client_name.charAt(0) %>
+                                                                                    </div>
+                                                                                    <% if (t.video_link) { %>
+                                                                                        <a href="<%= companyBasePath %>/watch/testimony/<%= t.video_link.id %>"
+                                                                                            class="avatar-play-btn"
+                                                                                            title="Watch Testimony Video">
+                                                                                            <i
+                                                                                                class="fa-solid fa-play"></i>
+                                                                                        </a>
+                                                                                        <% } %>
+                                                                                </div>
+                                                                                <div class="author-info">
+                                                                                    <h5>
+                                                                                        <%= t.client_name %>
+                                                                                    </h5>
+                                                                                    <div
+                                                                                        class="d-flex align-items-center gap-2">
+                                                                                        <% if (t.treatment) { %>
+                                                                                            <span
+                                                                                                class="treatment-info">
+                                                                                                <em>Treatment: <%=
+                                                                                                        t.treatment %>
+                                                                                                </em>
+                                                                                            </span>
+                                                                                            <% } else { %>
+                                                                                                <span
+                                                                                                    class="treatment-info">Healthcare
+                                                                                                    Professional</span>
+                                                                                                <% } %>
+                                                                                    </div>
+                                                                                </div>
+                                                                            </div>
+                                                                            <% if (t.video_link) { %>
+                                                                                <div class="testimony-video-indicator">
+                                                                                    <a href="<%= companyBasePath %>/watch/testimony/<%= t.video_link.id %>"
+                                                                                        class="modern-video-btn">
+                                                                                        <span class="btn-pulse"></span>
+                                                                                        <i
+                                                                                            class="fa-solid fa-video"></i>
+                                                                                        <span>Watch Video</span>
+                                                                                    </a>
+                                                                                </div>
+                                                                                <% } %>
+                                                                        </div>
+                                                                    </div>
+                                                                    <% }) %>
+                                                            </div>
+                                                            <% } else { %>
+                                                                <div class="pane-empty">
+                                                                    <i class="fa-solid fa-comment-slash"></i>
+                                                                    <p>Be the first to share your experience with this
+                                                                        product.</p>
+                                                                </div>
+                                                                <% } %>
+                                                    </div>
         </div>
     </div>
 </div>
@@ -643,106 +798,38 @@
         font-size: 0.95rem;
     }
 
-    .product-categories-wrapper {
+    /* Category Chips Styling */
+    .category-chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.75rem;
         margin-top: 0.5rem;
     }
 
-    .category-path {
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-        flex-wrap: wrap;
-    }
-
-    .category-item {
+    .category-chip {
         display: inline-flex;
         align-items: center;
         gap: 0.5rem;
-        padding: 0.5rem 0.875rem;
-        background: var(--white);
-        border-radius: 8px;
-        border: 1.5px solid var(--gray-200);
-        transition: all 0.2s ease;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-    }
-
-    .category-item:hover {
-        transform: translateY(-1px);
-        box-shadow: 0 2px 6px rgba(0, 91, 150, 0.12);
-    }
-
-    .category-item.main-category {
-        border-color: var(--blue-medium);
-        background: rgba(0, 91, 150, 0.04);
-    }
-
-    .category-item.sub-category {
-        border-color: var(--blue-light);
-        background: rgba(0, 91, 150, 0.02);
-    }
-
-    .category-icon {
-        width: 28px;
-        height: 28px;
-        border-radius: 6px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 0.85rem;
-        flex-shrink: 0;
-    }
-
-    .category-item.main-category .category-icon {
-        background: var(--blue-medium);
-        color: var(--white);
-    }
-
-    .category-item.sub-category .category-icon {
-        background: var(--blue-light);
-        color: var(--white);
-    }
-
-    .category-content {
-        display: flex;
-        flex-direction: column;
-        gap: 0.15rem;
-    }
-
-    .category-label {
-        font-size: 0.65rem;
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 0.3px;
-        color: var(--gray-500);
-        line-height: 1;
-    }
-
-    .category-item.main-category .category-label {
-        color: var(--blue-medium);
-    }
-
-    .category-item.sub-category .category-label {
-        color: var(--blue-light);
-    }
-
-    .category-name {
+        padding: 0.5rem 1rem;
+        background: var(--blue-lightest, rgba(0, 91, 150, 0.05));
+        border: 1px solid var(--blue-light, #005b96);
+        color: var(--blue-darkest, #011f4b);
+        border-radius: 50px;
         font-size: 0.85rem;
         font-weight: 600;
-        color: var(--blue-darkest);
-        line-height: 1.2;
+        transition: all 0.3s ease;
     }
 
-    .category-connector {
-        display: flex;
-        align-items: center;
-        color: var(--blue-medium);
-        font-size: 0.75rem;
-        opacity: 0.5;
+    .category-chip:hover {
+        background: var(--blue-light, #005b96);
+        color: var(--white, #ffffff);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 91, 150, 0.2);
     }
 
-    /* Single category (no subcategory) styling */
-    .category-path:has(.main-category:only-child) .category-item {
-        border-color: var(--blue-medium);
+    .category-chip i {
+        font-size: 0.8rem;
+        opacity: 0.8;
     }
 
     .supplier-info {
@@ -779,6 +866,7 @@
         font-size: 1.1rem;
         line-height: 1.7;
         color: var(--gray-600);
+        text-align: justify;
     }
 
     .detail-actions {
@@ -832,6 +920,9 @@
         background-color: var(--gray-50);
         border-bottom: 1px solid var(--gray-200);
         padding: 0 2rem;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: thin;
     }
 
     .tab-trigger {
@@ -846,6 +937,8 @@
         display: flex;
         align-items: center;
         gap: 0.75rem;
+        flex-shrink: 0;
+        white-space: nowrap;
     }
 
     .tab-trigger::after {
@@ -1130,9 +1223,23 @@
         gap: 1rem;
     }
 
+    .testimony-footer {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1.5rem;
+        flex-wrap: wrap;
+    }
+
+    .author-avatar-wrapper {
+        position: relative;
+        width: 52px;
+        height: 52px;
+    }
+
     .author-avatar {
-        width: 48px;
-        height: 48px;
+        width: 100%;
+        height: 100%;
         background-color: var(--blue-medium);
         color: var(--white);
         border-radius: 50%;
@@ -1141,15 +1248,88 @@
         justify-content: center;
         font-weight: 800;
         font-size: 1.25rem;
+        border: 2px solid var(--white);
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    .avatar-play-btn {
+        position: absolute;
+        bottom: -4px;
+        right: -4px;
+        width: 24px;
+        height: 24px;
+        background: var(--blue-dark);
+        color: var(--white);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.7rem;
+        border: 2px solid var(--white);
+        transition: transform 0.2s;
+        z-index: 2;
+    }
+
+    .avatar-play-btn:hover {
+        transform: scale(1.2);
+        color: var(--white);
+    }
+
+    .modern-video-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.6rem 1.2rem;
+        background: var(--white);
+        border: 1px solid var(--blue-medium);
+        color: var(--blue-medium);
+        border-radius: 50px;
+        font-size: 0.9rem;
+        font-weight: 600;
+        text-decoration: none;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .modern-video-btn:hover {
+        background: var(--blue-medium);
+        color: var(--white);
+        box-shadow: 0 4px 15px rgba(0, 91, 150, 0.2);
+        transform: translateY(-2px);
+    }
+
+    .btn-pulse {
+        position: absolute;
+        width: 10px;
+        height: 10px;
+        background: rgba(0, 91, 150, 0.2);
+        border-radius: 50%;
+        left: 1.25rem;
+        z-index: 0;
+        animation: pulse-video 2s infinite;
+    }
+
+    @keyframes pulse-video {
+        0% {
+            transform: scale(1);
+            opacity: 1;
+        }
+
+        100% {
+            transform: scale(4);
+            opacity: 0;
+        }
     }
 
     .author-info h5 {
         margin: 0;
-        font-size: 1rem;
+        font-size: 1.05rem;
+        color: var(--blue-darkest);
     }
 
     .author-info span {
-        font-size: 0.8rem;
+        font-size: 0.85rem;
         color: var(--gray-500);
     }
 
@@ -1194,6 +1374,15 @@
 
         .product-essentials {
             padding: 3rem;
+        }
+
+        .tabs-nav {
+            padding: 0 1rem;
+        }
+
+        .tab-trigger {
+            padding: 1.25rem 1.5rem;
+            font-size: 0.95rem;
         }
     }
 
@@ -1245,14 +1434,10 @@
         }
 
         .tabs-nav {
-            overflow-x: auto;
             padding: 0;
-            -webkit-overflow-scrolling: touch;
         }
 
         .tab-trigger {
-            padding: 1.25rem 1.5rem;
-            white-space: nowrap;
             font-size: 0.9rem;
         }
 
@@ -1375,6 +1560,7 @@
         .detail-description {
             font-size: 1rem;
             line-height: 1.6;
+            text-align: justify;
         }
 
         .detail-actions {
@@ -1579,6 +1765,7 @@
 
         .detail-description {
             font-size: 0.95rem;
+            text-align: justify;
         }
 
         .trust-indicators {

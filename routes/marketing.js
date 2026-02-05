@@ -310,11 +310,11 @@ router.post('/materials/add', upload.single('file'), async (req, res) => {
         }
 
         await connection.commit();
-        res.redirect('/admin/marketing/materials');
+        res.redirect(`/admin/marketing/materials?category=${category || 'BROCHURE'}`);
     } catch (err) {
         if (connection) await connection.rollback();
         console.error(err);
-        res.redirect('/admin/marketing/materials/add?error=Failed');
+        res.redirect(`/admin/marketing/materials/add?category=${category || 'BROCHURE'}&error=Failed`);
     } finally {
         if (connection) connection.release();
     }
@@ -332,7 +332,9 @@ router.get('/materials/edit/:id', async (req, res) => {
         const material = rows[0];
         material.product_ids = related.map(r => r.product_id);
 
-        res.render('marketing/materials/edit', { material, products, companies, MATERIAL_CATEGORIES });
+        const selectedCategory = req.query.category || material.category || 'BROCHURE';
+
+        res.render('marketing/materials/edit', { material, products, companies, MATERIAL_CATEGORIES, selectedCategory });
     } catch (err) {
         console.error(err);
         res.redirect('/admin/marketing/materials');
@@ -420,11 +422,11 @@ router.post('/materials/edit/:id', upload.single('file'), async (req, res) => {
         }
 
         await connection.commit();
-        res.redirect('/admin/marketing/materials');
+        res.redirect(`/admin/marketing/materials?category=${category || 'BROCHURE'}`);
     } catch (err) {
         if (connection) await connection.rollback();
         console.error(err);
-        res.redirect('/admin/marketing/materials');
+        res.redirect(`/admin/marketing/materials?category=${category || 'BROCHURE'}`);
     } finally {
         if (connection) connection.release();
     }
@@ -647,6 +649,7 @@ router.post('/testimonies/edit/:id', async (req, res) => {
 });
 
 router.post('/materials/delete/:id', async (req, res) => {
+    if (req.session.user.role !== 'Super Admin') return res.status(403).send('Unauthorized');
     try {
         const [rows] = await pool.query("SELECT file_path FROM marketing_materials WHERE id = ?", [req.params.id]);
         if (rows.length > 0 && rows[0].file_path) {
@@ -656,11 +659,17 @@ router.post('/materials/delete/:id', async (req, res) => {
             }
         }
         await pool.query("DELETE FROM marketing_materials WHERE id = ?", [req.params.id]);
-        res.redirect('/admin/marketing/materials');
-    } catch (e) { console.error(e); res.redirect('/admin/marketing/materials'); }
+        const category = req.query.category || 'BROCHURE';
+        res.redirect(`/admin/marketing/materials?category=${category}`);
+    } catch (e) {
+        console.error(e);
+        const category = req.query.category || 'BROCHURE';
+        res.redirect(`/admin/marketing/materials?category=${category}`);
+    }
 });
 
 router.post('/events/delete/:id', async (req, res) => {
+    if (req.session.user.role !== 'Super Admin') return res.status(403).send('Unauthorized');
     try {
         await pool.query("DELETE FROM events WHERE id = ?", [req.params.id]);
         res.redirect('/admin/marketing/events');
@@ -668,6 +677,7 @@ router.post('/events/delete/:id', async (req, res) => {
 });
 
 router.post('/testimonies/delete/:id', async (req, res) => {
+    if (req.session.user.role !== 'Super Admin') return res.status(403).send('Unauthorized');
     try {
         await pool.query("DELETE FROM testimonies WHERE id = ?", [req.params.id]);
         res.redirect('/admin/marketing/testimonies');

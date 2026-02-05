@@ -3,6 +3,9 @@
 <div class="tabs">
     <div class="tab active">General Settings</div>
     <a href="/admin/settings/categories" class="tab" style="text-decoration: none; color: inherit;">Categories</a>
+    <% if (user.role==='Admin' || user.role==='Super Admin' ) { %>
+        <a href="/admin/settings/users" class="tab" style="text-decoration: none; color: inherit;">Users</a>
+        <% } %>
 </div>
 
 <div class="grid">
@@ -37,11 +40,13 @@
                                         class="btn btn-secondary" style="padding: 4px 8px; font-size: 12px;">
                                         <i class="fas fa-edit"></i>
                                     </button>
-                                    <button
-                                        onclick="openDeleteModal('/admin/settings/delete/<%= c.id %>', 'Are you sure you want to delete the country \'<%= c.value %>\'?')"
-                                        class="btn btn-danger" style="padding: 4px 8px; font-size: 12px;">
-                                        <i class="fas fa-trash"></i>
-                                    </button>
+                                    <% if (user.role==='Super Admin' ) { %>
+                                        <button
+                                            onclick="openDeleteModal('/admin/settings/delete/<%= c.id %>', 'Are you sure you want to delete the country \'<%= c.value %>\'?')"
+                                            class="btn btn-danger" style="padding: 4px 8px; font-size: 12px;">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                        <% } %>
                                 </div>
                             </td>
                         </tr>
@@ -64,11 +69,13 @@
                                 class="btn btn-secondary btn-sm">
                                 <i class="fas fa-edit"></i>
                             </button>
-                            <button
-                                onclick="openDeleteModal('/admin/settings/delete/<%= c.id %>', 'Delete country \'<%= c.value %>\'?')"
-                                class="btn btn-danger btn-sm">
-                                <i class="fas fa-trash"></i>
-                            </button>
+                            <% if (user.role==='Super Admin' ) { %>
+                                <button
+                                    onclick="openDeleteModal('/admin/settings/delete/<%= c.id %>', 'Delete country \'<%= c.value %>\'?')"
+                                    class="btn btn-danger btn-sm">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                                <% } %>
                         </div>
                     </div>
                 </div>
@@ -107,11 +114,13 @@
                                         class="btn btn-secondary" style="padding: 4px 8px; font-size: 12px;">
                                         <i class="fas fa-edit"></i>
                                     </button>
-                                    <button
-                                        onclick="openDeleteModal('/admin/settings/delete/<%= t.id %>', 'Are you sure you want to delete the product type \'<%= t.value %>\'?')"
-                                        class="btn btn-danger" style="padding: 4px 8px; font-size: 12px;">
-                                        <i class="fas fa-trash"></i>
-                                    </button>
+                                    <% if (user.role==='Super Admin' ) { %>
+                                        <button
+                                            onclick="openDeleteModal('/admin/settings/delete/<%= t.id %>', 'Are you sure you want to delete the product type \'<%= t.value %>\'?')"
+                                            class="btn btn-danger" style="padding: 4px 8px; font-size: 12px;">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                        <% } %>
                                 </div>
                             </td>
                         </tr>
@@ -134,11 +143,13 @@
                                 class="btn btn-secondary btn-sm">
                                 <i class="fas fa-edit"></i>
                             </button>
-                            <button
-                                onclick="openDeleteModal('/admin/settings/delete/<%= t.id %>', 'Delete product type \'<%= t.value %>\'?')"
-                                class="btn btn-danger btn-sm">
-                                <i class="fas fa-trash"></i>
-                            </button>
+                            <% if (user.role==='Super Admin' ) { %>
+                                <button
+                                    onclick="openDeleteModal('/admin/settings/delete/<%= t.id %>', 'Delete product type \'<%= t.value %>\'?')"
+                                    class="btn btn-danger btn-sm">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                                <% } %>
                         </div>
                     </div>
                 </div>

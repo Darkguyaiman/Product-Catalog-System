@@ -130,6 +130,10 @@
                                             class="sidebar-link <%= path.startsWith('/admin/companies') ? 'active' : '' %>">
                                             <i class="fa-solid fa-building"></i> Companies
                                         </a>
+                                        <a href="/admin/import"
+                                            class="sidebar-link <%= path.startsWith('/admin/import') ? 'active' : '' %>">
+                                            <i class="fa-solid fa-file-import"></i> Bulk Import
+                                        </a>
                                     </div>
                                 </div>
 
@@ -212,9 +216,6 @@
                                                 <a href="<%= typeof companyBasePath !== 'undefined' ? companyBasePath + '/home' : '/home' %>"
                                                     class="footer-logo">
                                                     <img src="<%= brandLogo %>" alt="Logo">
-                                                    <span>
-                                                        <%= brandName %>
-                                                    </span>
                                                 </a>
                                                 <p class="footer-description">
                                                     Leading provider of innovative healthcare solutions and high-quality
@@ -355,6 +356,21 @@
                                                                 icon.className = 'fa-solid fa-bars';
                                                             }
                                                         });
+                                                    }
+
+                                                    // Scroll Persistence
+                                                    const sidebarNav = document.querySelector('.sidebar-nav');
+                                                    if (sidebarNav) {
+                                                        // Restore scroll position
+                                                        const savedScroll = localStorage.getItem('sidebar-scroll');
+                                                        if (savedScroll) {
+                                                            sidebarNav.scrollTop = savedScroll;
+                                                        }
+
+                                                        // Save scroll position
+                                                        sidebarNav.addEventListener('scroll', () => {
+                                                            localStorage.setItem('sidebar-scroll', sidebarNav.scrollTop);
+                                                        }, { passive: true });
                                                     }
 
                                                     // Collapsible Sections

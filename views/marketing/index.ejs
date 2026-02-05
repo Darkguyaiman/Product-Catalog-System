@@ -35,7 +35,7 @@
                         <%= selectedCategory ? (selectedCategory.charAt(0) + selectedCategory.slice(1).toLowerCase() +
                             (selectedCategory.endsWith('S') ? '' : 's' )) : 'Marketing Materials' %>
                             <% } %>
-                                <% if (activeTab==='events' ) { %> Marketing Events <% } %>
+                                <% if (activeTab==='events' ) { %> Events <% } %>
                                         <% if (activeTab==='testimonies' ) { %> Client Testimonies <% } %>
                 </h1>
                 <% if (activeTab==='materials' ) { %>
@@ -325,16 +325,16 @@
                                                                     <td>
                                                                         <div
                                                                             style="display: flex; gap: 8px; justify-content: center;">
-                                                                            <a href="/admin/marketing/materials/edit/<%= m.id %>"
+                                                                            <a href="/admin/marketing/materials/edit/<%= m.id %>?category=<%= selectedCategory %>"
                                                                                 class="btn btn-secondary btn-sm"><i
                                                                                     class="fas fa-edit"></i></a>
-                                                                            <form
-                                                                                action="/admin/marketing/materials/delete/<%= m.id %>"
-                                                                                method="POST"
-                                                                                onsubmit="return confirm('Delete this item?');">
-                                                                                <button class="btn btn-danger btn-sm"><i
-                                                                                        class="fas fa-trash"></i></button>
-                                                                            </form>
+                                                                            <% if (user.role==='Super Admin' ) { %>
+                                                                                <button type="button"
+                                                                                    onclick="openDeleteModal('/admin/marketing/materials/delete/<%= m.id %>?category=<%= selectedCategory %>', 'Delete content \'<%= m.name %>\'?')"
+                                                                                    class="btn btn-danger btn-sm">
+                                                                                    <i class="fas fa-trash"></i>
+                                                                                </button>
+                                                                                <% } %>
                                                                         </div>
                                                                     </td>
                                                 </tr>
@@ -395,13 +395,13 @@
                                                                     <a href="/admin/marketing/events/edit/<%= e.id %>"
                                                                         class="btn btn-secondary btn-sm"><i
                                                                             class="fas fa-edit"></i></a>
-                                                                    <form
-                                                                        action="/admin/marketing/events/delete/<%= e.id %>"
-                                                                        method="POST"
-                                                                        onsubmit="return confirm('Delete this event?');">
-                                                                        <button class="btn btn-danger btn-sm"><i
-                                                                                class="fas fa-trash"></i></button>
-                                                                    </form>
+                                                                    <% if (user.role==='Super Admin' ) { %>
+                                                                        <button type="button"
+                                                                            onclick="openDeleteModal('/admin/marketing/events/delete/<%= e.id %>', 'Delete event \'<%= e.name %>\'?')"
+                                                                            class="btn btn-danger btn-sm">
+                                                                            <i class="fas fa-trash"></i>
+                                                                        </button>
+                                                                        <% } %>
                                                                 </div>
                                                             </td>
                                                         </tr>
@@ -459,13 +459,13 @@
                                                                             <a href="/admin/marketing/testimonies/edit/<%= t.id %>"
                                                                                 class="btn btn-secondary btn-sm"><i
                                                                                     class="fas fa-edit"></i></a>
-                                                                            <form
-                                                                                action="/admin/marketing/testimonies/delete/<%= t.id %>"
-                                                                                method="POST"
-                                                                                onsubmit="return confirm('Delete this testimony?');">
-                                                                                <button class="btn btn-danger btn-sm"><i
-                                                                                        class="fas fa-trash"></i></button>
-                                                                            </form>
+                                                                            <% if (user.role==='Super Admin' ) { %>
+                                                                                <button type="button"
+                                                                                    onclick="openDeleteModal('/admin/marketing/testimonies/delete/<%= t.id %>', 'Delete testimony \'<%= t.client_name %>\'?')"
+                                                                                    class="btn btn-danger btn-sm">
+                                                                                    <i class="fas fa-trash"></i>
+                                                                                </button>
+                                                                                <% } %>
                                                                         </div>
                                                                     </td>
                                                                 </tr>
@@ -506,12 +506,13 @@
                                         </div>
                                     </div>
                                     <div class="category-card-actions">
-                                        <a href="/admin/marketing/materials/edit/<%= m.id %>"
+                                        <a href="/admin/marketing/materials/edit/<%= m.id %>?category=<%= selectedCategory %>"
                                             class="btn btn-secondary btn-sm"><i class="fas fa-edit"></i></a>
-                                        <form action="/admin/marketing/materials/delete/<%= m.id %>" method="POST"
-                                            onsubmit="return confirm('Delete this?');">
-                                            <button class="btn btn-danger btn-sm"><i class="fas fa-trash"></i></button>
-                                        </form>
+                                        <button type="button"
+                                            onclick="openDeleteModal('/admin/marketing/materials/delete/<%= m.id %>?category=<%= selectedCategory %>', 'Delete content \'<%= m.name %>\'?')"
+                                            class="btn btn-danger btn-sm">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
                                     </div>
                                 </div>
                                 <div class="category-card-details"
@@ -565,11 +566,13 @@
                                                         <a href="/admin/marketing/events/edit/<%= e.id %>"
                                                             class="btn btn-secondary btn-sm"><i
                                                                 class="fas fa-edit"></i></a>
-                                                        <form action="/admin/marketing/events/delete/<%= e.id %>"
-                                                            method="POST" onsubmit="return confirm('Delete event?');">
-                                                            <button class="btn btn-danger btn-sm"><i
-                                                                    class="fas fa-trash"></i></button>
-                                                        </form>
+                                                        <% if (user.role==='Super Admin' ) { %>
+                                                            <button type="button"
+                                                                onclick="openDeleteModal('/admin/marketing/events/delete/<%= e.id %>', 'Delete event \'<%= e.name %>\'?')"
+                                                                class="btn btn-danger btn-sm">
+                                                                <i class="fas fa-trash"></i>
+                                                            </button>
+                                                            <% } %>
                                                     </div>
                                                 </div>
                                                 <div class="category-card-details"
@@ -637,13 +640,13 @@
                                                                         <a href="/admin/marketing/testimonies/edit/<%= t.id %>"
                                                                             class="btn btn-secondary btn-sm"><i
                                                                                 class="fas fa-edit"></i></a>
-                                                                        <form
-                                                                            action="/admin/marketing/testimonies/delete/<%= t.id %>"
-                                                                            method="POST"
-                                                                            onsubmit="return confirm('Delete testimony?');">
-                                                                            <button class="btn btn-danger btn-sm"><i
-                                                                                    class="fas fa-trash"></i></button>
-                                                                        </form>
+                                                                        <% if (user.role==='Super Admin' ) { %>
+                                                                            <button type="button"
+                                                                                onclick="openDeleteModal('/admin/marketing/testimonies/delete/<%= t.id %>', 'Delete testimony \'<%= t.client_name %>\'?')"
+                                                                                class="btn btn-danger btn-sm">
+                                                                                <i class="fas fa-trash"></i>
+                                                                            </button>
+                                                                            <% } %>
                                                                     </div>
                                                                 </div>
                                                                 <div class="category-card-details"
@@ -762,7 +765,49 @@
                 document.querySelectorAll('.multiselect-header').forEach(h => h.classList.remove('active'));
             });
         });
+
+        function openDeleteModal(actionUrl, message) {
+            const overlay = document.getElementById('modalOverlay');
+            const form = document.getElementById('deleteConfirmForm');
+            const messageEl = document.getElementById('deleteModalMessage');
+            form.action = actionUrl;
+            messageEl.textContent = message;
+            overlay.style.display = 'flex';
+        }
+
+        function closeAllModals() {
+            document.getElementById('modalOverlay').style.display = 'none';
+        }
+
+        window.onclick = function (event) {
+            if (event.target == document.getElementById('modalOverlay')) {
+                closeAllModals();
+            }
+        }
     </script>
+
+    <!-- Shared Delete Modal -->
+    <div id="modalOverlay" class="modal-overlay" style="display: none;">
+        <div class="custom-modal-content" style="border-top: 4px solid var(--danger);">
+            <div style="text-align: center; padding: 1rem 0;">
+                <div
+                    style="width: 60px; height: 60px; background: #fee2e2; color: var(--danger); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.5rem; font-size: 1.5rem;">
+                    <i class="fas fa-exclamation-triangle"></i>
+                </div>
+                <h3 style="margin-bottom: 0.5rem;">Are you sure?</h3>
+                <p id="deleteModalMessage" style="color: var(--gray-600); font-size: 0.95rem;">This action cannot be
+                    undone.
+                </p>
+            </div>
+            <div style="display: flex; gap: 10px; margin-top: 1.5rem;">
+                <button type="button" onclick="closeAllModals()" class="btn btn-secondary"
+                    style="flex: 1;">Cancel</button>
+                <form id="deleteConfirmForm" method="POST" style="flex: 1;">
+                    <button type="submit" class="btn btn-danger" style="width: 100%;">Yes, Delete</button>
+                </form>
+            </div>
+        </div>
+    </div>
 
     <style>
         .tab-trigger.active {
