@@ -17,13 +17,17 @@
                                 <% productImages.forEach((img, index)=> { %>
                                     <div class="slide <%= index === 0 ? 'active' : '' %>" data-index="<%= index %>">
                                         <img src="<%= img.image_path %>" alt="<%= product.model %>"
-                                            class="main-product-image">
+                                            class="main-product-image preview-trigger" data-preview-type="image"
+                                            data-preview-src="<%= img.image_path %>"
+                                            data-preview-title="<%= product.model %>">
                                     </div>
                                     <% }) %>
                                         <% } else if (product.product_image) { %>
                                             <div class="slide active" data-index="0">
                                                 <img src="<%= product.product_image %>" alt="<%= product.model %>"
-                                                    class="main-product-image">
+                                                    class="main-product-image preview-trigger" data-preview-type="image"
+                                                    data-preview-src="<%= product.product_image %>"
+                                                    data-preview-title="<%= product.model %>">
                                             </div>
                                             <% } else { %>
                                                 <div class="slide active" data-index="0">
@@ -50,7 +54,10 @@
 
                                 <% if (product.mda_cert) { %>
                                     <div class="mda-cert-overlay">
-                                        <a href="<%= product.mda_cert %>" target="_blank" class="badge badge-success">
+                                        <a href="<%= product.mda_cert %>" target="_blank"
+                                            class="badge badge-success preview-trigger" data-preview-type="pdf"
+                                            data-preview-src="<%= product.mda_cert %>"
+                                            data-preview-title="MDA Certificate">
                                             <i class="fa-solid fa-certificate"></i> MDA Certified
                                         </a>
                                     </div>
@@ -80,7 +87,10 @@
                             Code: <%= product.code %>
                         </span>
                         <% if (product.mda_reg_no) { %>
-                            <a href="<%= product.mda_cert %>" target="_blank" class="badge badge-outline"
+                            <a href="<%= product.mda_cert %>" target="_blank"
+                                class="badge badge-outline preview-trigger" data-preview-type="pdf"
+                                data-preview-src="<%= product.mda_cert %>"
+                                data-preview-title="MDA Certificate: <%= product.mda_reg_no %>"
                                 style="text-decoration: none; cursor: pointer;">
                                 <i class="fa-solid fa-shield-halved mr-1"></i> MDA: <%= product.mda_reg_no %>
                             </a>
@@ -142,14 +152,23 @@
                         <i class="fa-solid fa-paper-plane"></i> Get a Quote
                     </a>
                     <% if (typeof companyBrochure !=='undefined' && companyBrochure) { %>
-                        <a href="<%= companyBrochure.file_path %>" target="_blank"
-                            class="btn btn-outline-primary btn-lg">
-                            <i class="fa-solid fa-download"></i> Brochure
-                        </a>
-                        <% } %>
-                            <button class="btn btn-secondary btn-lg" id="shareButton">
-                                <i class="fa-solid fa-share-nodes"></i> Share
-                            </button>
+                        <% const brochureExt=companyBrochure.file_path ?
+                            companyBrochure.file_path.split('.').pop().toLowerCase() : '' ; const isGoogleDriveBrochure = companyBrochure.file_path && companyBrochure.file_path.includes('drive.google.com'); let
+                            brochurePreviewType='file' ; if (brochureExt==='pdf' ) brochurePreviewType='pdf' ; else if
+                            (['jpg', 'jpeg' , 'png' , 'gif' , 'webp' ].includes(brochureExt) || isGoogleDriveBrochure)
+                            brochurePreviewType='image' ; else if (['doc', 'docx' , 'xls' , 'xlsx' , 'ppt' , 'pptx'
+                            ].includes(brochureExt)) brochurePreviewType='office' ; %>
+                            <a href="<%= companyBrochure.file_path %>" target="_blank"
+                                class="btn btn-outline-primary btn-lg <%= ['pdf', 'image', 'office'].includes(brochurePreviewType) ? 'preview-trigger' : '' %>"
+                                data-preview-type="<%= brochurePreviewType %>"
+                                data-preview-src="<%= companyBrochure.file_path %>"
+                                data-preview-title="Company Brochure">
+                                <i class="fa-solid fa-download"></i> Brochure
+                            </a>
+                            <% } %>
+                                <button class="btn btn-secondary btn-lg" id="shareButton">
+                                    <i class="fa-solid fa-share-nodes"></i> Share
+                                </button>
                 </div>
 
                 <div class="trust-indicators mt-5">
@@ -250,19 +269,27 @@
                 <div class="tab-pane" id="flyers">
                     <div class="grid grid-3">
                         <% materials.flyers.forEach(m=> { %>
-                            <a href="<%= m.file_path %>" target="_blank" class="resource-card">
-                                <div class="resource-icon">
-                                    <i class="fa-solid fa-file-pdf"></i>
-                                </div>
-                                <div class="resource-info">
-                                    <h4 class="resource-title">
-                                        <%= m.name %>
-                                    </h4>
-                                    <span class="resource-action">Download Flyer <i
-                                            class="fa-solid fa-download"></i></span>
-                                </div>
-                            </a>
-                            <% }) %>
+                            <% const fileExt=m.file_path ? m.file_path.split('.').pop().toLowerCase() : '' ; const isGoogleDrive = m.file_path && m.file_path.includes('drive.google.com'); let
+                                previewType='file' ; if (fileExt==='pdf' ) previewType='pdf' ; else if (['jpg', 'jpeg'
+                                , 'png' , 'gif' , 'webp' ].includes(fileExt) || isGoogleDrive) previewType='image' ; else if
+                                (['doc', 'docx' , 'xls' , 'xlsx' , 'ppt' , 'pptx' ].includes(fileExt))
+                                previewType='office' ; %>
+                                <a href="<%= m.file_path %>" target="_blank"
+                                    class="resource-card <%= ['pdf', 'image', 'office'].includes(previewType) ? 'preview-trigger' : '' %>"
+                                    data-preview-type="<%= previewType %>" data-preview-src="<%= m.file_path %>"
+                                    data-preview-title="<%= m.name %>">
+                                    <div class="resource-icon">
+                                        <i class="fa-solid fa-file-pdf"></i>
+                                    </div>
+                                    <div class="resource-info">
+                                        <h4 class="resource-title">
+                                            <%= m.name %>
+                                        </h4>
+                                        <span class="resource-action">View Flyer <i
+                                                class="fa-solid fa-expand"></i></span>
+                                    </div>
+                                </a>
+                                <% }) %>
                     </div>
                 </div>
                 <% } %>
@@ -272,19 +299,27 @@
                         <div class="tab-pane" id="backdrops">
                             <div class="grid grid-3">
                                 <% materials.backdrops.forEach(m=> { %>
-                                    <a href="<%= m.file_path %>" target="_blank" class="resource-card">
-                                        <div class="resource-icon">
-                                            <i class="fa-solid fa-panorama"></i>
-                                        </div>
-                                        <div class="resource-info">
-                                            <h4 class="resource-title">
-                                                <%= m.name %>
-                                            </h4>
-                                            <span class="resource-action">View Backdrop <i
-                                                    class="fa-solid fa-eye"></i></span>
-                                        </div>
-                                    </a>
-                                    <% }) %>
+                                    <% const fileExt=m.file_path ? m.file_path.split('.').pop().toLowerCase() : '' ; const isGoogleDrive = m.file_path && m.file_path.includes('drive.google.com'); let
+                                        previewType='file' ; if (fileExt==='pdf' ) previewType='pdf' ; else if
+                                        (['jpg', 'jpeg' , 'png' , 'gif' , 'webp' ].includes(fileExt) || isGoogleDrive)
+                                        previewType='image' ; else if (['doc', 'docx' , 'xls' , 'xlsx' , 'ppt' , 'pptx'
+                                        ].includes(fileExt)) previewType='office' ; %>
+                                        <a href="<%= m.file_path %>" target="_blank"
+                                            class="resource-card <%= ['pdf', 'image', 'office'].includes(previewType) ? 'preview-trigger' : '' %>"
+                                            data-preview-type="<%= previewType %>" data-preview-src="<%= m.file_path %>"
+                                            data-preview-title="<%= m.name %>">
+                                            <div class="resource-icon">
+                                                <i class="fa-solid fa-panorama"></i>
+                                            </div>
+                                            <div class="resource-info">
+                                                <h4 class="resource-title">
+                                                    <%= m.name %>
+                                                </h4>
+                                                <span class="resource-action">View Backdrop <i
+                                                        class="fa-solid fa-eye"></i></span>
+                                            </div>
+                                        </a>
+                                        <% }) %>
                             </div>
                         </div>
                         <% } %>
@@ -294,19 +329,28 @@
                                 <div class="tab-pane" id="posters">
                                     <div class="grid grid-3">
                                         <% materials.posters.forEach(m=> { %>
-                                            <a href="<%= m.file_path %>" target="_blank" class="resource-card">
-                                                <div class="resource-icon">
-                                                    <i class="fa-solid fa-image"></i>
-                                                </div>
-                                                <div class="resource-info">
-                                                    <h4 class="resource-title">
-                                                        <%= m.name %>
-                                                    </h4>
-                                                    <span class="resource-action">View Poster <i
-                                                            class="fa-solid fa-expand"></i></span>
-                                                </div>
-                                            </a>
-                                            <% }) %>
+                                            <% const fileExt=m.file_path ? m.file_path.split('.').pop().toLowerCase()
+                                                : '' ; const isGoogleDrive = m.file_path && m.file_path.includes('drive.google.com'); let previewType='file' ; if (fileExt==='pdf' ) previewType='pdf'
+                                                ; else if (['jpg', 'jpeg' , 'png' , 'gif' , 'webp' ].includes(fileExt) || isGoogleDrive)
+                                                previewType='image' ; else if (['doc', 'docx' , 'xls' , 'xlsx' , 'ppt'
+                                                , 'pptx' ].includes(fileExt)) previewType='office' ; %>
+                                                <a href="<%= m.file_path %>" target="_blank"
+                                                    class="resource-card <%= ['pdf', 'image', 'office'].includes(previewType) ? 'preview-trigger' : '' %>"
+                                                    data-preview-type="<%= previewType %>"
+                                                    data-preview-src="<%= m.file_path %>"
+                                                    data-preview-title="<%= m.name %>">
+                                                    <div class="resource-icon">
+                                                        <i class="fa-solid fa-image"></i>
+                                                    </div>
+                                                    <div class="resource-info">
+                                                        <h4 class="resource-title">
+                                                            <%= m.name %>
+                                                        </h4>
+                                                        <span class="resource-action">View Poster <i
+                                                                class="fa-solid fa-expand"></i></span>
+                                                    </div>
+                                                </a>
+                                                <% }) %>
                                     </div>
                                 </div>
                                 <% } %>
@@ -316,19 +360,30 @@
                                         <div class="tab-pane" id="rollups">
                                             <div class="grid grid-3">
                                                 <% materials.rollups.forEach(m=> { %>
-                                                    <a href="<%= m.file_path %>" target="_blank" class="resource-card">
-                                                        <div class="resource-icon">
-                                                            <i class="fa-solid fa-scroll"></i>
-                                                        </div>
-                                                        <div class="resource-info">
-                                                            <h4 class="resource-title">
-                                                                <%= m.name %>
-                                                            </h4>
-                                                            <span class="resource-action">View Roll Up <i
-                                                                    class="fa-solid fa-scroll"></i></span>
-                                                        </div>
-                                                    </a>
-                                                    <% }) %>
+                                                    <% const fileExt=m.file_path ?
+                                                        m.file_path.split('.').pop().toLowerCase() : '' ; const isGoogleDrive = m.file_path && m.file_path.includes('drive.google.com'); let
+                                                        previewType='file' ; if (fileExt==='pdf' ) previewType='pdf' ;
+                                                        else if (['jpg', 'jpeg' , 'png' , 'gif' , 'webp'
+                                                        ].includes(fileExt) || isGoogleDrive) previewType='image' ; else if
+                                                        (['doc', 'docx' , 'xls' , 'xlsx' , 'ppt' , 'pptx'
+                                                        ].includes(fileExt)) previewType='office' ; %>
+                                                        <a href="<%= m.file_path %>" target="_blank"
+                                                            class="resource-card <%= ['pdf', 'image', 'office'].includes(previewType) ? 'preview-trigger' : '' %>"
+                                                            data-preview-type="<%= previewType %>"
+                                                            data-preview-src="<%= m.file_path %>"
+                                                            data-preview-title="<%= m.name %>">
+                                                            <div class="resource-icon">
+                                                                <i class="fa-solid fa-scroll"></i>
+                                                            </div>
+                                                            <div class="resource-info">
+                                                                <h4 class="resource-title">
+                                                                    <%= m.name %>
+                                                                </h4>
+                                                                <span class="resource-action">View Roll Up <i
+                                                                        class="fa-solid fa-scroll"></i></span>
+                                                            </div>
+                                                        </a>
+                                                        <% }) %>
                                             </div>
                                         </div>
                                         <% } %>
@@ -338,33 +393,64 @@
                                                 <div class="tab-pane" id="others">
                                                     <div class="grid grid-3">
                                                         <% materials.others.forEach(m=> { %>
-                                                            <a href="<%= m.file_path %>" target="_blank"
-                                                                class="resource-card">
-                                                                <div class="resource-icon">
-                                                                    <% const fileExt=m.file_path ?
-                                                                        m.file_path.split('.').pop().toLowerCase() : ''
-                                                                        ; let iconClass='fa-file' ; if (fileExt==='pdf'
-                                                                        ) iconClass='fa-file-pdf' ; else if
-                                                                        (['doc', 'docx' ].includes(fileExt))
-                                                                        iconClass='fa-file-word' ; else if
-                                                                        (['xls', 'xlsx' ].includes(fileExt))
-                                                                        iconClass='fa-file-excel' ; else if
-                                                                        (['ppt', 'pptx' ].includes(fileExt))
-                                                                        iconClass='fa-file-powerpoint' ; else if
-                                                                        (['jpg', 'jpeg' , 'png' , 'gif' , 'webp'
-                                                                        ].includes(fileExt)) iconClass='fa-file-image' ;
-                                                                        %>
-                                                                        <i class="fa-solid <%= iconClass %>"></i>
-                                                                </div>
-                                                                <div class="resource-info">
-                                                                    <h4 class="resource-title">
-                                                                        <%= m.name %>
-                                                                    </h4>
-                                                                    <span class="resource-action">View Resources <i
-                                                                            class="fa-solid fa-arrow-right"></i></span>
-                                                                </div>
-                                                            </a>
-                                                            <% }) %>
+                                                            <% const fileExt=m.file_path ?
+                                                                m.file_path.split('.').pop().toLowerCase() : '' ; const isGoogleDrive = m.file_path && m.file_path.includes('drive.google.com'); let
+                                                                previewType='file' ; let isVideo=false; let videoId='' ;
+                                                                if (fileExt==='pdf' ) previewType='pdf' ; else if
+                                                                (['jpg', 'jpeg' , 'png' , 'gif' , 'webp'
+                                                                ].includes(fileExt) || isGoogleDrive) previewType='image' ; else if
+                                                                (['doc', 'docx' , 'xls' , 'xlsx' , 'ppt' , 'pptx'
+                                                                ].includes(fileExt)) previewType='office' ; else if
+                                                                (m.file_path.includes('youtube.com') ||
+                                                                m.file_path.includes('youtu.be')) { previewType='video'
+                                                                ; isVideo=true; const
+                                                                regExp=/^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+                                                                const match=m.file_path.match(regExp); videoId=(match &&
+                                                                match[2].length===11) ? match[2] : null; } %>
+                                                                <a href="<%= m.file_path %>" target="_blank"
+                                                                    class="resource-card preview-trigger"
+                                                                    data-preview-type="<%= previewType %>"
+                                                                    data-preview-src="<%= m.file_path %>"
+                                                                    data-preview-title="<%= m.name %>">
+                                                                    <div class="resource-icon"
+                                                                        style="<%= isVideo ? 'padding: 0; width: 100px;' : '' %>">
+                                                                        <% if (isVideo && videoId) { %>
+                                                                            <div class="video-thumbnail-container"
+                                                                                style="background-image: url('https://img.youtube.com/vi/<%= videoId %>/mqdefault.jpg')">
+                                                                                <i
+                                                                                    class="fa-solid fa-play play-overlay"></i>
+                                                                            </div>
+                                                                            <% } else { %>
+                                                                                <% let iconClass='fa-file' ; if
+                                                                                    (fileExt==='pdf' )
+                                                                                    iconClass='fa-file-pdf' ; else if
+                                                                                    (['doc', 'docx' ].includes(fileExt))
+                                                                                    iconClass='fa-file-word' ; else if
+                                                                                    (['xls', 'xlsx' ].includes(fileExt))
+                                                                                    iconClass='fa-file-excel' ; else if
+                                                                                    (['ppt', 'pptx' ].includes(fileExt))
+                                                                                    iconClass='fa-file-powerpoint' ;
+                                                                                    else if (['jpg', 'jpeg' , 'png'
+                                                                                    , 'gif' , 'webp'
+                                                                                    ].includes(fileExt))
+                                                                                    iconClass='fa-file-image' ; %>
+                                                                                    <i
+                                                                                        class="fa-solid <%= iconClass %>"></i>
+                                                                                    <% } %>
+                                                                    </div>
+                                                                    <div class="resource-info">
+                                                                        <h4 class="resource-title">
+                                                                            <%= m.name %>
+                                                                        </h4>
+                                                                        <span class="resource-action">
+                                                                            <%= isVideo ? 'Watch Video'
+                                                                                : 'View Resource' %>
+                                                                                <i
+                                                                                    class="fa-solid <%= isVideo ? 'fa-play' : 'fa-arrow-right' %>"></i>
+                                                                        </span>
+                                                                    </div>
+                                                                </a>
+                                                                <% }) %>
                                                     </div>
                                                 </div>
                                                 <% } %>
@@ -374,61 +460,182 @@
                                                         <% if (events.length> 0) { %>
                                                             <div class="grid grid-2">
                                                                 <% events.forEach(e=> { %>
-                                                                    <div class="event-capsule">
-                                                                        <div class="event-date">
-                                                                            <span class="month">
-                                                                                <%= e.start_date ? new
-                                                                                    Date(e.start_date).toLocaleString('default',
-                                                                                    { month: 'short' }) : '---' %>
-                                                                            </span>
-                                                                            <span class="day">
-                                                                                <%= e.start_date ? new
-                                                                                    Date(e.start_date).getDate() : '--'
-                                                                                    %>
-                                                                            </span>
-                                                                            <span class="year">
-                                                                                <%= e.start_date ? new
-                                                                                    Date(e.start_date).getFullYear()
-                                                                                    : '----' %>
-                                                                            </span>
-                                                                        </div>
-                                                                        <div class="event-body">
-                                                                            <h4>
-                                                                                <%= e.name %>
-                                                                            </h4>
-                                                                            <p class="location"><i
-                                                                                    class="fa-solid fa-location-dot"></i>
-                                                                                <%= e.location %>
-                                                                            </p>
-                                                                            <div class="event-actions mt-3">
-                                                                                <% if (e.video_link) { %>
-                                                                                    <a href="<%= companyBasePath %>/watch/event/<%= e.video_link.id %>"
-                                                                                        class="btn btn-sm btn-outline-primary">
-                                                                                        <i class="fa-solid fa-play"></i>
-                                                                                        Watch Video
-                                                                                    </a>
-                                                                                    <% } %>
-                                                                                        <% if (e.links &&
-                                                                                            e.links.length> 0) { %>
-                                                                                            <% e.links.forEach(link=> {
-                                                                                                %>
-                                                                                                <% if (!e.video_link ||
-                                                                                                    link.id
-                                                                                                    !==e.video_link.id)
-                                                                                                    { %>
-                                                                                                    <a href="<%= link.url %>"
-                                                                                                        target="_blank"
-                                                                                                        class="btn btn-sm btn-link">
-                                                                                                        <i
-                                                                                                            class="fa-solid fa-link"></i>
-                                                                                                        <%= link.title
-                                                                                                            || 'Link' %>
-                                                                                                    </a>
-                                                                                                    <% } %>
-                                                                                                        <% }) %>
+                                                                    <div class="event-capsule <%= e.video_link ? 'preview-trigger' : '' %>"
+                                                                        style="cursor: <%= e.video_link ? 'pointer' : 'default' %>"
+                                                                        <% if (e.video_link) { %>
+                                                                        data-preview-type="video"
+                                                                        data-preview-src="<%= e.video_link.url %>"
+                                                                            data-preview-title="<%= e.name %>"
+                                                                                <% } %>>
+                                                                                    <div class="event-date">
+                                                                                        <span class="month">
+                                                                                            <%= e.start_date ? new
+                                                                                                Date(e.start_date).toLocaleString('default',
+                                                                                                { month: 'short' })
+                                                                                                : '---' %>
+                                                                                        </span>
+                                                                                        <span class="day">
+                                                                                            <%= e.start_date ? new
+                                                                                                Date(e.start_date).getDate()
+                                                                                                : '--' %>
+                                                                                        </span>
+                                                                                        <span class="year">
+                                                                                            <%= e.start_date ? new
+                                                                                                Date(e.start_date).getFullYear()
+                                                                                                : '----' %>
+                                                                                        </span>
+                                                                                    </div>
+                                                                                    <div class="event-body">
+                                                                                        <div
+                                                                                            class="d-flex justify-content-between align-items-start">
+                                                                                            <div>
+                                                                                                <h4>
+                                                                                                    <%= e.name %>
+                                                                                                </h4>
+                                                                                                <p class="location"><i
+                                                                                                        class="fa-solid fa-location-dot"></i>
+                                                                                                    <%= e.location %>
+                                                                                                </p>
+                                                                                            </div>
+                                                                                            <% if (e.video_link) { %>
+                                                                                                <% const
+                                                                                                    regExp=/^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+                                                                                                    const
+                                                                                                    match=e.video_link.url.match(regExp);
+                                                                                                    const videoId=(match
+                                                                                                    &&
+                                                                                                    match[2].length===11)
+                                                                                                    ? match[2] : null;
+                                                                                                    %>
+                                                                                                    <% if (videoId) { %>
+                                                                                                        <div class="event-video-thumb preview-trigger"
+                                                                                                            data-preview-type="video"
+                                                                                                            data-preview-src="<%= e.video_link.url %>"
+                                                                                                            data-preview-title="<%= e.name %>"
+                                                                                                            style="width: 120px; height: 68px; background-image: url('https://img.youtube.com/vi/<%= videoId %>/mqdefault.jpg'); background-size: cover; border-radius: 8px; position: relative; margin-left: 1rem; flex-shrink: 0;">
+                                                                                                            <div
+                                                                                                                style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.2); border-radius: 8px;">
+                                                                                                                <i class="fa-solid fa-play"
+                                                                                                                    style="color: white; font-size: 1.2rem;"></i>
+                                                                                                            </div>
+                                                                                                        </div>
+                                                                                                        <% } %>
                                                                                                             <% } %>
-                                                                            </div>
-                                                                        </div>
+                                                                                        </div>
+                                                                                        <div class="event-actions mt-3">
+                                                                                            <div
+                                                                                                class="multimedia-links">
+                                                                                                <% if (e.links &&
+                                                                                                    e.links.length> 0) {
+                                                                                                    %>
+                                                                                                    <%
+                                                                                                        // Filter out the video_link from links to avoid duplication
+                                                                                                        const videoLinkUrl = e.video_link ? e.video_link.url : null;
+                                                                                                        const filteredLinks = e.links.filter(link => {
+                                                                                                            if (!videoLinkUrl) return true;
+                                                                                                            const linkUrl = link.url || '';
+                                                                                                            // Compare URLs, handling different formats
+                                                                                                            return linkUrl !== videoLinkUrl && 
+                                                                                                                   !linkUrl.includes(videoLinkUrl) && 
+                                                                                                                   !videoLinkUrl.includes(linkUrl);
+                                                                                                        });
+                                                                                                        filteredLinks.forEach(link=>
+                                                                                                        { %>
+                                                                                                        <% const
+                                                                                                            url=link.url
+                                                                                                            || '' ;
+                                                                                                            const
+                                                                                                            ytRegExp=/^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+                                                                                                            const
+                                                                                                            ytMatch=url.match(ytRegExp);
+                                                                                                            const
+                                                                                                            ytId=(ytMatch
+                                                                                                            &&
+                                                                                                            ytMatch[2].length===11)
+                                                                                                            ? ytMatch[2]
+                                                                                                            : null;
+                                                                                                            const
+                                                                                                            fileExt=url.split('.').pop().toLowerCase();
+                                                                                                            const
+                                                                                                            isGoogleDriveImg = url.includes('drive.google.com');
+                                                                                                            const
+                                                                                                            isImg=['jpg', 'jpeg'
+                                                                                                            , 'png'
+                                                                                                            , 'gif'
+                                                                                                            , 'webp'
+                                                                                                            ].includes(fileExt) || isGoogleDriveImg;
+                                                                                                            let thumbUrl = url;
+                                                                                                            if (isGoogleDriveImg) {
+                                                                                                                let fileId = null;
+                                                                                                                const fileMatch = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
+                                                                                                                if (fileMatch) {
+                                                                                                                    fileId = fileMatch[1];
+                                                                                                                } else {
+                                                                                                                    const idMatch = url.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+                                                                                                                    if (idMatch) fileId = idMatch[1];
+                                                                                                                }
+                                                                                                                if (fileId) {
+                                                                                                                    thumbUrl = `https://drive.google.com/thumbnail?id=${fileId}&sz=w320-h180`;
+                                                                                                                }
+                                                                                                            }
+                                                                                                            %>
+
+                                                                                                            <% if (ytId)
+                                                                                                                { %>
+                                                                                                                <div class="multimedia-thumb preview-trigger"
+                                                                                                                    data-preview-type="video"
+                                                                                                                    data-preview-src="<%= url %>"
+                                                                                                                    data-preview-title="<%= link.title || e.name %>"
+                                                                                                                    style="background-image: url('https://img.youtube.com/vi/<%= ytId %>/mqdefault.jpg')"
+                                                                                                                    onclick="event.stopPropagation()">
+                                                                                                                    <i
+                                                                                                                        class="fa-solid fa-play play-icon"></i>
+                                                                                                                </div>
+                                                                                                                <% } else
+                                                                                                                    if
+                                                                                                                    (isImg)
+                                                                                                                    { %>
+                                                                                                                    <div class="multimedia-thumb preview-trigger"
+                                                                                                                        data-preview-type="image"
+                                                                                                                        data-preview-src="<%= url %>"
+                                                                                                                        data-preview-title="<%= link.title || e.name %>"
+                                                                                                                        style="background-image: url('<%= thumbUrl %>')"
+                                                                                                                        onclick="event.stopPropagation()">
+                                                                                                                    </div>
+                                                                                                                    <% } else
+                                                                                                                        {
+                                                                                                                        %>
+                                                                                                                        <a href="<%= url %>"
+                                                                                                                            target="_blank"
+                                                                                                                            class="btn btn-sm btn-link"
+                                                                                                                            onclick="event.stopPropagation()">
+                                                                                                                            <i
+                                                                                                                                class="fa-solid fa-link"></i>
+                                                                                                                            <%= link.title
+                                                                                                                                || 'Link'
+                                                                                                                                %>
+                                                                                                                        </a>
+                                                                                                                        <% }
+                                                                                                                            %>
+                                                                                                                            <% })
+                                                                                                                                %>
+                                                                                                                                <% } else
+                                                                                                                                    if
+                                                                                                                                    (e.video_link)
+                                                                                                                                    {
+                                                                                                                                    %>
+                                                                                                                                    <span
+                                                                                                                                        class="btn btn-sm btn-outline-primary">
+                                                                                                                                        <i
+                                                                                                                                            class="fa-solid fa-play"></i>
+                                                                                                                                        Watch
+                                                                                                                                        Video
+                                                                                                                                    </span>
+                                                                                                                                    <% }
+                                                                                                                                        %>
+                                                                                            </div>
+                                                                                        </div>
+                                                                                    </div>
                                                                     </div>
                                                                     <% }) %>
                                                             </div>
@@ -455,51 +662,137 @@
                                                                         </div>
                                                                         <div class="testimony-footer">
                                                                             <div class="testimony-author">
-                                                                                <div class="author-avatar-wrapper">
-                                                                                    <div class="author-avatar">
-                                                                                        <%= t.client_name.charAt(0) %>
+                                                                                <% let firstImg=null; if (t.links &&
+                                                                                    t.links.length> 0) {
+                                                                                    firstImg = t.links.find(l => {
+                                                                                    const ext = (l.url ||
+                                                                                    '').split('.').pop().toLowerCase();
+                                                                                    return ['jpg', 'jpeg', 'png', 'gif',
+                                                                                    'webp'].includes(ext);
+                                                                                    });
+                                                                                    }
+                                                                                    %>
+                                                                                    <div class="author-avatar-wrapper">
+                                                                                        <div class="author-avatar"
+                                                                                            style="<%= firstImg ? `background-image: url('${firstImg.url}'); background-size: cover; background-position: center; border: none;` : '' %>">
+                                                                                            <%= firstImg ? '' :
+                                                                                                t.client_name.charAt(0)
+                                                                                                %>
+                                                                                        </div>
+                                                                                        <% if (t.video_link) { %>
+                                                                                            <a href="<%= t.video_link.url %>"
+                                                                                                class="avatar-play-btn preview-trigger"
+                                                                                                data-preview-type="video"
+                                                                                                data-preview-src="<%= t.video_link.url %>"
+                                                                                                data-preview-title="Testimony: <%= t.client_name %>"
+                                                                                                title="Watch Testimony Video">
+                                                                                                <i
+                                                                                                    class="fa-solid fa-play"></i>
+                                                                                            </a>
+                                                                                            <% } %>
                                                                                     </div>
-                                                                                    <% if (t.video_link) { %>
-                                                                                        <a href="<%= companyBasePath %>/watch/testimony/<%= t.video_link.id %>"
-                                                                                            class="avatar-play-btn"
-                                                                                            title="Watch Testimony Video">
-                                                                                            <i
-                                                                                                class="fa-solid fa-play"></i>
-                                                                                        </a>
-                                                                                        <% } %>
-                                                                                </div>
-                                                                                <div class="author-info">
-                                                                                    <h5>
-                                                                                        <%= t.client_name %>
-                                                                                    </h5>
-                                                                                    <div
-                                                                                        class="d-flex align-items-center gap-2">
-                                                                                        <% if (t.treatment) { %>
-                                                                                            <span
-                                                                                                class="treatment-info">
-                                                                                                <em>Treatment: <%=
-                                                                                                        t.treatment %>
-                                                                                                </em>
-                                                                                            </span>
-                                                                                            <% } else { %>
+                                                                                    <div class="author-info">
+                                                                                        <h5>
+                                                                                            <%= t.client_name %>
+                                                                                        </h5>
+                                                                                        <div
+                                                                                            class="d-flex align-items-center gap-2">
+                                                                                            <% if (t.treatment) { %>
                                                                                                 <span
-                                                                                                    class="treatment-info">Healthcare
-                                                                                                    Professional</span>
-                                                                                                <% } %>
+                                                                                                    class="treatment-info">
+                                                                                                    <em>Treatment: <%=
+                                                                                                            t.treatment
+                                                                                                            %></em>
+                                                                                                </span>
+                                                                                                <% } else { %>
+                                                                                                    <span
+                                                                                                        class="treatment-info">Healthcare
+                                                                                                        Professional</span>
+                                                                                                    <% } %>
+                                                                                        </div>
                                                                                     </div>
-                                                                                </div>
                                                                             </div>
-                                                                            <% if (t.video_link) { %>
-                                                                                <div class="testimony-video-indicator">
-                                                                                    <a href="<%= companyBasePath %>/watch/testimony/<%= t.video_link.id %>"
-                                                                                        class="modern-video-btn">
-                                                                                        <span class="btn-pulse"></span>
-                                                                                        <i
-                                                                                            class="fa-solid fa-video"></i>
-                                                                                        <span>Watch Video</span>
-                                                                                    </a>
-                                                                                </div>
-                                                                                <% } %>
+                                                                            <div class="multimedia-links">
+                                                                                <% if (t.links && t.links.length> 0) {
+                                                                                    %>
+                                                                                    <% t.links.forEach(link=> { %>
+                                                                                        <% const url=link.url || '' ;
+                                                                                            const
+                                                                                            ytRegExp=/^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+                                                                                            const
+                                                                                            ytMatch=url.match(ytRegExp);
+                                                                                            const ytId=(ytMatch &&
+                                                                                            ytMatch[2].length===11) ?
+                                                                                            ytMatch[2] : null; const
+                                                                                            fileExt=url.split('.').pop().toLowerCase();
+                                                                                            const isGoogleDriveImg = url.includes('drive.google.com');
+                                                                                            const isImg=['jpg', 'jpeg'
+                                                                                            , 'png' , 'gif' , 'webp'
+                                                                                            ].includes(fileExt) || isGoogleDriveImg;
+                                                                                            let thumbUrl = url;
+                                                                                            if (isGoogleDriveImg) {
+                                                                                                let fileId = null;
+                                                                                                const fileMatch = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
+                                                                                                if (fileMatch) {
+                                                                                                    fileId = fileMatch[1];
+                                                                                                } else {
+                                                                                                    const idMatch = url.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+                                                                                                    if (idMatch) fileId = idMatch[1];
+                                                                                                }
+                                                                                                if (fileId) {
+                                                                                                    thumbUrl = `https://drive.google.com/thumbnail?id=${fileId}&sz=w320-h180`;
+                                                                                                }
+                                                                                            } %>
+
+                                                                                            <% if (ytId) { %>
+                                                                                                <div class="multimedia-thumb preview-trigger"
+                                                                                                    data-preview-type="video"
+                                                                                                    data-preview-src="<%= url %>"
+                                                                                                    data-preview-title="Testimony: <%= t.client_name %>"
+                                                                                                    style="background-image: url('https://img.youtube.com/vi/<%= ytId %>/mqdefault.jpg')">
+                                                                                                    <i
+                                                                                                        class="fa-solid fa-play play-icon"></i>
+                                                                                                </div>
+                                                                                                <% } else if (isImg) {
+                                                                                                    %>
+                                                                                                    <div class="multimedia-thumb preview-trigger"
+                                                                                                        data-preview-type="image"
+                                                                                                        data-preview-src="<%= url %>"
+                                                                                                        data-preview-title="Testimony: <%= t.client_name %>"
+                                                                                                        style="background-image: url('<%= thumbUrl %>')">
+                                                                                                    </div>
+                                                                                                    <% } else { %>
+                                                                                                        <a href="<%= url %>"
+                                                                                                            target="_blank"
+                                                                                                            class="btn btn-sm btn-link">
+                                                                                                            <i
+                                                                                                                class="fa-solid fa-link"></i>
+                                                                                                            <%= link.title
+                                                                                                                || 'Link'
+                                                                                                                %>
+                                                                                                        </a>
+                                                                                                        <% } %>
+                                                                                                            <% }) %>
+                                                                                                                <% } %>
+                                                                                                                    <% if
+                                                                                                                        (t.video_link)
+                                                                                                                        {
+                                                                                                                        %>
+                                                                                                                        <a href="<%= t.video_link.url %>"
+                                                                                                                            class="modern-video-btn preview-trigger"
+                                                                                                                            data-preview-type="video"
+                                                                                                                            data-preview-src="<%= t.video_link.url %>"
+                                                                                                                            data-preview-title="Testimony: <%= t.client_name %>">
+                                                                                                                            <span
+                                                                                                                                class="btn-pulse"></span>
+                                                                                                                            <i
+                                                                                                                                class="fa-solid fa-video"></i>
+                                                                                                                            <span>Watch
+                                                                                                                                Video</span>
+                                                                                                                        </a>
+                                                                                                                        <% }
+                                                                                                                            %>
+                                                                            </div>
                                                                         </div>
                                                                     </div>
                                                                     <% }) %>
@@ -2005,10 +2298,182 @@
         scrollbar-width: thin;
         scrollbar-color: #005b96 transparent;
     }
+
+    /* Preview Modal Styles */
+    .preview-modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.9);
+        display: none;
+        justify-content: center;
+        align-items: center;
+        z-index: 9999;
+        backdrop-filter: blur(8px);
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+
+    .preview-modal.active {
+        display: flex;
+        opacity: 1;
+    }
+
+    .preview-content-container {
+        position: relative;
+        width: 90%;
+        max-width: 1200px;
+        height: 85%;
+        background: #000;
+        border-radius: 12px;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        transform: scale(0.9);
+        transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    .preview-modal.active .preview-content-container {
+        transform: scale(1);
+    }
+
+    .preview-header {
+        padding: 1rem 1.5rem;
+        background: #1a1a1a;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        color: white;
+    }
+
+    .preview-title {
+        font-weight: 700;
+        font-size: 1.1rem;
+        margin: 0;
+        color: white;
+    }
+
+    .preview-close {
+        background: none;
+        border: none;
+        color: white;
+        font-size: 1.5rem;
+        cursor: pointer;
+        padding: 0.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: transform 0.2s;
+    }
+
+    .preview-close:hover {
+        transform: rotate(90deg);
+        color: var(--blue-light);
+    }
+
+    .preview-body {
+        flex: 1;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        overflow: hidden;
+        position: relative;
+        background: #000;
+    }
+
+    .preview-body img {
+        max-width: 100%;
+        max-height: 100%;
+        object-fit: contain;
+    }
+
+    .preview-body iframe {
+        width: 100%;
+        height: 100%;
+        border: none;
+    }
+
+    .video-thumbnail-container {
+        width: 100%;
+        height: 100%;
+        background-size: cover;
+        background-position: center;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .video-thumbnail-container::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.3);
+        transition: background 0.3s;
+    }
+
+    .resource-card:hover .video-thumbnail-container::before {
+        background: rgba(0, 0, 0, 0.1);
+    }
+
+    .play-overlay {
+        font-size: 3rem;
+        color: white;
+        z-index: 1;
+        filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.5));
+        transition: transform 0.3s;
+    }
+
+    .resource-card:hover .play-overlay {
+        transform: scale(1.15);
+    }
+
+    .multimedia-links {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        margin-top: 1rem;
+    }
+
+    .multimedia-thumb {
+        width: 80px;
+        height: 45px;
+        border-radius: 6px;
+        background-size: cover;
+        background-position: center;
+        position: relative;
+        cursor: pointer;
+        overflow: hidden;
+        border: 1px solid var(--gray-200);
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .multimedia-thumb:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        border-color: var(--blue-light);
+    }
+
+    .multimedia-thumb .play-icon {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        color: white;
+        font-size: 0.8rem;
+        text-shadow: 0 0 4px rgba(0, 0, 0, 0.5);
+    }
 </style>
 
 <script>
     document.addEventListener('DOMContentLoaded', function () {
+        // Tab switching logic
         const triggers = document.querySelectorAll('.tab-trigger');
         const panes = document.querySelectorAll('.tab-pane');
 
@@ -2041,19 +2506,14 @@
                 };
 
                 try {
-                    // Try Web Share API first (works on mobile and modern browsers)
                     if (navigator.share) {
                         await navigator.share(shareData);
                     } else {
-                        // Fallback: Copy to clipboard
                         await navigator.clipboard.writeText(productUrl);
-
-                        // Show feedback
                         const originalText = shareButton.innerHTML;
                         shareButton.innerHTML = '<i class="fa-solid fa-check"></i> Copied!';
                         shareButton.style.background = 'var(--success)';
                         shareButton.style.color = 'var(--white)';
-
                         setTimeout(() => {
                             shareButton.innerHTML = originalText;
                             shareButton.style.background = '';
@@ -2061,16 +2521,13 @@
                         }, 2000);
                     }
                 } catch (err) {
-                    // User cancelled or error occurred
                     if (err.name !== 'AbortError') {
-                        // Fallback: Copy to clipboard if Web Share API failed
                         try {
                             await navigator.clipboard.writeText(productUrl);
                             const originalText = shareButton.innerHTML;
                             shareButton.innerHTML = '<i class="fa-solid fa-check"></i> Copied!';
                             shareButton.style.background = 'var(--success)';
                             shareButton.style.color = 'var(--white)';
-
                             setTimeout(() => {
                                 shareButton.innerHTML = originalText;
                                 shareButton.style.background = '';
@@ -2078,39 +2535,27 @@
                             }, 2000);
                         } catch (clipboardErr) {
                             console.error('Failed to share or copy:', clipboardErr);
-                            alert('Unable to share. Please copy this link manually:\n' + productUrl);
                         }
                     }
                 }
             });
         }
-    });
-</script>
 
-
-<script>
-    // Enhanced Image Gallery with Swipe Support
-    document.addEventListener('DOMContentLoaded', function () {
+        // Image Gallery Logic
         const slides = document.querySelectorAll('.slide');
         const thumbnails = document.querySelectorAll('.thumbnail-item');
         const prevBtn = document.getElementById('prevBtn');
         const nextBtn = document.getElementById('nextBtn');
         const currentIndexSpan = document.getElementById('currentImageIndex');
-        const totalImagesSpan = document.getElementById('totalImages');
         const mainImageWrapper = document.getElementById('mainImageWrapper');
 
         let currentIndex = 0;
         const totalImages = slides.length;
         let isTransitioning = false;
-        let touchStartX = 0;
-        let touchEndX = 0;
-        let touchStartY = 0;
-        let touchEndY = 0;
+        let touchStartX = 0, touchEndX = 0, touchStartY = 0, touchEndY = 0;
         const minSwipeDistance = 50;
 
-        // Initialize: Ensure first slide is visible and hide others
         if (totalImages > 0) {
-            // Hide all slides first
             slides.forEach((slide, idx) => {
                 slide.style.zIndex = '0';
                 if (!slide.classList.contains('active')) {
@@ -2119,44 +2564,26 @@
                 }
             });
 
-            // Find the slide that already has the active class (from server-side)
             const activeSlide = document.querySelector('.slide.active');
             if (activeSlide) {
                 currentIndex = parseInt(activeSlide.dataset.index) || 0;
-                // Force visibility and z-index
                 activeSlide.style.opacity = '1';
                 activeSlide.style.visibility = 'visible';
                 activeSlide.style.transform = 'translateX(0) scale(1)';
                 activeSlide.style.zIndex = '2';
-            } else {
-                // If no active slide found, activate the first one
-                if (slides[0]) {
-                    slides[0].classList.add('active');
-                    slides[0].style.opacity = '1';
-                    slides[0].style.visibility = 'visible';
-                    slides[0].style.transform = 'translateX(0) scale(1)';
-                    slides[0].style.zIndex = '2';
-                    currentIndex = 0;
-                }
             }
         }
 
-        // Update indicator
         function updateIndicator() {
-            if (currentIndexSpan) {
-                currentIndexSpan.textContent = currentIndex + 1;
-            }
+            if (currentIndexSpan) currentIndexSpan.textContent = currentIndex + 1;
         }
 
-        // Show slide with animation
         function showSlide(index, direction = 'next') {
             if (isTransitioning || index < 0 || index >= totalImages) return;
-
             isTransitioning = true;
             const prevIndex = currentIndex;
             currentIndex = index;
 
-            // First, hide all slides and reset z-index
             slides.forEach((slide, idx) => {
                 slide.classList.remove('active', 'prev', 'next');
                 slide.style.zIndex = '0';
@@ -2166,35 +2593,22 @@
                 }
             });
 
-            // Add appropriate classes for animation
             if (direction === 'next') {
-                if (slides[prevIndex]) {
-                    slides[prevIndex].classList.add('prev');
-                    slides[prevIndex].style.zIndex = '0';
-                }
-                if (slides[currentIndex]) {
-                    slides[currentIndex].classList.add('active');
-                    slides[currentIndex].style.zIndex = '2';
-                }
+                if (slides[prevIndex]) slides[prevIndex].classList.add('prev');
+                if (slides[currentIndex]) slides[currentIndex].classList.add('active');
             } else {
-                if (slides[prevIndex]) {
-                    slides[prevIndex].classList.add('next');
-                    slides[prevIndex].style.zIndex = '0';
-                }
-                if (slides[currentIndex]) {
-                    slides[currentIndex].classList.add('active');
-                    slides[currentIndex].style.zIndex = '2';
-                }
+                if (slides[prevIndex]) slides[prevIndex].classList.add('next');
+                if (slides[currentIndex]) slides[currentIndex].classList.add('active');
             }
 
-            // Update thumbnails
+            slides[currentIndex].style.zIndex = '2';
+
             thumbnails.forEach((thumb, idx) => {
                 thumb.classList.toggle('active', idx === currentIndex);
             });
 
             updateIndicator();
 
-            // Reset transition lock after animation and ensure only active is visible
             setTimeout(() => {
                 isTransitioning = false;
                 slides.forEach((slide, idx) => {
@@ -2212,143 +2626,178 @@
             }, 500);
         }
 
-        // Next image
-        function nextImage() {
-            const nextIndex = (currentIndex + 1) % totalImages;
-            showSlide(nextIndex, 'next');
-        }
-
-        // Previous image
-        function prevImage() {
-            const prevIndex = (currentIndex - 1 + totalImages) % totalImages;
-            showSlide(prevIndex, 'prev');
-        }
-
-        // Navigation buttons
         if (prevBtn && nextBtn && totalImages > 1) {
-            prevBtn.addEventListener('click', prevImage);
-            nextBtn.addEventListener('click', nextImage);
+            prevBtn.addEventListener('click', () => showSlide((currentIndex - 1 + totalImages) % totalImages, 'prev'));
+            nextBtn.addEventListener('click', () => showSlide((currentIndex + 1) % totalImages, 'next'));
         }
 
-        // Thumbnail click handler
         thumbnails.forEach((thumbnail, index) => {
             thumbnail.addEventListener('click', function () {
                 if (index !== currentIndex && !isTransitioning) {
-                    const direction = index > currentIndex ? 'next' : 'prev';
-                    showSlide(index, direction);
+                    showSlide(index, index > currentIndex ? 'next' : 'prev');
                 }
             });
         });
 
-        // Touch/Swipe support
+        // Swipe/Drag support
         if (mainImageWrapper && totalImages > 1) {
-            mainImageWrapper.addEventListener('touchstart', function (e) {
+            mainImageWrapper.addEventListener('touchstart', e => {
                 touchStartX = e.changedTouches[0].screenX;
                 touchStartY = e.changedTouches[0].screenY;
             }, { passive: true });
 
-            mainImageWrapper.addEventListener('touchend', function (e) {
+            mainImageWrapper.addEventListener('touchend', e => {
                 touchEndX = e.changedTouches[0].screenX;
                 touchEndY = e.changedTouches[0].screenY;
-                handleSwipe();
+                const deltaX = touchEndX - touchStartX;
+                const deltaY = touchEndY - touchStartY;
+                if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > minSwipeDistance) {
+                    if (deltaX > 0) showSlide((currentIndex - 1 + totalImages) % totalImages, 'prev');
+                    else showSlide((currentIndex + 1) % totalImages, 'next');
+                }
             }, { passive: true });
 
-            // Mouse drag support for desktop
-            let isMouseDown = false;
-            let mouseStartX = 0;
-
-            mainImageWrapper.addEventListener('mousedown', function (e) {
+            let isMouseDown = false, mouseStartX = 0;
+            mainImageWrapper.addEventListener('mousedown', e => {
                 isMouseDown = true;
                 mouseStartX = e.clientX;
                 mainImageWrapper.style.cursor = 'grabbing';
             });
-
-            mainImageWrapper.addEventListener('mousemove', function (e) {
+            mainImageWrapper.addEventListener('mouseup', e => {
                 if (isMouseDown) {
-                    // Prevent text selection while dragging
-                    e.preventDefault();
-                }
-            });
-
-            mainImageWrapper.addEventListener('mouseup', function (e) {
-                if (isMouseDown) {
-                    const mouseEndX = e.clientX;
-                    const deltaX = mouseEndX - mouseStartX;
-
+                    const deltaX = e.clientX - mouseStartX;
                     if (Math.abs(deltaX) > minSwipeDistance) {
-                        if (deltaX > 0) {
-                            prevImage();
-                        } else {
-                            nextImage();
-                        }
+                        if (deltaX > 0) showSlide((currentIndex - 1 + totalImages) % totalImages, 'prev');
+                        else showSlide((currentIndex + 1) % totalImages, 'next');
                     }
-
                     isMouseDown = false;
                     mainImageWrapper.style.cursor = 'grab';
                 }
             });
-
-            mainImageWrapper.addEventListener('mouseleave', function () {
+            mainImageWrapper.addEventListener('mouseleave', () => {
                 isMouseDown = false;
                 mainImageWrapper.style.cursor = 'grab';
             });
-
-            mainImageWrapper.style.cursor = 'grab';
         }
 
-        function handleSwipe() {
-            const deltaX = touchEndX - touchStartX;
-            const deltaY = touchEndY - touchStartY;
-
-            // Check if horizontal swipe is greater than vertical (to avoid conflicts with scrolling)
-            if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > minSwipeDistance) {
-                if (deltaX > 0) {
-                    // Swipe right - previous image
-                    prevImage();
-                } else {
-                    // Swipe left - next image
-                    nextImage();
-                }
-            }
-        }
-
-        // Keyboard navigation
-        document.addEventListener('keydown', function (e) {
+        document.addEventListener('keydown', e => {
             if (totalImages <= 1) return;
-
-            if (e.key === 'ArrowLeft') {
-                e.preventDefault();
-                prevImage();
-            } else if (e.key === 'ArrowRight') {
-                e.preventDefault();
-                nextImage();
-            }
+            if (e.key === 'ArrowLeft') showSlide((currentIndex - 1 + totalImages) % totalImages, 'prev');
+            else if (e.key === 'ArrowRight') showSlide((currentIndex + 1) % totalImages, 'next');
         });
 
-        // Initialize
+        // Preview Modal Logic
+        const modal = document.createElement('div');
+        modal.className = 'preview-modal';
+        modal.innerHTML = `
+            <div class="preview-content-container">
+                <div class="preview-header">
+                    <h3 class="preview-title">Preview</h3>
+                    <button class="preview-close" aria-label="Close preview">&times;</button>
+                </div>
+                <div class="preview-body"></div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+
+        const modalBody = modal.querySelector('.preview-body');
+        const modalTitle = modal.querySelector('.preview-title');
+        const closeBtn = modal.querySelector('.preview-close');
+
+        // Function to convert Google Drive URLs to direct image URLs
+        function convertGoogleDriveUrl(url) {
+            if (!url || typeof url !== 'string') return url;
+            
+            // Check if it's a Google Drive URL
+            if (url.includes('drive.google.com')) {
+                // Extract file ID from various Google Drive URL formats
+                let fileId = null;
+                
+                // Format: https://drive.google.com/file/d/FILE_ID/view
+                const fileMatch = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
+                if (fileMatch) {
+                    fileId = fileMatch[1];
+                    return `https://drive.google.com/uc?export=view&id=${fileId}`;
+                }
+                
+                // Format: https://drive.google.com/uc?id=FILE_ID or ?id=FILE_ID
+                const idMatch = url.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+                if (idMatch) {
+                    fileId = idMatch[1];
+                    return `https://drive.google.com/uc?export=view&id=${fileId}`;
+                }
+                
+                // Format: https://drive.google.com/open?id=FILE_ID
+                const openMatch = url.match(/open[?&]id=([a-zA-Z0-9_-]+)/);
+                if (openMatch) {
+                    fileId = openMatch[1];
+                    return `https://drive.google.com/uc?export=view&id=${fileId}`;
+                }
+            }
+            
+            return url;
+        }
+
+        function openModal(type, src, title) {
+            modalBody.innerHTML = '';
+            modalTitle.textContent = title || 'Preview';
+
+            if (type === 'image') {
+                const img = document.createElement('img');
+                // Convert Google Drive URLs to direct image URLs
+                img.src = convertGoogleDriveUrl(src);
+                img.onerror = function() {
+                    // If direct URL fails, try opening in new tab
+                    window.open(src, '_blank');
+                    closeModal();
+                };
+                modalBody.appendChild(img);
+            } else if (type === 'video') {
+                let embedUrl = src;
+                if (src.includes('youtube.com/watch?v=')) embedUrl = src.replace('watch?v=', 'embed/');
+                else if (src.includes('youtu.be/')) embedUrl = `https://www.youtube.com/embed/${src.split('/').pop().split('?')[0]}`;
+                else if (src.includes('vimeo.com/')) embedUrl = `https://player.vimeo.com/video/${src.split('/').pop().split('?')[0]}`;
+
+                const iframe = document.createElement('iframe');
+                iframe.src = embedUrl;
+                iframe.allow = "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture";
+                iframe.allowFullscreen = true;
+                modalBody.appendChild(iframe);
+            } else if (type === 'pdf') {
+                const iframe = document.createElement('iframe');
+                iframe.src = src;
+                modalBody.appendChild(iframe);
+            } else if (type === 'office') {
+                const iframe = document.createElement('iframe');
+                iframe.src = `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(src)}`;
+                modalBody.appendChild(iframe);
+            }
+
+            modal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeModal() {
+            modal.classList.remove('active');
+            document.body.style.overflow = '';
+            setTimeout(() => { modalBody.innerHTML = ''; }, 300);
+        }
+
+        closeBtn.addEventListener('click', closeModal);
+        modal.addEventListener('click', e => { if (e.target === modal) closeModal(); });
+        document.addEventListener('keydown', e => { if (e.key === 'Escape' && modal.classList.contains('active')) closeModal(); });
+
+        // Use capture phase so clicks on elements that call stopPropagation()
+        // (e.g. multimedia thumbnails) are still caught here for the modal
+        document.addEventListener('click', e => {
+            const trigger = e.target.closest('.preview-trigger');
+            if (trigger) {
+                e.preventDefault();
+                const { previewType, previewSrc, previewTitle } = trigger.dataset;
+                if (previewType && previewSrc) openModal(previewType, previewSrc, previewTitle);
+            }
+        }, true);
+
         updateIndicator();
     });
-
-    function switchTab(evt, tabName) {
-        // Hide all tab content
-        var i, tabcontent, tablinks;
-        tabcontent = document.getElementsByClassName("tab-content");
-        for (i = 0; i < tabcontent.length; i++) {
-            tabcontent[i].style.display = "none";
-        }
-
-        // Remove active class from all buttons
-        tablinks = document.getElementsByClassName("tab-btn");
-        for (i = 0; i < tablinks.length; i++) {
-            tablinks[i].className = tablinks[i].className.replace(" active", "");
-            tablinks[i].style.color = "var(--gray-600)";
-            tablinks[i].style.borderBottom = "3px solid transparent";
-        }
-
-        // Show the current tab and add active class
-        document.getElementById(tabName).style.display = "block";
-        evt.currentTarget.className += " active";
-        evt.currentTarget.style.color = "var(--blue-medium)";
-        evt.currentTarget.style.borderBottom = "3px solid var(--blue-medium)";
-    }
 </script>
