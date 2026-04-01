@@ -1,5 +1,43 @@
 <h1>Settings</h1>
 
+<% 
+const categoryById = {};
+(categories || []).forEach(function (c) { categoryById[c.id] = c; });
+
+function normParentId(pid) {
+    if (pid === null || pid === undefined || pid === '') return null;
+    return pid;
+}
+
+function sortedChildrenOf(parentId) {
+    return (categories || []).filter(function (c) {
+        if (parentId === null) return normParentId(c.parent_id) === null;
+        return parentId == c.parent_id;
+    }).sort(function (a, b) { return a.name.localeCompare(b.name); });
+}
+
+var treeRows = [];
+function walkSubtree(cat, depth) {
+    treeRows.push({ cat: cat, depth: depth });
+    sortedChildrenOf(cat.id).forEach(function (ch) { walkSubtree(ch, depth + 1); });
+}
+sortedChildrenOf(null).forEach(function (root) { walkSubtree(root, 0); });
+
+var inTree = {};
+treeRows.forEach(function (r) { inTree[r.cat.id] = true; });
+var orphans = (categories || []).filter(function (c) { return !inTree[c.id]; });
+
+var parentSelectOptions = [];
+function walkParentOptions(parentId, depth) {
+    sortedChildrenOf(parentId).forEach(function (c) {
+        var prefix = depth > 0 ? new Array(depth + 1).join('— ') : '';
+        parentSelectOptions.push({ id: c.id, label: prefix + c.name });
+        walkParentOptions(c.id, depth + 1);
+    });
+}
+walkParentOptions(null, 0);
+%>
+
 <div class="tabs">
     <a href="/admin/settings" class="tab" style="text-decoration: none; color: inherit;">General Settings</a>
     <div class="tab active">Categories</div>
@@ -19,10 +57,8 @@
             <label>Main Category (Optional)</label>
             <select name="parent_id">
                 <option value="">-- None (Main Category) --</option>
-                <% categories.forEach(function(c) { %>
-                    <option value="<%= c.id %>">
-                        <%= c.name %>
-                    </option>
+                <% parentSelectOptions.forEach(function(opt) { %>
+                    <option value="<%= opt.id %>"><%= opt.label %></option>
                     <% }); %>
             </select>
         </div>
@@ -39,26 +75,36 @@
                 </tr>
             </thead>
             <tbody>
-                <% const topLevel=categories.filter(c=> !c.parent_id);
-                    const children = categories.filter(c => c.parent_id);
+                <% treeRows.forEach(function(row) {
+                    var cat = row.cat;
+                    var depth = row.depth;
+                    var parentCat = cat.parent_id ? categoryById[cat.parent_id] : null;
                     %>
-
-                    <% topLevel.forEach(function(parent) { %>
-                        <tr style="background-color: var(--gray-50);">
-                            <td><span class="badge badge-primary">Main</span></td>
-                            <td style="font-weight: 700; color: var(--blue-darkest);">
-                                <i class="fas fa-folder" style="margin-right: 8px; color: var(--blue-medium);"></i>
-                                <%= parent.name %>
+                        <tr style="<%= depth === 0 ? 'background-color: var(--gray-50);' : '' %>">
+                            <td>
+                                <% if (depth === 0) { %>
+                                    <span class="badge badge-primary">Main</span>
+                                <% } else { %>
+                                    <span class="badge" style="background-color: var(--gray-100); color: var(--gray-600);">Sub of <%= parentCat ? parentCat.name : '?' %></span>
+                                <% } %>
+                            </td>
+                            <td style="font-weight: <%= depth === 0 ? '700' : '400' %>; color: <%= depth === 0 ? 'var(--blue-darkest)' : 'inherit' %>; padding-left: <%= depth === 0 ? 'inherit' : (2.5 + (depth - 1) * 1.25) %>rem;">
+                                <% if (depth === 0) { %>
+                                    <i class="fas fa-folder" style="margin-right: 8px; color: var(--blue-medium);"></i>
+                                <% } else { %>
+                                    <i class="fas fa-level-up-alt fa-rotate-90" style="margin-right: 8px; color: var(--gray-400);"></i>
+                                <% } %>
+                                <%= cat.name %>
                             </td>
                             <td>
                                 <div style="display: flex; gap: 5px;">
-                                    <button onclick="openEditModal('<%= parent.id %>', '<%= parent.name %>', '')"
+                                    <button onclick="openEditModal('<%= cat.id %>', '<%= cat.name %>', '<%= cat.parent_id || '' %>')"
                                         class="btn btn-secondary" style="padding: 4px 8px; font-size: 12px;">
                                         <i class="fas fa-edit"></i>
                                     </button>
                                     <% if (user.role==='Super Admin' ) { %>
                                         <button
-                                            onclick="openDeleteModal('/admin/settings/categories/delete/<%= parent.id %>', 'Are you sure you want to delete the category \'<%= parent.name %>\'? All sub-categories will be disconnected.')"
+                                            onclick="openDeleteModal('/admin/settings/categories/delete/<%= cat.id %>', 'Are you sure you want to delete the category \'<%= cat.name %>\'?<%= depth === 0 ? ' All nested sub-categories will be disconnected.' : '' %>')"
                                             class="btn btn-danger" style="padding: 4px 8px; font-size: 12px;">
                                             <i class="fas fa-trash"></i>
                                         </button>
@@ -66,41 +112,9 @@
                                 </div>
                             </td>
                         </tr>
+                    <% }); %>
 
-                        <% children.filter(child=> child.parent_id === parent.id).forEach(function(child) { %>
-                            <tr>
-                                <td>
-                                    <span class="badge"
-                                        style="background-color: var(--gray-100); color: var(--gray-600);">Sub of <%=
-                                            parent.name %></span>
-                                </td>
-                                <td style="padding-left: 2.5rem;">
-                                    <i class="fas fa-level-up-alt fa-rotate-90"
-                                        style="margin-right: 8px; color: var(--gray-400);"></i>
-                                    <%= child.name %>
-                                </td>
-                                <td>
-                                    <div style="display: flex; gap: 5px;">
-                                        <button
-                                            onclick="openEditModal('<%= child.id %>', '<%= child.name %>', '<%= parent.id %>')"
-                                            class="btn btn-secondary" style="padding: 4px 8px; font-size: 12px;">
-                                            <i class="fas fa-edit"></i>
-                                        </button>
-                                        <% if (user.role==='Super Admin' ) { %>
-                                            <button
-                                                onclick="openDeleteModal('/admin/settings/categories/delete/<%= child.id %>', 'Are you sure you want to delete the category \'<%= child.name %>\'?')"
-                                                class="btn btn-danger" style="padding: 4px 8px; font-size: 12px;">
-                                                <i class="fas fa-trash"></i>
-                                            </button>
-                                            <% } %>
-                                    </div>
-                                </td>
-                            </tr>
-                            <% }); %>
-                                <% }); %>
-
-                                    <% const orphans=children.filter(c=> !categories.find(p => p.id === c.parent_id));
-                                        if (orphans.length > 0) {
+                                    <% if (orphans.length > 0) {
                                         orphans.forEach(function(orphan) { %>
                                         <tr>
                                             <td><span class="badge badge-danger">Broken Main Ref</span></td>
@@ -134,21 +148,30 @@
 
     <!-- Mobile Card View -->
     <div class="mobile-category-cards">
-        <% topLevel.forEach(function(parent) { %>
-            <div class="category-card">
+        <% treeRows.forEach(function(row) {
+            var cat = row.cat;
+            var depth = row.depth;
+            var parentCat = cat.parent_id ? categoryById[cat.parent_id] : null;
+            var ml = depth * 1.5;
+            %>
+            <div class="category-card" style="<%= depth > 0 ? 'margin-left: ' + ml + 'rem; border-left: 3px solid var(--gray-200);' : '' %>">
                 <div class="category-card-header">
                     <div class="category-card-name">
-                        <i class="fas fa-folder" style="color: var(--blue-medium);"></i>
-                        <%= parent.name %>
+                        <% if (depth === 0) { %>
+                            <i class="fas fa-folder" style="color: var(--blue-medium);"></i>
+                        <% } else { %>
+                            <i class="fas fa-level-up-alt fa-rotate-90" style="color: var(--gray-400);"></i>
+                        <% } %>
+                        <%= cat.name %>
                     </div>
                     <div class="category-card-actions">
-                        <button onclick="openEditModal('<%= parent.id %>', '<%= parent.name %>', '')"
+                        <button onclick="openEditModal('<%= cat.id %>', '<%= cat.name %>', '<%= cat.parent_id || '' %>')"
                             class="btn btn-secondary btn-sm">
                             <i class="fas fa-edit"></i>
                         </button>
                         <% if (user.role==='Super Admin' ) { %>
                             <button
-                                onclick="openDeleteModal('/admin/settings/categories/delete/<%= parent.id %>', 'Delete category \'<%= parent.name %>\'?')"
+                                onclick="openDeleteModal('/admin/settings/categories/delete/<%= cat.id %>', 'Delete category \'<%= cat.name %>\'?<%= depth === 0 ? ' All nested sub-categories will be disconnected.' : '' %>')"
                                 class="btn btn-danger btn-sm">
                                 <i class="fas fa-trash"></i>
                             </button>
@@ -156,37 +179,14 @@
                     </div>
                 </div>
                 <div class="category-card-details">
-                    <span class="category-card-badge">Main Category</span>
+                    <% if (depth === 0) { %>
+                        <span class="category-card-badge">Main Category</span>
+                    <% } else { %>
+                        <span class="category-card-badge">Sub of <%= parentCat ? parentCat.name : '?' %></span>
+                    <% } %>
                 </div>
             </div>
-
-            <% children.filter(child=> child.parent_id === parent.id).forEach(function(child) { %>
-                <div class="category-card" style="margin-left: 1.5rem; border-left: 3px solid var(--gray-200);">
-                    <div class="category-card-header">
-                        <div class="category-card-name">
-                            <i class="fas fa-level-up-alt fa-rotate-90" style="color: var(--gray-400);"></i>
-                            <%= child.name %>
-                        </div>
-                        <div class="category-card-actions">
-                            <button onclick="openEditModal('<%= child.id %>', '<%= child.name %>', '<%= parent.id %>')"
-                                class="btn btn-secondary btn-sm">
-                                <i class="fas fa-edit"></i>
-                            </button>
-                            <% if (user.role==='Super Admin' ) { %>
-                                <button
-                                    onclick="openDeleteModal('/admin/settings/categories/delete/<%= child.id %>', 'Delete category \'<%= child.name %>\'?')"
-                                    class="btn btn-danger btn-sm">
-                                    <i class="fas fa-trash"></i>
-                                </button>
-                                <% } %>
-                        </div>
-                    </div>
-                    <div class="category-card-details">
-                        <span class="category-card-badge">Sub of <%= parent.name %></span>
-                    </div>
-                </div>
-                <% }); %>
-                    <% }); %>
+        <% }); %>
 
                         <% if (orphans.length> 0) { %>
                             <div
@@ -241,10 +241,8 @@
                 <label>Main Category</label>
                 <select name="parent_id" id="edit_parent_id">
                     <option value="">-- None (Main Category) --</option>
-                    <% topLevel.forEach(function(c) { %>
-                        <option value="<%= c.id %>">
-                            <%= c.name %>
-                        </option>
+                    <% parentSelectOptions.forEach(function(opt) { %>
+                        <option value="<%= opt.id %>"><%= opt.label %></option>
                         <% }); %>
                 </select>
             </div>
@@ -337,21 +335,56 @@
     }
 </style>
 
+<script id="category-parent-json" type="application/json"><%- JSON.stringify((categories || []).map(function (c) {
+    return { id: c.id, parent_id: c.parent_id == null || c.parent_id === '' ? null : c.parent_id };
+})) %></script>
+
 <script>
+    function getDescendantIds(editId) {
+        var el = document.getElementById('category-parent-json');
+        if (!el) return new Set();
+        var data = JSON.parse(el.textContent);
+        var byParent = {};
+        data.forEach(function (c) {
+            var pk = c.parent_id == null ? '__root__' : String(c.parent_id);
+            if (!byParent[pk]) byParent[pk] = [];
+            byParent[pk].push(c.id);
+        });
+        var out = new Set();
+        var stack = [String(editId)];
+        while (stack.length) {
+            var id = stack.pop();
+            (byParent[id] || []).forEach(function (k) {
+                var sk = String(k);
+                if (!out.has(sk)) {
+                    out.add(sk);
+                    stack.push(sk);
+                }
+            });
+        }
+        return out;
+    }
+
     function openEditModal(id, name, parentId) {
         const overlay = document.getElementById('modalOverlay');
         const modal = document.getElementById('editCategoryModal');
         const form = document.getElementById('editCategoryForm');
         const nameInput = document.getElementById('edit_name');
         const parentSelect = document.getElementById('edit_parent_id');
+        const sid = String(id);
 
         form.action = '/admin/settings/categories/edit/' + id;
         nameInput.value = name;
-        parentSelect.value = parentId || "";
+        parentSelect.value = parentId !== undefined && parentId !== null && parentId !== '' ? String(parentId) : '';
 
-        // Prevent circular reference
-        Array.from(parentSelect.options).forEach(opt => {
-            opt.disabled = opt.value === id;
+        var descendants = getDescendantIds(id);
+        Array.from(parentSelect.options).forEach(function (opt) {
+            if (!opt.value) {
+                opt.disabled = false;
+                return;
+            }
+            var ov = String(opt.value);
+            opt.disabled = ov === sid || descendants.has(ov);
         });
 
         overlay.style.display = 'flex';

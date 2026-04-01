@@ -35,6 +35,15 @@ function getCategoryChildIds(allCategories, parentId) {
     return ids;
 }
 
+/** Form may send deleted_images as CSV in one field ("1,2,3") or as an array. */
+function normalizeDeletedImageIds(deleted_images) {
+    if (deleted_images == null || deleted_images === '') return [];
+    const raw = Array.isArray(deleted_images) ? deleted_images : [deleted_images];
+    const parts = raw.flatMap((v) => String(v).split(',').map((s) => s.trim()).filter(Boolean));
+    const ids = [...new Set(parts.map((id) => parseInt(id, 10)).filter((n) => Number.isFinite(n)))];
+    return ids;
+}
+
 router.get('/', async (req, res) => {
     try {
         const { search, category, categories: selectedCats, suppliers: selectedSups, types: selectedTypes } = req.query;
@@ -409,31 +418,29 @@ router.post('/edit/:id', handleUploads, async (req, res) => {
 
         const productId = req.params.id;
 
-        // Handle image deletions
-        if (deleted_images) {
-            const deletedIds = Array.isArray(deleted_images) ? deleted_images : [deleted_images];
-            if (deletedIds.length > 0) {
-                // Get image paths before deletion
-                const [imagesToDelete] = await connection.query(
-                    "SELECT image_path FROM product_images WHERE id IN (?)",
-                    [deletedIds]
-                );
+        const deletedIds = normalizeDeletedImageIds(deleted_images);
+        if (deletedIds.length > 0) {
+            const placeholders = deletedIds.map(() => '?').join(',');
+            const [imagesToDelete] = await connection.query(
+                `SELECT image_path FROM product_images WHERE product_id = ? AND id IN (${placeholders})`,
+                [productId, ...deletedIds]
+            );
 
-                // Delete from database
-                await connection.query("DELETE FROM product_images WHERE id IN (?)", [deletedIds]);
+            await connection.query(
+                `DELETE FROM product_images WHERE product_id = ? AND id IN (${placeholders})`,
+                [productId, ...deletedIds]
+            );
 
-                // Delete files
-                imagesToDelete.forEach(img => {
-                    const filePath = path.join(__dirname, '../public', img.image_path);
-                    if (fs.existsSync(filePath)) {
-                        try {
-                            fs.unlinkSync(filePath);
-                        } catch (e) {
-                            console.error('Error deleting image file:', e);
-                        }
+            imagesToDelete.forEach((img) => {
+                const filePath = path.join(__dirname, '../public', img.image_path);
+                if (fs.existsSync(filePath)) {
+                    try {
+                        fs.unlinkSync(filePath);
+                    } catch (e) {
+                        console.error('Error deleting image file:', e);
                     }
-                });
-            }
+                }
+            });
         }
 
         // Add new images (normal or chunked)

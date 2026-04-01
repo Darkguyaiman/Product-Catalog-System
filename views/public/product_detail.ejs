@@ -152,12 +152,17 @@
                         <i class="fa-solid fa-paper-plane"></i> Get a Quote
                     </a>
                     <% if (typeof companyBrochure !=='undefined' && companyBrochure) { %>
-                        <% const brochureExt=companyBrochure.file_path ?
-                            companyBrochure.file_path.split('.').pop().toLowerCase() : '' ; const isGoogleDriveBrochure = companyBrochure.file_path && companyBrochure.file_path.includes('drive.google.com'); let
-                            brochurePreviewType='file' ; if (brochureExt==='pdf' ) brochurePreviewType='pdf' ; else if
-                            (['jpg', 'jpeg' , 'png' , 'gif' , 'webp' ].includes(brochureExt) || isGoogleDriveBrochure)
-                            brochurePreviewType='image' ; else if (['doc', 'docx' , 'xls' , 'xlsx' , 'ppt' , 'pptx'
-                            ].includes(brochureExt)) brochurePreviewType='office' ; %>
+                        <% const brochurePath = companyBrochure.file_path || '';
+                            const brochurePathNoQuery = brochurePath.split('?')[0].split('#')[0];
+                            const brochureExt = brochurePathNoQuery.includes('.') ? brochurePathNoQuery.split('.').pop().toLowerCase() : '';
+                            const isGoogleDriveBrochure = brochurePath.includes('drive.google.com');
+                            const isDriveFileLink = isGoogleDriveBrochure && /\/file\/d\//.test(brochurePath);
+                            let brochurePreviewType = 'file';
+                            if (brochureExt === 'pdf' || isDriveFileLink) brochurePreviewType = 'pdf';
+                            else if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(brochureExt)) brochurePreviewType = 'image';
+                            else if (isGoogleDriveBrochure) brochurePreviewType = 'pdf';
+                            else if (['doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx'].includes(brochureExt)) brochurePreviewType = 'office';
+                        %>
                             <a href="<%= companyBrochure.file_path %>" target="_blank"
                                 class="btn btn-outline-primary btn-lg <%= ['pdf', 'image', 'office'].includes(brochurePreviewType) ? 'preview-trigger' : '' %>"
                                 data-preview-type="<%= brochurePreviewType %>"
@@ -486,9 +491,8 @@
                                                                                         </span>
                                                                                     </div>
                                                                                     <div class="event-body">
-                                                                                        <div
-                                                                                            class="d-flex justify-content-between align-items-start">
-                                                                                            <div>
+                                                                                        <div class="event-body-header">
+                                                                                            <div class="event-body-text">
                                                                                                 <h4>
                                                                                                     <%= e.name %>
                                                                                                 </h4>
@@ -512,17 +516,15 @@
                                                                                                             data-preview-type="video"
                                                                                                             data-preview-src="<%= e.video_link.url %>"
                                                                                                             data-preview-title="<%= e.name %>"
-                                                                                                            style="width: 120px; height: 68px; background-image: url('https://img.youtube.com/vi/<%= videoId %>/mqdefault.jpg'); background-size: cover; border-radius: 8px; position: relative; margin-left: 1rem; flex-shrink: 0;">
-                                                                                                            <div
-                                                                                                                style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.2); border-radius: 8px;">
-                                                                                                                <i class="fa-solid fa-play"
-                                                                                                                    style="color: white; font-size: 1.2rem;"></i>
-                                                                                                            </div>
+                                                                                                            style="background-image: url('https://img.youtube.com/vi/<%= videoId %>/mqdefault.jpg');">
+                                                                                                            <span class="event-video-thumb-overlay" aria-hidden="true">
+                                                                                                                <i class="fa-solid fa-play"></i>
+                                                                                                            </span>
                                                                                                         </div>
                                                                                                         <% } %>
                                                                                                             <% } %>
                                                                                         </div>
-                                                                                        <div class="event-actions mt-3">
+                                                                                        <div class="event-actions">
                                                                                             <div
                                                                                                 class="multimedia-links">
                                                                                                 <% if (e.links &&
@@ -554,8 +556,9 @@
                                                                                                             ytMatch[2].length===11)
                                                                                                             ? ytMatch[2]
                                                                                                             : null;
+                                                                                                            const urlPathEvt = url.split('?')[0].split('#')[0];
                                                                                                             const
-                                                                                                            fileExt=url.split('.').pop().toLowerCase();
+                                                                                                            fileExt=urlPathEvt.includes('.') ? urlPathEvt.split('.').pop().toLowerCase() : '';
                                                                                                             const
                                                                                                             isGoogleDriveImg = url.includes('drive.google.com');
                                                                                                             const
@@ -665,10 +668,10 @@
                                                                                 <% let firstImg=null; if (t.links &&
                                                                                     t.links.length> 0) {
                                                                                     firstImg = t.links.find(l => {
-                                                                                    const ext = (l.url ||
-                                                                                    '').split('.').pop().toLowerCase();
-                                                                                    return ['jpg', 'jpeg', 'png', 'gif',
-                                                                                    'webp'].includes(ext);
+                                                                                    const u = (l.url || '').split('?')[0].split('#')[0];
+                                                                                    const ext = u.includes('.') ? u.split('.').pop().toLowerCase() : '';
+                                                                                    const gd = (l.url || '').includes('drive.google.com');
+                                                                                    return ['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext) || gd;
                                                                                     });
                                                                                     }
                                                                                     %>
@@ -717,6 +720,7 @@
                                                                                     %>
                                                                                     <% t.links.forEach(link=> { %>
                                                                                         <% const url=link.url || '' ;
+                                                                                            const urlPathOnly = url.split('?')[0].split('#')[0];
                                                                                             const
                                                                                             ytRegExp=/^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
                                                                                             const
@@ -724,7 +728,7 @@
                                                                                             const ytId=(ytMatch &&
                                                                                             ytMatch[2].length===11) ?
                                                                                             ytMatch[2] : null; const
-                                                                                            fileExt=url.split('.').pop().toLowerCase();
+                                                                                            fileExt=urlPathOnly.includes('.') ? urlPathOnly.split('.').pop().toLowerCase() : '';
                                                                                             const isGoogleDriveImg = url.includes('drive.google.com');
                                                                                             const isImg=['jpg', 'jpeg'
                                                                                             , 'png' , 'gif' , 'webp'
@@ -1410,12 +1414,12 @@
     /* Events */
     .event-capsule {
         display: flex;
-        align-items: center;
-        padding: 1.5rem;
+        align-items: flex-start;
+        padding: 1.35rem 1.5rem;
         background-color: var(--white);
         border: 1px solid var(--gray-200);
         border-radius: var(--border-radius);
-        gap: 1.5rem;
+        gap: 1.25rem;
         transition: var(--transition-base);
         cursor: pointer;
         text-decoration: none;
@@ -1435,30 +1439,32 @@
         flex-direction: column;
         align-items: center;
         justify-content: center;
-        width: 80px;
-        min-height: 80px;
+        flex-shrink: 0;
+        width: 76px;
+        min-height: 88px;
         background-color: var(--blue-darkest);
         color: var(--white);
         border-radius: 12px;
-        padding: 0.5rem;
+        padding: 0.55rem 0.4rem;
     }
 
     .event-date .month {
-        font-size: 0.7rem;
+        font-size: 0.68rem;
         text-transform: uppercase;
         font-weight: 800;
         line-height: 1.2;
+        letter-spacing: 0.04em;
     }
 
     .event-date .day {
-        font-size: 1.5rem;
+        font-size: 1.45rem;
         font-weight: 800;
         line-height: 1;
         margin: 0.2rem 0;
     }
 
     .event-date .year {
-        font-size: 0.65rem;
+        font-size: 0.62rem;
         font-weight: 600;
         opacity: 0.9;
         line-height: 1;
@@ -1466,17 +1472,127 @@
 
     .event-body {
         flex: 1;
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+        align-self: stretch;
+    }
+
+    .event-body-header {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 1.25rem;
+        width: 100%;
+    }
+
+    .event-body-text {
+        flex: 1;
+        min-width: 0;
     }
 
     .event-body h4 {
-        margin: 0 0 0.25rem 0;
-        font-size: 1.1rem;
+        margin: 0 0 0.35rem 0;
+        font-size: 1.125rem;
+        font-weight: 700;
+        line-height: 1.3;
+        color: var(--gray-900);
     }
 
     .event-body .location {
         margin: 0;
-        font-size: 0.85rem;
+        font-size: 0.875rem;
         color: var(--gray-500);
+        line-height: 1.45;
+        display: flex;
+        align-items: flex-start;
+        gap: 0.4rem;
+    }
+
+    .event-body .location i {
+        margin-top: 0.2rem;
+        flex-shrink: 0;
+        color: var(--blue-medium);
+        opacity: 0.85;
+    }
+
+    .event-video-thumb {
+        width: 148px;
+        aspect-ratio: 16 / 9;
+        flex-shrink: 0;
+        border-radius: 10px;
+        background-size: cover;
+        background-position: center;
+        position: relative;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+        overflow: hidden;
+    }
+
+    .event-video-thumb-overlay {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(0, 0, 0, 0.28);
+        transition: background 0.2s ease;
+    }
+
+    .event-video-thumb:hover .event-video-thumb-overlay,
+    .event-capsule:hover .event-video-thumb .event-video-thumb-overlay {
+        background: rgba(0, 0, 0, 0.4);
+    }
+
+    .event-video-thumb-overlay i {
+        color: var(--white);
+        font-size: 1.35rem;
+        filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.35));
+    }
+
+    .event-actions {
+        margin-top: 0;
+        padding: 1rem 0 0.15rem;
+        width: 100%;
+        border-top: 1px solid var(--gray-200);
+        background: linear-gradient(180deg, var(--gray-50) 0%, transparent 100%);
+        border-radius: 0 0 var(--border-radius) var(--border-radius);
+    }
+
+    /* Event card: gallery tiles share the row instead of tiny left-clustered thumbs */
+    .event-body .event-actions .multimedia-links {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+        gap: 0.75rem;
+        align-items: stretch;
+        width: 100%;
+        margin-top: 0;
+    }
+
+    .event-body .event-actions .multimedia-thumb {
+        width: 100%;
+        height: auto;
+        aspect-ratio: 16 / 9;
+        min-height: 78px;
+        border-radius: 10px;
+        border: 1px solid var(--gray-200);
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.07);
+    }
+
+    .event-body .event-actions .multimedia-thumb .play-icon {
+        font-size: 1.1rem;
+    }
+
+    .event-body .event-actions .btn-link {
+        align-self: center;
+        justify-self: start;
+        grid-column: 1 / -1;
+        padding: 0.35rem 0;
+    }
+
+    .event-body .event-actions .btn-outline-primary {
+        grid-column: 1 / -1;
+        justify-self: start;
     }
 
     /* Testimonies */
@@ -1951,12 +2067,47 @@
 
         .event-capsule {
             flex-direction: column;
+            align-items: stretch;
             text-align: center;
-            gap: 1rem;
+            gap: 1.1rem;
         }
 
         .event-date {
             margin: 0 auto;
+        }
+
+        .event-body {
+            text-align: left;
+            gap: 0.85rem;
+        }
+
+        .event-body-header {
+            flex-direction: column;
+            align-items: stretch;
+            gap: 1rem;
+        }
+
+        .event-body-text {
+            text-align: center;
+        }
+
+        .event-body .location {
+            justify-content: center;
+        }
+
+        .event-video-thumb {
+            width: 100%;
+            max-width: 320px;
+            margin: 0 auto;
+        }
+
+        .event-actions {
+            padding-top: 0.75rem;
+        }
+
+        .event-body .event-actions .multimedia-links {
+            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+            justify-items: stretch;
         }
 
         .event-link {
@@ -2132,8 +2283,8 @@
         }
 
         .event-date {
-            width: 60px;
-            height: 60px;
+            width: 64px;
+            min-height: 76px;
         }
 
         .event-date .day {
@@ -2142,6 +2293,10 @@
 
         .event-body h4 {
             font-size: 1rem;
+        }
+
+        .event-video-thumb {
+            max-width: 100%;
         }
 
         .testimony-card {
@@ -2393,6 +2548,49 @@
         width: 100%;
         height: 100%;
         border: none;
+    }
+
+    .preview-body.preview-body--docs {
+        flex-direction: column;
+        align-items: stretch;
+        justify-content: flex-start;
+        background: #1a1a1a;
+    }
+
+    .preview-body-doc-frame {
+        flex: 1;
+        min-height: 0;
+        position: relative;
+        width: 100%;
+    }
+
+    .preview-body-doc-frame iframe {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        border: none;
+        background: #fff;
+    }
+
+    .preview-doc-toolbar {
+        flex-shrink: 0;
+        padding: 0.55rem 1rem;
+        background: #111;
+        border-bottom: 1px solid #2a2a2a;
+        text-align: center;
+    }
+
+    .preview-doc-toolbar a {
+        color: #8ab4ff;
+        text-decoration: none;
+        font-size: 0.9rem;
+        font-weight: 500;
+    }
+
+    .preview-doc-toolbar a:hover {
+        text-decoration: underline;
     }
 
     .video-thumbnail-container {
@@ -2738,17 +2936,146 @@
             return url;
         }
 
-        function openModal(type, src, title) {
+        /** Embeddable Drive viewer — works for PDFs and many file types (avoids broken image/embed for PDFs). */
+        function getGoogleDrivePreviewUrl(url) {
+            if (!url || typeof url !== 'string' || !url.includes('drive.google.com')) return null;
+            let fileId = (url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/) || [])[1];
+            if (!fileId) fileId = (url.match(/[?&]id=([a-zA-Z0-9_-]+)/) || [])[1];
+            if (!fileId) return null;
+            return `https://drive.google.com/file/d/${fileId}/preview`;
+        }
+
+        function toAbsoluteUrl(src) {
+            if (!src || typeof src !== 'string') return src;
+            if (/^https?:\/\//i.test(src)) return src;
+            const origin = window.location.origin;
+            if (src.startsWith('/')) return origin + src;
+            return origin + '/' + src;
+        }
+
+        function hostBlocksIframePreview(url) {
+            try {
+                const u = new URL(url, window.location.href);
+                const h = u.hostname.toLowerCase();
+                if (h.includes('sharepoint.com')) return true;
+                if (h.includes('onedrive')) return true;
+                if (h === '1drv.ms' || h.endsWith('.1drv.ms')) return true;
+                if (h === 'dropbox.com' || h.endsWith('.dropbox.com')) return true;
+                return false;
+            } catch (e) {
+                return false;
+            }
+        }
+
+        function officeViewerCannotReachSite() {
+            const h = window.location.hostname.toLowerCase();
+            if (h === 'localhost' || h === '127.0.0.1') return true;
+            if (/^192\.168\.\d+\.\d+$/.test(h)) return true;
+            if (/^10\.\d+\.\d+\.\d+$/.test(h)) return true;
+            if (/^172\.(1[6-9]|2\d|3[01])\.\d+\.\d+$/.test(h)) return true;
+            return false;
+        }
+
+        function appendDocToolbar(container, abs) {
+            const bar = document.createElement('div');
+            bar.className = 'preview-doc-toolbar';
+            const a = document.createElement('a');
+            a.href = abs;
+            a.target = '_blank';
+            a.rel = 'noopener noreferrer';
+            a.innerHTML = '<i class="fa-solid fa-up-right-from-square"></i> Open in new tab';
+            bar.appendChild(a);
+            container.appendChild(bar);
+        }
+
+        function appendMicrosoftDocIframe(container, abs) {
+            const iframe = document.createElement('iframe');
+            iframe.title = 'Document preview';
+            iframe.src = `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(abs)}`;
+            container.appendChild(iframe);
+        }
+
+        function appendGoogleDocIframe(container, abs) {
+            const iframe = document.createElement('iframe');
+            iframe.title = 'Document preview';
+            iframe.src = `https://docs.google.com/gview?url=${encodeURIComponent(abs)}&embedded=true`;
+            container.appendChild(iframe);
+        }
+
+        async function renderPdfWithPdfJs(abs, container) {
+            const wrap = document.createElement('div');
+            wrap.className = 'pdf-js-pages';
+            wrap.style.cssText = 'overflow:auto;width:100%;height:100%;background:#3a3a3a;padding:1rem;display:flex;flex-direction:column;align-items:center;gap:1rem;box-sizing:border-box;';
+            container.appendChild(wrap);
+            try {
+                const pdfjsLib = await import('https://cdn.jsdelivr.net/npm/pdfjs-dist@4.4.168/build/pdf.min.mjs');
+                pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@4.4.168/build/pdf.worker.min.mjs';
+                const loadingTask = pdfjsLib.getDocument({ url: abs, withCredentials: false });
+                const pdf = await loadingTask.promise;
+                await new Promise((r) => requestAnimationFrame(r));
+                const w = container.getBoundingClientRect().width || document.querySelector('.preview-content-container')?.getBoundingClientRect().width || 720;
+                const scale = Math.min(1.6, Math.max(0.85, (w - 48) / 612));
+                for (let p = 1; p <= pdf.numPages; p++) {
+                    const page = await pdf.getPage(p);
+                    const viewport = page.getViewport({ scale });
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    canvas.height = viewport.height;
+                    canvas.width = viewport.width;
+                    canvas.style.maxWidth = '100%';
+                    canvas.style.height = 'auto';
+                    await page.render({ canvasContext: ctx, viewport }).promise;
+                    wrap.appendChild(canvas);
+                }
+            } catch (err) {
+                console.error('PDF.js preview failed', err);
+                wrap.innerHTML = '<p style="color:#eee;padding:1.5rem;text-align:center;">Could not render PDF here. Use <strong>Open in new tab</strong> above.</p>';
+            }
+        }
+
+        function appendOfficeLocalHint(container, abs) {
+            const box = document.createElement('div');
+            box.style.cssText = 'overflow:auto;width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1rem;padding:2rem;color:#e0e0e0;text-align:center;font-size:0.95rem;line-height:1.55;box-sizing:border-box;';
+            box.innerHTML = '<p style="margin:0;"><i class="fa-solid fa-file-powerpoint" style="font-size:1.75rem;opacity:0.5;"></i> &nbsp; <i class="fa-solid fa-file-excel" style="font-size:1.75rem;opacity:0.5;"></i> &nbsp; <i class="fa-solid fa-file-word" style="font-size:1.75rem;opacity:0.5;"></i></p><p style="margin:0;max-width:28rem;">Embedded previews for <strong>Excel</strong>, <strong>PowerPoint</strong>, and <strong>Word</strong> use Microsoft\'s online viewer. It can only load files from a <strong>public https://</strong> URL (your live site), not from localhost.</p><p style="margin:0;opacity:0.85;font-size:0.88rem;">PDFs still preview below on local development.</p>';
+            const a = document.createElement('a');
+            a.href = abs;
+            a.target = '_blank';
+            a.rel = 'noopener noreferrer';
+            a.className = 'btn btn-primary';
+            a.style.marginTop = '0.35rem';
+            a.innerHTML = '<i class="fa-solid fa-up-right-from-square"></i> Open file';
+            box.appendChild(a);
+            container.appendChild(box);
+        }
+
+        async function openModal(type, src, title) {
             modalBody.innerHTML = '';
+            modalBody.className = 'preview-body';
             modalTitle.textContent = title || 'Preview';
+
+            const drivePreview = getGoogleDrivePreviewUrl(src);
+            if (drivePreview && (type === 'pdf' || type === 'image' || type === 'office' || type === 'file')) {
+                modalBody.classList.add('preview-body--docs');
+                appendDocToolbar(modalBody, toAbsoluteUrl(src));
+                const frameWrap = document.createElement('div');
+                frameWrap.className = 'preview-body-doc-frame';
+                modalBody.appendChild(frameWrap);
+                const iframe = document.createElement('iframe');
+                iframe.src = drivePreview;
+                iframe.setAttribute('allowfullscreen', 'true');
+                iframe.title = 'Document preview';
+                frameWrap.appendChild(iframe);
+                modal.classList.add('active');
+                document.body.style.overflow = 'hidden';
+                return;
+            }
 
             if (type === 'image') {
                 const img = document.createElement('img');
-                // Convert Google Drive URLs to direct image URLs
-                img.src = convertGoogleDriveUrl(src);
+                img.src = toAbsoluteUrl(convertGoogleDriveUrl(src));
+                img.alt = title || 'Preview';
                 img.onerror = function() {
-                    // If direct URL fails, try opening in new tab
-                    window.open(src, '_blank');
+                    window.open(toAbsoluteUrl(src), '_blank');
                     closeModal();
                 };
                 modalBody.appendChild(img);
@@ -2763,14 +3090,29 @@
                 iframe.allow = "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture";
                 iframe.allowFullscreen = true;
                 modalBody.appendChild(iframe);
-            } else if (type === 'pdf') {
-                const iframe = document.createElement('iframe');
-                iframe.src = src;
-                modalBody.appendChild(iframe);
-            } else if (type === 'office') {
-                const iframe = document.createElement('iframe');
-                iframe.src = `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(src)}`;
-                modalBody.appendChild(iframe);
+            } else if (type === 'pdf' || type === 'office') {
+                const abs = toAbsoluteUrl(src);
+                modalBody.classList.add('preview-body--docs');
+                appendDocToolbar(modalBody, abs);
+                const frameWrap = document.createElement('div');
+                frameWrap.className = 'preview-body-doc-frame';
+                modalBody.appendChild(frameWrap);
+
+                if (hostBlocksIframePreview(abs)) {
+                    appendGoogleDocIframe(frameWrap, abs);
+                } else if (officeViewerCannotReachSite()) {
+                    if (type === 'pdf') {
+                        await renderPdfWithPdfJs(abs, frameWrap);
+                    } else {
+                        appendOfficeLocalHint(frameWrap, abs);
+                    }
+                } else {
+                    appendMicrosoftDocIframe(frameWrap, abs);
+                }
+            } else {
+                window.open(toAbsoluteUrl(src), '_blank');
+                closeModal();
+                return;
             }
 
             modal.classList.add('active');
@@ -2794,7 +3136,9 @@
             if (trigger) {
                 e.preventDefault();
                 const { previewType, previewSrc, previewTitle } = trigger.dataset;
-                if (previewType && previewSrc) openModal(previewType, previewSrc, previewTitle);
+                if (previewType && previewSrc) {
+                    openModal(previewType, previewSrc, previewTitle).catch((err) => console.error(err));
+                }
             }
         }, true);
 
