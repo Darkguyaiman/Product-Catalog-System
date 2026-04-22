@@ -58,7 +58,7 @@ app.use(async (req, res, next) => {
 
   // Default values
   res.locals.brandLogo = '/QSS Healthcare.png';
-  res.locals.brandName = 'Product Catalog';
+  res.locals.brandName = 'Q Product Catalog';
 
   // Template Links
   res.locals.templates = {
