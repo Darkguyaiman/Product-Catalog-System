@@ -286,28 +286,28 @@ erDiagram
 ```mermaid
 graph LR
     subgraph Auth
-        A1[GET /auth/login]
-        A2[POST /auth/login]
-        A3[GET /auth/logout]
+        A1["GET /auth/login"]
+        A2["POST /auth/login"]
+        A3["GET /auth/logout"]
     end
 
     subgraph Admin
-        D[GET /admin - Dashboard]
-        S[/admin/settings/*]
-        C[/admin/companies/*]
-        SU[/admin/suppliers/*]
-        P[/admin/products/*]
-        M[/admin/marketing/*]
-        PK[/admin/packages/*]
-        I[/admin/import/*]
+        D["GET /admin - Dashboard"]
+        S["Settings"]
+        C["Companies"]
+        SU["Suppliers"]
+        P["Products"]
+        M["Marketing"]
+        PK["Packages"]
+        I["Import"]
     end
 
     subgraph Public["Public Catalog"]
-        PH[GET /:shortname/home]
-        PP[GET /:shortname/products]
-        PD[GET /:shortname/product/:id]
-        PPK[GET /:shortname/packages]
-        PPKD[GET /:shortname/package/:id]
+        PH["GET /:shortname/home"]
+        PP["GET /:shortname/products"]
+        PD["GET /:shortname/product/:id"]
+        PPK["GET /:shortname/packages"]
+        PPKD["GET /:shortname/package/:id"]
     end
 
     A1 --> D
@@ -477,4 +477,4 @@ graph TD
 
 ## License
 
-ISC
+This project is proprietary. All rights reserved.
