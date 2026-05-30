@@ -7,6 +7,7 @@ const sharp = require('sharp');
 const fs = require('fs');
 
 const MATERIAL_CATEGORIES = ['BROCHURE', 'FLIERS', 'ROLL-UP', 'POSTER', 'BACK-DROP'];
+const { validateRequired, validateOneOf, nullIfEmpty } = require('../utils/validation');
 
 // Configure Multer for Marketing Uploads
 const storage = multer.diskStorage({
@@ -259,6 +260,17 @@ router.get('/materials/add', async (req, res) => {
 
 router.post('/materials/add', upload.single('file'), async (req, res) => {
     const { name, category, company_id, product_ids, file_path, file_mime } = req.body;
+    const categoryParam = category || 'BROCHURE';
+
+    const nameError = validateRequired(req.body, { name: 'Title/Name' });
+    if (nameError) {
+        return res.redirect(`/admin/marketing/materials/add?category=${categoryParam}&error=${encodeURIComponent(nameError)}`);
+    }
+    const fileError = validateOneOf(req.body, ['file_path'], 'Upload file');
+    if (fileError && !req.file) {
+        return res.redirect(`/admin/marketing/materials/add?category=${categoryParam}&error=${encodeURIComponent(fileError)}`);
+    }
+
     let filePath = file_path;
     let mimeType = file_mime;
 
@@ -343,6 +355,11 @@ router.get('/materials/edit/:id', async (req, res) => {
 
 router.post('/materials/edit/:id', upload.single('file'), async (req, res) => {
     const { name, category, company_id, product_ids, existing_file, file_path, file_mime } = req.body;
+
+    const nameError = validateRequired(req.body, { name: 'Title/Name' });
+    if (nameError) {
+        return res.redirect(`/admin/marketing/materials/edit/${req.params.id}?category=${category || 'BROCHURE'}&error=${encodeURIComponent(nameError)}`);
+    }
 
     let connection;
     try {
@@ -442,13 +459,18 @@ router.get('/events/add', async (req, res) => {
 });
 
 router.post('/events/add', async (req, res) => {
+    const validationError = validateRequired(req.body, { name: 'Event Name' });
+    if (validationError) {
+        return res.redirect(`/admin/marketing/events/add?error=${encodeURIComponent(validationError)}`);
+    }
+
     const { name, location, start_date, end_date, link_titles, link_urls, product_ids } = req.body;
     let connection;
     try {
         connection = await pool.getConnection();
         await connection.beginTransaction();
 
-        const [result] = await connection.query("INSERT INTO events (name, location, start_date, end_date) VALUES (?, ?, ?, ?)", [name, location, start_date, end_date]);
+        const [result] = await connection.query("INSERT INTO events (name, location, start_date, end_date) VALUES (?, ?, ?, ?)", [name, nullIfEmpty(location), nullIfEmpty(start_date), nullIfEmpty(end_date)]);
         const eventId = result.insertId;
 
         if (link_urls) {
@@ -500,13 +522,18 @@ router.get('/events/edit/:id', async (req, res) => {
 });
 
 router.post('/events/edit/:id', async (req, res) => {
+    const validationError = validateRequired(req.body, { name: 'Event Name' });
+    if (validationError) {
+        return res.redirect(`/admin/marketing/events/edit/${req.params.id}?error=${encodeURIComponent(validationError)}`);
+    }
+
     const { name, location, start_date, end_date, link_titles, link_urls, product_ids } = req.body;
     let connection;
     try {
         connection = await pool.getConnection();
         await connection.beginTransaction();
 
-        await connection.query("UPDATE events SET name = ?, location = ?, start_date = ?, end_date = ? WHERE id = ?", [name, location, start_date, end_date, req.params.id]);
+        await connection.query("UPDATE events SET name = ?, location = ?, start_date = ?, end_date = ? WHERE id = ?", [name, nullIfEmpty(location), nullIfEmpty(start_date), nullIfEmpty(end_date), req.params.id]);
 
         // Update Links
         await connection.query("DELETE FROM event_links WHERE event_id = ?", [req.params.id]);
@@ -550,13 +577,18 @@ router.get('/testimonies/add', async (req, res) => {
 });
 
 router.post('/testimonies/add', async (req, res) => {
+    const validationError = validateRequired(req.body, { client_name: 'Client Name' });
+    if (validationError) {
+        return res.redirect(`/admin/marketing/testimonies/add?error=${encodeURIComponent(validationError)}`);
+    }
+
     const { client_name, location, start_date, treatment, link_titles, link_urls, product_ids } = req.body;
     let connection;
     try {
         connection = await pool.getConnection();
         await connection.beginTransaction();
 
-        const [result] = await connection.query("INSERT INTO testimonies (client_name, location, start_date, treatment) VALUES (?, ?, ?, ?)", [client_name, location, start_date, treatment]);
+        const [result] = await connection.query("INSERT INTO testimonies (client_name, location, start_date, treatment) VALUES (?, ?, ?, ?)", [client_name, nullIfEmpty(location), nullIfEmpty(start_date), nullIfEmpty(treatment)]);
         const testimonyId = result.insertId;
 
         if (link_urls) {
@@ -608,13 +640,18 @@ router.get('/testimonies/edit/:id', async (req, res) => {
 });
 
 router.post('/testimonies/edit/:id', async (req, res) => {
+    const validationError = validateRequired(req.body, { client_name: 'Client Name' });
+    if (validationError) {
+        return res.redirect(`/admin/marketing/testimonies/edit/${req.params.id}?error=${encodeURIComponent(validationError)}`);
+    }
+
     const { client_name, location, start_date, treatment, link_titles, link_urls, product_ids } = req.body;
     let connection;
     try {
         connection = await pool.getConnection();
         await connection.beginTransaction();
 
-        await connection.query("UPDATE testimonies SET client_name = ?, location = ?, start_date = ?, treatment = ? WHERE id = ?", [client_name, location, start_date, treatment, req.params.id]);
+        await connection.query("UPDATE testimonies SET client_name = ?, location = ?, start_date = ?, treatment = ? WHERE id = ?", [client_name, nullIfEmpty(location), nullIfEmpty(start_date), nullIfEmpty(treatment), req.params.id]);
 
         // Update Links
         await connection.query("DELETE FROM testimony_links WHERE testimony_id = ?", [req.params.id]);

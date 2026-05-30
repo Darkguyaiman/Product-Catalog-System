@@ -6,6 +6,7 @@ const path = require('path');
 const fs = require('fs');
 
 const sharp = require('sharp');
+const { validateRequired } = require('../utils/validation');
 
 // Configure Multer for package image
 const storage = multer.memoryStorage();
@@ -116,6 +117,11 @@ router.get('/create', async (req, res) => {
 
 // Create package action
 router.post('/create', upload.single('main_image'), async (req, res) => {
+    const validationError = validateRequired(req.body, { name: 'Package Name' });
+    if (validationError) {
+        return res.redirect(`/admin/packages/create?error=${encodeURIComponent(validationError)}`);
+    }
+
     const { name, description, bundle_label, product_ids, spec_icons, spec_texts, main_image_path } = req.body;
     let main_image = main_image_path || null;
 
@@ -214,6 +220,11 @@ router.get('/edit/:id', async (req, res) => {
 
 // Edit package action
 router.post('/edit/:id', upload.single('main_image'), async (req, res) => {
+    const validationError = validateRequired(req.body, { name: 'Package Name' });
+    if (validationError) {
+        return res.redirect(`/admin/packages/edit/${req.params.id}?error=${encodeURIComponent(validationError)}`);
+    }
+
     const { name, description, bundle_label, product_ids, spec_icons, spec_texts, main_image_path, remove_main_image } = req.body;
     const packageId = req.params.id;
 

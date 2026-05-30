@@ -5,6 +5,25 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 const sharp = require('sharp');
+const { validateRequired, validateOneOf, trimValue } = require('../utils/validation');
+
+const COMPANY_REQUIRED_FIELDS = {
+    name: 'Company/Brand Name',
+    shortname: 'URL Shortname',
+    reg_no: 'Registration Number',
+    reg_date: 'Registration Date',
+    contact_number: 'Contact Number',
+    email: 'Email Address',
+    website: 'Website URL',
+    address: 'Company Address'
+};
+
+function validateCompanyLogo(body, file) {
+    const removed = body.logo_removed === 'true';
+    const hasExisting = trimValue(body.existing_logo) && !removed;
+    if (hasExisting || trimValue(body.logo_path) || file) return null;
+    return 'Company Logo is required.';
+}
 
 // Configure Multer for Logo Upload (Memory Storage for Sharp processing)
 const storage = multer.memoryStorage();
@@ -136,6 +155,15 @@ router.post('/upload-chunk', chunkUpload.single('chunk'), async (req, res) => {
 });
 
 router.post('/add', handleUpload('logo'), async (req, res) => {
+    const validationError = validateRequired(req.body, COMPANY_REQUIRED_FIELDS);
+    if (validationError) {
+        return res.redirect(`/admin/companies/add?error=${encodeURIComponent(validationError)}`);
+    }
+    const logoError = validateOneOf(req.body, ['logo_path'], 'Company Logo');
+    if (logoError && !req.file) {
+        return res.redirect(`/admin/companies/add?error=${encodeURIComponent(logoError)}`);
+    }
+
     const { name, shortname, reg_no, reg_date, address, website, email, contact_number, logo_path } = req.body;
     let logo = logo_path || null;
 
@@ -161,7 +189,17 @@ router.post('/add', handleUpload('logo'), async (req, res) => {
     try {
         await pool.query(
             "INSERT INTO affiliated_companies (name, shortname, logo, reg_no, reg_date, address, website, email, contact_number) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-            [name, shortname, logo, reg_no, reg_date, address, website, email, contact_number]
+            [
+                trimValue(name),
+                trimValue(shortname),
+                logo,
+                trimValue(reg_no),
+                trimValue(reg_date),
+                trimValue(address),
+                trimValue(website),
+                trimValue(email),
+                trimValue(contact_number)
+            ]
         );
         res.redirect('/admin/companies');
     } catch (err) {
@@ -171,6 +209,15 @@ router.post('/add', handleUpload('logo'), async (req, res) => {
 });
 
 router.post('/edit/:id', handleUpload('logo'), async (req, res) => {
+    const validationError = validateRequired(req.body, COMPANY_REQUIRED_FIELDS);
+    if (validationError) {
+        return res.redirect(`/admin/companies/edit/${req.params.id}?error=${encodeURIComponent(validationError)}`);
+    }
+    const logoError = validateCompanyLogo(req.body, req.file);
+    if (logoError) {
+        return res.redirect(`/admin/companies/edit/${req.params.id}?error=${encodeURIComponent(logoError)}`);
+    }
+
     const { name, shortname, reg_no, reg_date, address, website, email, contact_number, existing_logo, logo_path } = req.body;
     let logo = logo_path || existing_logo;
 
@@ -220,7 +267,18 @@ router.post('/edit/:id', handleUpload('logo'), async (req, res) => {
     try {
         await pool.query(
             "UPDATE affiliated_companies SET name = ?, shortname = ?, logo = ?, reg_no = ?, reg_date = ?, address = ?, website = ?, email = ?, contact_number = ? WHERE id = ?",
-            [name, shortname, logo, reg_no, reg_date, address, website, email, contact_number, req.params.id]
+            [
+                trimValue(name),
+                trimValue(shortname),
+                logo,
+                trimValue(reg_no),
+                trimValue(reg_date),
+                trimValue(address),
+                trimValue(website),
+                trimValue(email),
+                trimValue(contact_number),
+                req.params.id
+            ]
         );
         res.redirect('/admin/companies');
     } catch (err) {

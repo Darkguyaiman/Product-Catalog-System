@@ -2,12 +2,21 @@ const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcrypt');
 const { pool } = require('../config/database');
+const { validateRequired } = require('../utils/validation');
 
 router.get('/login', (req, res) => {
     res.render('login', { error: null });
 });
 
 router.post('/login', async (req, res) => {
+    const validationError = validateRequired(req.body, {
+        email: 'Email',
+        password: 'Password'
+    });
+    if (validationError) {
+        return res.render('login', { error: validationError });
+    }
+
     const { email, password } = req.body;
     try {
         const [users] = await pool.query('SELECT * FROM users WHERE email = ?', [email]);

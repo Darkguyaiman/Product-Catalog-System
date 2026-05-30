@@ -6,11 +6,13 @@
         </a>
     </div>
 
-    <div class="card" style="max-width: 900px; margin: 0 auto;">
+    <%- include('../../partials/validation_banner') %>
+
+    <div class="card admin-form-card">
         <form action="/admin/marketing/testimonies/add" method="POST" id="addTestimonyForm">
             <div class="grid-2">
                 <div class="form-group">
-                    <label>Client Name <span style="color: var(--danger);">*</span></label>
+                    <label>Client Name <span class="required-star">*</span></label>
                     <input type="text" name="client_name" required placeholder="e.g. John Doe">
                 </div>
                 <div class="form-group">

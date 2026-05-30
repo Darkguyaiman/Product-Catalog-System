@@ -1,11 +1,5 @@
 <div class="companies-page">
-    <% if (typeof query !=='undefined' && query.error) { %>
-        <div class="alert alert-danger"
-            style="margin-bottom: 20px; padding: 12px; background: #fee2e2; color: #dc2626; border-radius: 8px; font-weight: 600;">
-            <i class="fas fa-exclamation-circle"></i>
-            <%= query.error %>
-        </div>
-        <% } %>
+    <%- include('../partials/validation_banner') %>
             <div class="card-header companies-header">
                 <h1>Add New Company</h1>
                 <a href="/admin/companies" class="btn btn-secondary btn-sm" title="Go Back">
@@ -13,48 +7,49 @@
                 </a>
             </div>
 
-            <div class="card" style="max-width: 800px; margin: 0 auto;">
-                <form id="addCompanyForm" action="/admin/companies/add" method="POST" enctype="multipart/form-data">
+            <div class="card admin-form-card">
+                <form id="addCompanyForm" action="/admin/companies/add" method="POST" enctype="multipart/form-data"
+                    data-ajax-submit data-required-file="logo_path" data-required-file-label="Company Logo">
                     <div class="grid-2">
                         <div class="form-group">
-                            <label>Company/Brand Name <span style="color: var(--danger);">*</span></label>
+                            <label>Company/Brand Name <span class="required-star">*</span></label>
                             <input type="text" name="name" id="companyName" placeholder="e.g. QSS Healthcare" required>
                         </div>
                         <div class="form-group">
-                            <label>URL Shortname <span style="color: var(--danger);">*</span></label>
+                            <label>URL Shortname <span class="required-star">*</span></label>
                             <input type="text" name="shortname" id="shortnameSlug" placeholder="e.g. qss" required>
                             <small style="color: var(--gray-500); font-size: 0.75rem;">This will be used for your unique
                                 URL (e.g., /qss/home).</small>
                         </div>
                         <div class="form-group">
-                            <label>Registration Number</label>
-                            <input type="text" name="reg_no" placeholder="Registration No.">
+                            <label>Registration Number <span class="required-star">*</span></label>
+                            <input type="text" name="reg_no" placeholder="Registration No." required>
                         </div>
                         <div class="form-group">
-                            <label>Registration Date</label>
-                            <input type="date" name="reg_date">
+                            <label>Registration Date <span class="required-star">*</span></label>
+                            <input type="date" name="reg_date" required>
                         </div>
                         <div class="form-group">
-                            <label>Contact Number</label>
-                            <input type="text" name="contact_number" placeholder="+60 12-345 6789">
+                            <label>Contact Number <span class="required-star">*</span></label>
+                            <input type="text" name="contact_number" placeholder="+60 12-345 6789" required>
                         </div>
                         <div class="form-group">
-                            <label>Email Address</label>
-                            <input type="email" name="email" placeholder="contact@company.com">
+                            <label>Email Address <span class="required-star">*</span></label>
+                            <input type="email" name="email" placeholder="contact@company.com" required>
                         </div>
                         <div class="form-group">
-                            <label>Website URL</label>
-                            <input type="text" name="website" placeholder="https://www.company.com">
+                            <label>Website URL <span class="required-star">*</span></label>
+                            <input type="url" name="website" placeholder="https://www.company.com" required>
                         </div>
                     </div>
 
                     <div class="form-group">
-                        <label>Company Address</label>
-                        <textarea name="address" rows="3" placeholder="Full business address..."></textarea>
+                        <label>Company Address <span class="required-star">*</span></label>
+                        <textarea name="address" rows="3" placeholder="Full business address..." required></textarea>
                     </div>
 
                     <div class="form-group">
-                        <label>Company Logo</label>
+                        <label>Company Logo <span class="required-star">*</span></label>
                         <div class="upload-zone" id="logoUploadZone">
                             <div class="upload-content">
                                 <i class="fas fa-cloud-upload-alt upload-icon"></i>
@@ -301,6 +296,7 @@
 <script>
     document.getElementById('addCompanyForm').addEventListener('submit', async function (e) {
         e.preventDefault();
+        if (!FormValidation.validateBeforeSubmit(this)) return;
 
         const btn = document.getElementById('submitBtn');
         const logoInput = document.getElementById('logoInput');

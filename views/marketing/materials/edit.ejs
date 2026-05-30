@@ -9,11 +9,13 @@
         </a>
     </div>
 
-    <div class="card" style="max-width: 900px; margin: 0 auto;">
+    <%- include('../../partials/validation_banner') %>
+
+    <div class="card admin-form-card">
         <form action="/admin/marketing/materials/edit/<%= material.id %>" method="POST" enctype="multipart/form-data"
-            id="editMaterialForm">
+            id="editMaterialForm" data-ajax-submit>
             <div class="form-group">
-                <label>Title/Name <span style="color: var(--danger);">*</span></label>
+                <label>Title/Name <span class="required-star">*</span></label>
                 <input type="text" name="name" required value="<%= material.name %>">
             </div>
 
@@ -316,6 +318,8 @@
         // Form Submit with Chunked Upload
         document.getElementById('editMaterialForm').addEventListener('submit', async function (e) {
             e.preventDefault();
+            if (!FormValidation.validateBeforeSubmit(this)) return;
+
             const btn = document.getElementById('submitBtn');
             const file = input.files[0];
 

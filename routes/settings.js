@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { pool } = require('../config/database');
 const bcrypt = require('bcrypt');
+const { validateRequired } = require('../utils/validation');
 
 
 // Middleware to check auth
@@ -24,6 +25,11 @@ router.get('/', async (req, res) => {
 
 // Add Setting
 router.post('/add', async (req, res) => {
+    const validationError = validateRequired(req.body, { value: 'Value' });
+    if (validationError) {
+        return res.redirect(`/admin/settings?error=${encodeURIComponent(validationError)}`);
+    }
+
     const { type, value } = req.body;
     try {
         await pool.query("INSERT INTO settings (type, value) VALUES (?, ?)", [type, value]);
@@ -36,6 +42,11 @@ router.post('/add', async (req, res) => {
 
 // Edit Setting
 router.post('/edit/:id', async (req, res) => {
+    const validationError = validateRequired(req.body, { value: 'Value' });
+    if (validationError) {
+        return res.redirect(`/admin/settings?error=${encodeURIComponent(validationError)}`);
+    }
+
     const { value } = req.body;
     try {
         await pool.query("UPDATE settings SET value = ? WHERE id = ?", [value, req.params.id]);
@@ -70,6 +81,11 @@ router.get('/categories', async (req, res) => {
 });
 
 router.post('/categories/add', async (req, res) => {
+    const validationError = validateRequired(req.body, { name: 'Category Name' });
+    if (validationError) {
+        return res.redirect(`/admin/settings/categories?error=${encodeURIComponent(validationError)}`);
+    }
+
     const { name, parent_id } = req.body;
     try {
         await pool.query("INSERT INTO categories (name, parent_id) VALUES (?, ?)", [name, parent_id || null]);
@@ -81,6 +97,11 @@ router.post('/categories/add', async (req, res) => {
 });
 
 router.post('/categories/edit/:id', async (req, res) => {
+    const validationError = validateRequired(req.body, { name: 'Category Name' });
+    if (validationError) {
+        return res.redirect(`/admin/settings/categories?error=${encodeURIComponent(validationError)}`);
+    }
+
     const { name, parent_id } = req.body;
     try {
         await pool.query("UPDATE categories SET name = ?, parent_id = ? WHERE id = ?", [name, parent_id || null, req.params.id]);
@@ -130,6 +151,15 @@ router.post('/users/add', async (req, res) => {
 
     const { email, password, role } = req.body;
 
+    const validationError = validateRequired(req.body, {
+        email: 'Email',
+        password: 'Password',
+        role: 'Role'
+    });
+    if (validationError) {
+        return res.redirect(`/admin/settings/users?error=${encodeURIComponent(validationError)}`);
+    }
+
     // Protection: Admin cannot create Super Admin
     if (role === 'Super Admin' && userRole !== 'Super Admin') {
         return res.status(403).send('Unauthorized to create Super Admin');
@@ -150,6 +180,14 @@ router.post('/users/edit/:id', async (req, res) => {
     if (userRole !== 'Admin' && userRole !== 'Super Admin') return res.status(403).send('Unauthorized');
 
     const { email, role } = req.body;
+
+    const validationError = validateRequired(req.body, {
+        email: 'Email',
+        role: 'Role'
+    });
+    if (validationError) {
+        return res.redirect(`/admin/settings/users?error=${encodeURIComponent(validationError)}`);
+    }
 
     try {
         // Check target user's current role

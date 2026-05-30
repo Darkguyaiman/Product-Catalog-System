@@ -5,12 +5,14 @@
     </a>
 </div>
 
-<div class="card" style="margin-top: 20px;">
+<%- include('../partials/validation_banner') %>
+
+<div class="card admin-form-card" style="margin-top: 20px;">
     <h3>Supplier Details</h3>
     <form action="/admin/suppliers/edit/<%= supplier.id %>" method="POST">
         <div class="grid">
             <div class="form-group">
-                <label>Supplier Name</label>
+                <label>Supplier Name <span class="required-star">*</span></label>
                 <input type="text" name="name" value="<%= supplier.name %>" required>
             </div>
             <div class="form-group">

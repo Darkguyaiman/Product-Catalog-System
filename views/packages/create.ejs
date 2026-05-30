@@ -4,12 +4,14 @@
         <p style="color: var(--gray-500); margin-top: 0.5rem;">Group products together into a professional bundle.</p>
     </div>
 
-    <div class="card" style="margin-top: 2rem;">
-        <form id="packageForm" action="/admin/packages/create" method="POST" enctype="multipart/form-data">
+    <%- include('../partials/validation_banner') %>
+
+    <div class="card admin-form-card" style="margin-top: 2rem;">
+        <form id="packageForm" action="/admin/packages/create" method="POST" enctype="multipart/form-data" data-ajax-submit>
             <div class="form-grid">
                 <!-- Basic Info -->
                 <div class="form-group" style="grid-column: span 1;">
-                    <label for="name">Package Name <span style="color: var(--danger);">*</span></label>
+                    <label for="name">Package Name <span class="required-star">*</span></label>
                     <input type="text" id="name" name="name" required placeholder="e.g., ICU Complete Setup">
                 </div>
 
@@ -595,6 +597,10 @@
 
         const packageForm = document.getElementById('packageForm');
         packageForm.addEventListener('submit', async function (e) {
+            if (!FormValidation.validateBeforeSubmit(this)) {
+                e.preventDefault();
+                return;
+            }
             if (fileInput.files.length > 0 && !document.getElementById('main_image_path').value) {
                 e.preventDefault();
                 const submitBtn = document.getElementById('submitBtn');

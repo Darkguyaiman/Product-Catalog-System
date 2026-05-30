@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { pool } = require('../config/database');
+const { validateRequired } = require('../utils/validation');
 
 router.use((req, res, next) => {
     if (!req.session.user) return res.redirect('/auth/login');
@@ -82,6 +83,11 @@ router.get('/add', async (req, res) => {
 });
 
 router.post('/add', async (req, res) => {
+    const validationError = validateRequired(req.body, { name: 'Supplier Name' });
+    if (validationError) {
+        return res.redirect(`/admin/suppliers/add?error=${encodeURIComponent(validationError)}`);
+    }
+
     const { name, country, company_ids } = req.body;
     // company_ids can be array or string
     const companyIds = Array.isArray(company_ids) ? company_ids : (company_ids ? [company_ids] : []);
@@ -130,6 +136,11 @@ router.get('/edit/:id', async (req, res) => {
 });
 
 router.post('/edit/:id', async (req, res) => {
+    const validationError = validateRequired(req.body, { name: 'Supplier Name' });
+    if (validationError) {
+        return res.redirect(`/admin/suppliers/edit/${req.params.id}?error=${encodeURIComponent(validationError)}`);
+    }
+
     const { name, country, company_ids } = req.body;
     const companyIds = Array.isArray(company_ids) ? company_ids : (company_ids ? [company_ids] : []);
 

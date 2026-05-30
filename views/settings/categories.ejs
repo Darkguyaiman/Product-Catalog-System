@@ -1,5 +1,7 @@
 <h1>Settings</h1>
 
+<%- include('../partials/validation_banner') %>
+
 <% 
 const categoryById = {};
 (categories || []).forEach(function (c) { categoryById[c.id] = c; });
@@ -50,7 +52,7 @@ walkParentOptions(null, 0);
     <h3>Categories</h3>
     <form action="/admin/settings/categories/add" method="POST" class="form-group responsive-flex items-end">
         <div class="flex-1">
-            <label>Category Name</label>
+            <label>Category Name <span class="required-star">*</span></label>
             <input type="text" name="name" required>
         </div>
         <div class="flex-1">

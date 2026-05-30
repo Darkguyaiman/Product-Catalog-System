@@ -5,6 +5,7 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 const sharp = require('sharp');
+const { validateRequired } = require('../utils/validation');
 
 // Configure Multer (Memory Storage for Sharp processing of images, direct save for PDFs if needed manually)
 const storage = multer.memoryStorage();
@@ -295,6 +296,11 @@ router.post('/upload-chunk', chunkUpload.single('chunk'), async (req, res) => {
 });
 
 router.post('/create', handleUploads, async (req, res) => {
+    const validationError = validateRequired(req.body, { code: 'Product Code' });
+    if (validationError) {
+        return res.redirect(`/admin/products/create?error=${encodeURIComponent(validationError)}`);
+    }
+
     const {
         code, model, mda_reg_no, description,
         product_types, product_categories,
@@ -386,6 +392,11 @@ router.post('/create', handleUploads, async (req, res) => {
 });
 
 router.post('/edit/:id', handleUploads, async (req, res) => {
+    const validationError = validateRequired(req.body, { code: 'Product Code' });
+    if (validationError) {
+        return res.redirect(`/admin/products/edit/${req.params.id}?error=${encodeURIComponent(validationError)}`);
+    }
+
     const {
         code, model, mda_reg_no, description,
         product_types, product_categories,

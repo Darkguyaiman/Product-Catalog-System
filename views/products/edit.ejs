@@ -7,9 +7,11 @@
         </a>
     </div>
 
-    <div class="card" style="max-width: 900px; margin: 0 auto;">
+    <%- include('../partials/validation_banner') %>
+
+    <div class="card admin-form-card">
         <form id="editProductForm" action="/admin/products/edit/<%= product.id %>" method="POST"
-            enctype="multipart/form-data">
+            enctype="multipart/form-data" data-ajax-submit>
 
             <h3
                 style="margin-bottom: 1.5rem; font-size: 1.1rem; color: var(--blue-dark); border-bottom: 1px solid var(--gray-200); padding-bottom: 0.5rem;">
@@ -73,7 +75,7 @@
 
             <div class="grid-2">
                 <div class="form-group">
-                    <label>Product Code <span style="color: var(--danger);">*</span></label>
+                    <label>Product Code <span class="required-star">*</span></label>
                     <input type="text" name="code" value="<%= product.code %>" required>
                 </div>
                 <div class="form-group">
@@ -835,6 +837,8 @@
 
     document.getElementById('editProductForm').addEventListener('submit', async function (e) {
         e.preventDefault();
+        if (!FormValidation.validateBeforeSubmit(this)) return;
+
         const btn = document.getElementById('submitBtn');
         btn.classList.add('btn-loading');
         btn.disabled = true;
