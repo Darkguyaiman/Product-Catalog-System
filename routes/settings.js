@@ -179,7 +179,7 @@ router.post('/users/edit/:id', async (req, res) => {
     const userRole = req.session.user.role;
     if (userRole !== 'Admin' && userRole !== 'Super Admin') return res.status(403).send('Unauthorized');
 
-    const { email, role } = req.body;
+    const { email, password, role } = req.body;
 
     const validationError = validateRequired(req.body, {
         email: 'Email',
@@ -204,7 +204,12 @@ router.post('/users/edit/:id', async (req, res) => {
             return res.status(403).send('Unauthorized to promote to Super Admin');
         }
 
-        await pool.query("UPDATE users SET email = ?, role = ? WHERE id = ?", [email, role, req.params.id]);
+        if (password && password.trim().length > 0) {
+            const hashedPassword = await bcrypt.hash(password, 10);
+            await pool.query("UPDATE users SET email = ?, password = ?, role = ? WHERE id = ?", [email, hashedPassword, role, req.params.id]);
+        } else {
+            await pool.query("UPDATE users SET email = ?, role = ? WHERE id = ?", [email, role, req.params.id]);
+        }
         res.redirect('/admin/settings/users');
     } catch (err) {
         console.error(err);
@@ -240,4 +245,3 @@ router.post('/users/delete/:id', async (req, res) => {
 });
 
 module.exports = router;
-

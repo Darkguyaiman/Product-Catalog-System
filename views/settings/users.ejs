@@ -129,6 +129,17 @@
                 <input type="email" name="email" id="edit_email" required>
             </div>
             <div class="form-group" style="margin-top: 1rem;">
+                <label>New Password</label>
+                <div style="position: relative;">
+                    <input type="password" name="password" id="edit_password"
+                        placeholder="Leave blank to keep current password" style="padding-right: 40px;">
+                    <button type="button" id="toggleEditPassword"
+                        style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: var(--gray-400);">
+                        <i class="fa-solid fa-eye" id="editEyeIcon"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="form-group" style="margin-top: 1rem;">
                 <label>Role <span class="required-star">*</span></label>
                 <select name="role" id="edit_role" required>
                     <% if (user.role==='Super Admin' ) { %>
@@ -234,10 +245,12 @@
         const modal = document.getElementById('editUserModal');
         const form = document.getElementById('editUserForm');
         const emailInput = document.getElementById('edit_email');
+        const passwordInput = document.getElementById('edit_password');
         const roleSelect = document.getElementById('edit_role');
 
         form.action = '/admin/settings/users/edit/' + id;
         emailInput.value = email;
+        passwordInput.value = '';
         roleSelect.value = role;
 
         overlay.style.display = 'flex';
@@ -275,6 +288,9 @@
     const toggleUserPassword = document.querySelector('#toggleUserPassword');
     const userPassword = document.querySelector('#userPassword');
     const userEyeIcon = document.querySelector('#userEyeIcon');
+    const toggleEditPassword = document.querySelector('#toggleEditPassword');
+    const editPassword = document.querySelector('#edit_password');
+    const editEyeIcon = document.querySelector('#editEyeIcon');
 
     if (toggleUserPassword) {
         toggleUserPassword.addEventListener('click', function () {
@@ -287,6 +303,21 @@
             } else {
                 userEyeIcon.classList.remove('fa-eye');
                 userEyeIcon.classList.add('fa-eye-slash');
+            }
+        });
+    }
+
+    if (toggleEditPassword) {
+        toggleEditPassword.addEventListener('click', function () {
+            const type = editPassword.getAttribute('type') === 'password' ? 'text' : 'password';
+            editPassword.setAttribute('type', type);
+
+            if (type === 'password') {
+                editEyeIcon.classList.remove('fa-eye-slash');
+                editEyeIcon.classList.add('fa-eye');
+            } else {
+                editEyeIcon.classList.remove('fa-eye');
+                editEyeIcon.classList.add('fa-eye-slash');
             }
         });
     }
