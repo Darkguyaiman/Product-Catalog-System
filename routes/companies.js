@@ -5,7 +5,7 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 const sharp = require('sharp');
-const { validateRequired, validateOneOf, trimValue } = require('../utils/validation');
+const { validateRequired, validateOneOf, trimValue, nullIfEmpty } = require('../utils/validation');
 
 const COMPANY_REQUIRED_FIELDS = {
     name: 'Company/Brand Name',
@@ -14,7 +14,6 @@ const COMPANY_REQUIRED_FIELDS = {
     reg_date: 'Registration Date',
     contact_number: 'Contact Number',
     email: 'Email Address',
-    website: 'Website URL',
     address: 'Company Address'
 };
 
@@ -196,7 +195,7 @@ router.post('/add', handleUpload('logo'), async (req, res) => {
                 trimValue(reg_no),
                 trimValue(reg_date),
                 trimValue(address),
-                trimValue(website),
+                nullIfEmpty(website),
                 trimValue(email),
                 trimValue(contact_number)
             ]
@@ -274,7 +273,7 @@ router.post('/edit/:id', handleUpload('logo'), async (req, res) => {
                 trimValue(reg_no),
                 trimValue(reg_date),
                 trimValue(address),
-                trimValue(website),
+                nullIfEmpty(website),
                 trimValue(email),
                 trimValue(contact_number),
                 req.params.id
@@ -307,4 +306,3 @@ router.post('/delete/:id', async (req, res) => {
 });
 
 module.exports = router;
-
