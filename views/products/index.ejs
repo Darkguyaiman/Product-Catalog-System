@@ -119,6 +119,37 @@
             margin-left: 5px;
         }
 
+        .status-toggle-action {
+            width: 34px;
+            height: 30px;
+            padding: 0;
+            border-radius: 6px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid var(--gray-300);
+            background: var(--white);
+            color: var(--gray-600);
+            cursor: pointer;
+        }
+
+        .status-toggle-action.is-active {
+            border-color: #bbf7d0;
+            background: #f0fdf4;
+            color: #15803d;
+        }
+
+        .status-toggle-action.is-inactive {
+            border-color: var(--gray-300);
+            background: var(--gray-100);
+            color: var(--gray-600);
+        }
+
+        .status-toggle-action:hover {
+            border-color: var(--blue-light);
+            color: var(--blue-medium);
+        }
+
         @media (max-width: 1024px) {
             .filter-row {
                 flex-direction: column;
@@ -137,6 +168,15 @@
                 <input type="text" name="search" placeholder="Search products..."
                     value="<%= typeof search !== 'undefined' ? search : '' %>"
                     style="width: 100%; padding: 0.75rem 1rem 0.75rem 2.5rem; border: 1px solid var(--gray-300); border-radius: 6px;">
+            </div>
+
+            <div style="min-width: 160px;">
+                <select name="status"
+                    style="width: 100%; padding: 0.75rem 1rem; border: 1px solid var(--gray-300); border-radius: 6px;">
+                    <option value="all" <%= !locals.selectedStatus || selectedStatus === 'all' ? 'selected' : '' %>>All Status</option>
+                    <option value="active" <%= locals.selectedStatus === 'active' ? 'selected' : '' %>>Active</option>
+                    <option value="inactive" <%= locals.selectedStatus === 'inactive' ? 'selected' : '' %>>Inactive</option>
+                </select>
             </div>
 
             <!-- Category Multiselect -->
@@ -216,6 +256,7 @@
                     <tr>
                         <th style="width: 80px;">Image</th>
                         <th style="width: 300px;">Product Info</th>
+                        <th style="width: 110px;">Status</th>
                         <th>Reg. Numbers</th>
                         <th>Description</th>
                         <th style="text-align: center; width: 120px;">Actions</th>
@@ -224,7 +265,7 @@
                 <tbody>
                     <% if (products.length===0) { %>
                         <tr>
-                            <td colspan="5" style="text-align: center; padding: 2rem; color: var(--gray-500);">
+                            <td colspan="6" style="text-align: center; padding: 2rem; color: var(--gray-500);">
                                 No products found. Click "Register New Product" to get started.
                             </td>
                         </tr>
@@ -255,6 +296,13 @@
                                         </div>
                                     </td>
                                     <td>
+                                        <% if (p.is_active) { %>
+                                            <span class="badge badge-success" style="font-size: 0.75rem;">Active</span>
+                                        <% } else { %>
+                                            <span class="badge badge-secondary" style="font-size: 0.75rem; background: var(--gray-200); color: var(--gray-700);">Inactive</span>
+                                        <% } %>
+                                    </td>
+                                    <td>
                                         <div style="font-size: 0.85rem; color: var(--gray-700);">
                                             <strong>MDA Reg:</strong>
                                             <%= p.mda_reg_no || '-' %>
@@ -266,6 +314,14 @@
                                     </td>
                                     <td>
                                         <div style="display: flex; gap: 8px; justify-content: center;">
+                                            <form action="/admin/products/toggle-status/<%= p.id %>" method="POST"
+                                                style="margin: 0;">
+                                                <button type="submit"
+                                                    class="status-toggle-action <%= p.is_active ? 'is-active' : 'is-inactive' %>"
+                                                    title="<%= p.is_active ? 'Set inactive' : 'Set active' %>">
+                                                    <i class="fa-solid <%= p.is_active ? 'fa-toggle-on' : 'fa-toggle-off' %>"></i>
+                                                </button>
+                                            </form>
                                             <a href="/admin/products/edit/<%= p.id %>" class="btn btn-secondary btn-sm"
                                                 title="Edit">
                                                 <i class="fas fa-edit"></i>
@@ -319,9 +375,23 @@
                                 style="font-size: 0.65rem; padding: 2px 6px; margin-top: 2px;">
                                 <%= p.code %>
                             </span>
+                            <% if (p.is_active) { %>
+                                <span class="badge badge-success"
+                                    style="font-size: 0.65rem; padding: 2px 6px; margin-top: 2px;">Active</span>
+                            <% } else { %>
+                                <span class="badge badge-secondary"
+                                    style="font-size: 0.65rem; padding: 2px 6px; margin-top: 2px; background: var(--gray-200); color: var(--gray-700);">Inactive</span>
+                            <% } %>
                         </div>
                     </div>
                     <div class="category-card-actions">
+                        <form action="/admin/products/toggle-status/<%= p.id %>" method="POST" style="margin: 0;">
+                            <button type="submit"
+                                class="status-toggle-action <%= p.is_active ? 'is-active' : 'is-inactive' %>"
+                                title="<%= p.is_active ? 'Set inactive' : 'Set active' %>">
+                                <i class="fa-solid <%= p.is_active ? 'fa-toggle-on' : 'fa-toggle-off' %>"></i>
+                            </button>
+                        </form>
                         <a href="/admin/products/edit/<%= p.id %>" class="btn btn-secondary btn-sm">
                             <i class="fas fa-edit"></i>
                         </a>

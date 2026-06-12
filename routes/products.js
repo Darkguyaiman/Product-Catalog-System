@@ -47,7 +47,7 @@ function normalizeDeletedImageIds(deleted_images) {
 
 router.get('/', async (req, res) => {
     try {
-        const { search, category, categories: selectedCats, suppliers: selectedSups, types: selectedTypes } = req.query;
+        const { search, category, categories: selectedCats, suppliers: selectedSups, types: selectedTypes, status } = req.query;
 
         // Normalize filters to arrays
         const catFilters = Array.isArray(selectedCats) ? selectedCats : (selectedCats ? [selectedCats] : (category ? [category] : []));
@@ -98,6 +98,12 @@ router.get('/', async (req, res) => {
             params.push(...typeFilters);
         }
 
+        if (status === 'active') {
+            conditions.push('p.is_active = 1');
+        } else if (status === 'inactive') {
+            conditions.push('p.is_active = 0');
+        }
+
         if (conditions.length > 0) {
             query += " WHERE " + conditions.join(" AND ");
         }
@@ -114,7 +120,8 @@ router.get('/', async (req, res) => {
             search: search || '',
             selectedCategories: catFilters,
             selectedSuppliers: supFilters,
-            selectedTypes: typeFilters
+            selectedTypes: typeFilters,
+            selectedStatus: status || 'all'
         });
     } catch (err) {
         console.error(err);
@@ -307,6 +314,7 @@ router.post('/create', handleUploads, async (req, res) => {
         spec_key, spec_value,
         main_image_index,
         supplier_id,
+        is_active,
         mda_cert_path,
         product_images_paths
     } = req.body;
@@ -335,8 +343,8 @@ router.post('/create', handleUploads, async (req, res) => {
         }
 
         const [result] = await connection.query(
-            "INSERT INTO products (code, model, mda_reg_no, description, mda_cert, product_image, supplier_id) VALUES (?, ?, ?, ?, ?, ?, ?)",
-            [code, model, mda_reg_no, description, finalCertPath, mainImagePath, supplier_id || null]
+            "INSERT INTO products (code, model, mda_reg_no, description, mda_cert, product_image, supplier_id, is_active) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+            [code, model, mda_reg_no, description, finalCertPath, mainImagePath, supplier_id || null, is_active === '0' ? 0 : 1]
         );
         const productId = result.insertId;
 
@@ -404,6 +412,7 @@ router.post('/edit/:id', handleUploads, async (req, res) => {
         existing_mda_cert, mda_cert_removed,
         existing_images, deleted_images, main_image_id,
         supplier_id,
+        is_active,
         mda_cert_path,
         product_images_paths
     } = req.body;
@@ -482,8 +491,8 @@ router.post('/edit/:id', handleUploads, async (req, res) => {
         const mainImagePath = mainImageResult.length > 0 ? mainImageResult[0].image_path : null;
 
         const [result] = await connection.query(
-            "UPDATE products SET code=?, model=?, mda_reg_no=?, description=?, mda_cert=?, product_image=?, supplier_id=? WHERE id=?",
-            [code, model, mda_reg_no, description, finalCertPath, mainImagePath, supplier_id || null, productId]
+            "UPDATE products SET code=?, model=?, mda_reg_no=?, description=?, mda_cert=?, product_image=?, supplier_id=?, is_active=? WHERE id=?",
+            [code, model, mda_reg_no, description, finalCertPath, mainImagePath, supplier_id || null, is_active === '0' ? 0 : 1, productId]
         );
 
         // Reset Relations
@@ -530,6 +539,16 @@ router.post('/edit/:id', handleUploads, async (req, res) => {
         res.redirect(`/admin/products/edit/${req.params.id}?error=Failed to update product`);
     } finally {
         if (connection) connection.release();
+    }
+});
+
+router.post('/toggle-status/:id', async (req, res) => {
+    try {
+        await pool.query("UPDATE products SET is_active = IF(is_active = 1, 0, 1) WHERE id = ?", [req.params.id]);
+        res.redirect(req.get('Referrer') || '/admin/products');
+    } catch (err) {
+        console.error(err);
+        res.redirect('/admin/products?error=Failed to update product status');
     }
 });
 

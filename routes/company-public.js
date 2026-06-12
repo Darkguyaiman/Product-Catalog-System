@@ -46,7 +46,7 @@ router.get('/home', async (req, res) => {
         const { category, search } = req.query;
         let query = "SELECT p.* FROM products p JOIN supplier_companies sc ON p.supplier_id = sc.supplier_id";
         let params = [res.locals.currentCompany.id];
-        const conditions = ["sc.company_id = ?"];
+        const conditions = ["sc.company_id = ?", "p.is_active = 1"];
 
         // Fetch all categories for filter and recursion logic
         const [allCategories] = await pool.query("SELECT * FROM categories ORDER BY name ASC");
@@ -95,7 +95,7 @@ router.get('/products', async (req, res) => {
         const { category, search } = req.query;
         let query = "SELECT p.* FROM products p JOIN supplier_companies sc ON p.supplier_id = sc.supplier_id";
         let params = [res.locals.currentCompany.id];
-        const conditions = ["sc.company_id = ?"];
+        const conditions = ["sc.company_id = ?", "p.is_active = 1"];
 
         const [allCategories] = await pool.query("SELECT * FROM categories ORDER BY name ASC");
 
@@ -141,7 +141,7 @@ router.get('/product/:id', async (req, res) => {
         const [products] = await pool.query(`
             SELECT p.* FROM products p
             JOIN supplier_companies sc ON p.supplier_id = sc.supplier_id
-            WHERE p.id = ? AND sc.company_id = ?
+            WHERE p.id = ? AND sc.company_id = ? AND p.is_active = 1
         `, [req.params.id, res.locals.currentCompany.id]);
         if (products.length === 0) return res.status(404).send('Product not found');
         const product = products[0];
@@ -255,7 +255,7 @@ router.get('/product/:id/mda-cert', async (req, res) => {
         const [products] = await pool.query(`
             SELECT p.mda_cert FROM products p
             JOIN supplier_companies sc ON p.supplier_id = sc.supplier_id
-            WHERE p.id = ? AND sc.company_id = ?
+            WHERE p.id = ? AND sc.company_id = ? AND p.is_active = 1
         `, [req.params.id, res.locals.currentCompany.id]);
         if (products.length === 0 || !products[0].mda_cert) {
             return res.status(404).send('MDA Certificate not found');
@@ -284,7 +284,7 @@ router.get('/packages', async (req, res) => {
             JOIN package_products pp ON pkg.id = pp.package_id
             JOIN products p ON pp.product_id = p.id
             JOIN supplier_companies sc ON p.supplier_id = sc.supplier_id
-            WHERE sc.company_id = ?
+            WHERE sc.company_id = ? AND p.is_active = 1
         `;
         const params = [res.locals.currentCompany.id];
 
@@ -303,7 +303,7 @@ router.get('/packages', async (req, res) => {
                 SELECT p.* FROM products p
                 JOIN package_products pp ON p.id = pp.product_id
                 JOIN supplier_companies sc ON p.supplier_id = sc.supplier_id
-                WHERE pp.package_id = ? AND sc.company_id = ?
+                WHERE pp.package_id = ? AND sc.company_id = ? AND p.is_active = 1
                 ORDER BY pp.sort_order ASC
             `, [pkg.id, res.locals.currentCompany.id]);
 
@@ -338,7 +338,7 @@ router.get('/package/:id', async (req, res) => {
             JOIN package_products pp ON pkg.id = pp.package_id
             JOIN products p ON pp.product_id = p.id
             JOIN supplier_companies sc ON p.supplier_id = sc.supplier_id
-            WHERE pkg.id = ? AND sc.company_id = ?
+            WHERE pkg.id = ? AND sc.company_id = ? AND p.is_active = 1
         `, [req.params.id, res.locals.currentCompany.id]);
 
         if (packages.length === 0) return res.status(404).send('Package not found');
@@ -349,7 +349,7 @@ router.get('/package/:id', async (req, res) => {
             SELECT p.* FROM products p
             JOIN package_products pp ON p.id = pp.product_id
             JOIN supplier_companies sc ON p.supplier_id = sc.supplier_id
-            WHERE pp.package_id = ? AND sc.company_id = ?
+            WHERE pp.package_id = ? AND sc.company_id = ? AND p.is_active = 1
             ORDER BY pp.sort_order ASC
         `, [pkg.id, res.locals.currentCompany.id]);
 

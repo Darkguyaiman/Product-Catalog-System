@@ -40,6 +40,7 @@ async function initializeDatabase() {
 
         await connection.query(`CREATE DATABASE IF NOT EXISTS \`${process.env.DB_NAME || 'product_catalog'}\`;`);
         await connection.query(`USE \`${process.env.DB_NAME || 'product_catalog'}\`;`);
+        const dbName = process.env.DB_NAME || 'product_catalog';
 
         const createTablesSql = `
             CREATE TABLE IF NOT EXISTS users (
@@ -103,6 +104,7 @@ async function initializeDatabase() {
                 product_image VARCHAR(255),
                 mda_cert VARCHAR(255),
                 supplier_id INT DEFAULT NULL,
+                is_active TINYINT(1) NOT NULL DEFAULT 1,
                 FOREIGN KEY (supplier_id) REFERENCES suppliers(id) ON DELETE SET NULL,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             );
@@ -435,10 +437,23 @@ async function initializeDatabase() {
             console.log('Migration check for supplier_id skipped (table may not exist yet)');
         }
 
+        // Migration: Add product active/inactive status.
+        try {
+            const [activeColumns] = await connection.query(`
+                SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS
+                WHERE TABLE_SCHEMA = ? AND TABLE_NAME = 'products' AND COLUMN_NAME = 'is_active'
+            `, [dbName]);
+
+            if (activeColumns.length === 0) {
+                await connection.query("ALTER TABLE products ADD COLUMN is_active TINYINT(1) NOT NULL DEFAULT 1 AFTER supplier_id");
+                console.log('âœ“ Added is_active column to products table');
+            }
+        } catch (migrationError) {
+            console.log('Migration check for products.is_active skipped:', migrationError.message);
+        }
+
         // Migration for Packages enhancements
         try {
-            const dbName = process.env.DB_NAME || 'product_catalog';
-
             // Check bundle_label and main_image in packages
             const [pkgColumns] = await connection.query(`
                 SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS 
@@ -493,6 +508,31 @@ async function initializeDatabase() {
             }
         } catch (migrationError) {
             console.log('Migration for marketing_materials category/company failed or skipped:', migrationError.message);
+        }
+
+        // Dashboard indexes: keep date-range counts and completeness filtering efficient.
+        try {
+            const ensureIndex = async (tableName, indexName, createSql) => {
+                const [indexes] = await connection.query(`
+                    SELECT INDEX_NAME
+                    FROM INFORMATION_SCHEMA.STATISTICS
+                    WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ? AND INDEX_NAME = ?
+                `, [dbName, tableName, indexName]);
+
+                if (indexes.length === 0) {
+                    await connection.query(createSql);
+                }
+            };
+
+            await ensureIndex('products', 'idx_products_created_at', 'CREATE INDEX idx_products_created_at ON products(created_at)');
+            await ensureIndex('affiliated_companies', 'idx_companies_created_at', 'CREATE INDEX idx_companies_created_at ON affiliated_companies(created_at)');
+            await ensureIndex('suppliers', 'idx_suppliers_created_at', 'CREATE INDEX idx_suppliers_created_at ON suppliers(created_at)');
+            await ensureIndex('marketing_materials', 'idx_materials_created_at', 'CREATE INDEX idx_materials_created_at ON marketing_materials(created_at)');
+            await ensureIndex('events', 'idx_events_created_at', 'CREATE INDEX idx_events_created_at ON events(created_at)');
+            await ensureIndex('testimonies', 'idx_testimonies_created_at', 'CREATE INDEX idx_testimonies_created_at ON testimonies(created_at)');
+            await ensureIndex('products', 'idx_products_active_created_at', 'CREATE INDEX idx_products_active_created_at ON products(is_active, created_at)');
+        } catch (migrationError) {
+            console.log('Dashboard index migration skipped:', migrationError.message);
         }
 
         // Migration: Update users role enum
