@@ -130,6 +130,22 @@
                 </h2>
                 <p class="detail-hint">Products without any image</p>
             </div>
+
+            <div class="stat-card detail updated-products">
+                <div class="detail-header">
+                    <span class="detail-icon"><i class="fa-solid fa-pen-to-square"></i></span>
+                    <span class="trend-badge <%= productsUpdatedChange >= 0 ? 'up' : 'down' %>">
+                        <i
+                            class="fa-solid <%= productsUpdatedChange >= 0 ? 'fa-arrow-trend-up' : 'fa-arrow-trend-down' %>"></i>
+                        <%= Math.abs(productsUpdatedChange) %>%
+                    </span>
+                </div>
+                <p class="detail-label">Products Updated</p>
+                <h2 class="detail-value">
+                    <%= productsUpdated %>
+                </h2>
+                <p class="detail-hint">Unique products touched by edits or material changes</p>
+            </div>
         </div>
 
         <!-- Marketing Trends Row -->
@@ -375,6 +391,10 @@
         grid-template-columns: repeat(4, 1fr);
     }
 
+    .stats-row.product-health-stats {
+        grid-template-columns: repeat(4, 1fr);
+    }
+
     .stat-card {
         background: white;
         border-radius: 8px;
@@ -521,6 +541,11 @@
     .missing-images .detail-icon {
         background: #fef3c7;
         color: #b45309;
+    }
+
+    .updated-products .detail-icon {
+        background: #fee2e2;
+        color: #b91c1c;
     }
 
     .trend-badge {
@@ -905,6 +930,10 @@
         }
 
         .stats-row.main-stats {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        .stats-row.product-health-stats {
             grid-template-columns: repeat(2, 1fr);
         }
 

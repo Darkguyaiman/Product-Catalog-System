@@ -162,6 +162,14 @@ async function initializeDatabase() {
                 FOREIGN KEY (material_id) REFERENCES marketing_materials(id) ON DELETE CASCADE
             );
 
+            CREATE TABLE IF NOT EXISTS product_activity_logs (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                product_id INT NOT NULL,
+                activity_type ENUM('product_updated', 'material_added', 'material_updated', 'product_status_updated') NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE
+            );
+
             CREATE TABLE IF NOT EXISTS events (
                 id INT AUTO_INCREMENT PRIMARY KEY,
                 name VARCHAR(255) NOT NULL,
@@ -531,6 +539,8 @@ async function initializeDatabase() {
             await ensureIndex('events', 'idx_events_created_at', 'CREATE INDEX idx_events_created_at ON events(created_at)');
             await ensureIndex('testimonies', 'idx_testimonies_created_at', 'CREATE INDEX idx_testimonies_created_at ON testimonies(created_at)');
             await ensureIndex('products', 'idx_products_active_created_at', 'CREATE INDEX idx_products_active_created_at ON products(is_active, created_at)');
+            await ensureIndex('product_activity_logs', 'idx_product_activity_created_at', 'CREATE INDEX idx_product_activity_created_at ON product_activity_logs(created_at)');
+            await ensureIndex('product_activity_logs', 'idx_product_activity_product_created', 'CREATE INDEX idx_product_activity_product_created ON product_activity_logs(product_id, created_at)');
         } catch (migrationError) {
             console.log('Dashboard index migration skipped:', migrationError.message);
         }

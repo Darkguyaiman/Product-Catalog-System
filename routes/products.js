@@ -45,6 +45,20 @@ function normalizeDeletedImageIds(deleted_images) {
     return ids;
 }
 
+async function logProductActivity(connection, productIds, activityType) {
+    const ids = [...new Set((Array.isArray(productIds) ? productIds : [productIds])
+        .map((id) => parseInt(id, 10))
+        .filter((id) => Number.isFinite(id)))];
+
+    if (ids.length === 0) return;
+
+    const values = ids.map((productId) => [productId, activityType]);
+    await connection.query(
+        "INSERT INTO product_activity_logs (product_id, activity_type) VALUES ?",
+        [values]
+    );
+}
+
 router.get('/', async (req, res) => {
     try {
         const { search, category, categories: selectedCats, suppliers: selectedSups, types: selectedTypes, status } = req.query;
@@ -531,6 +545,8 @@ router.post('/edit/:id', handleUploads, async (req, res) => {
             }
         }
 
+        await logProductActivity(connection, productId, 'product_updated');
+
         await connection.commit();
         res.redirect('/admin/products');
     } catch (err) {
@@ -544,7 +560,18 @@ router.post('/edit/:id', handleUploads, async (req, res) => {
 
 router.post('/toggle-status/:id', async (req, res) => {
     try {
-        await pool.query("UPDATE products SET is_active = IF(is_active = 1, 0, 1) WHERE id = ?", [req.params.id]);
+        const connection = await pool.getConnection();
+        try {
+            await connection.beginTransaction();
+            await connection.query("UPDATE products SET is_active = IF(is_active = 1, 0, 1) WHERE id = ?", [req.params.id]);
+            await logProductActivity(connection, req.params.id, 'product_status_updated');
+            await connection.commit();
+        } catch (err) {
+            await connection.rollback();
+            throw err;
+        } finally {
+            connection.release();
+        }
         res.redirect(req.get('Referrer') || '/admin/products');
     } catch (err) {
         console.error(err);

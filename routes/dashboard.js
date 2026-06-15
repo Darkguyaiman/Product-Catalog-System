@@ -181,6 +181,24 @@ const getCatalogCompleteness = async (range) => {
     return completeness;
 };
 
+const getProductsUpdatedCount = async (range) => {
+    if (range.isAllTime) {
+        const [[{ count }]] = await pool.query(`
+            SELECT COUNT(DISTINCT product_id) AS count
+            FROM product_activity_logs
+        `);
+        return Number(count || 0);
+    }
+
+    const [[{ count }]] = await pool.query(`
+        SELECT COUNT(DISTINCT product_id) AS count
+        FROM product_activity_logs
+        WHERE created_at >= ? AND created_at < DATE_ADD(?, INTERVAL 1 DAY)
+    `, [range.startDate, range.endDate]);
+
+    return Number(count || 0);
+};
+
 const getDashboardData = async (query) => {
     const dateRange = getDashboardDateRange(query);
     const previousRange = dateRange.isAllTime ? null : getPreviousDateRange(dateRange.startDate, dateRange.endDate);
@@ -191,6 +209,9 @@ const getDashboardData = async (query) => {
     const catalogCompleteness = await getCatalogCompleteness(dateRange);
     const { activeProducts, inactiveProducts } = await getProductStatusCounts(dateRange);
     const missingProductImages = await getMissingProductImagesCount(dateRange);
+    const productsUpdated = await getProductsUpdatedCount(dateRange);
+    const lastProductsUpdated = previousRange ? await getProductsUpdatedCount(previousRange) : 0;
+    const productsUpdatedChange = getPercentageChange(productsUpdated, lastProductsUpdated);
 
     const totalMaterials = await countInRange('marketing_materials', dateRange);
     const lastMaterials = previousRange ? await countInRange('marketing_materials', previousRange) : 0;
@@ -247,6 +268,8 @@ const getDashboardData = async (query) => {
         activeProducts,
         inactiveProducts,
         missingProductImages,
+        productsUpdated,
+        productsUpdatedChange,
         totalMaterials,
         materialsChange,
         totalEvents,
@@ -382,21 +405,24 @@ const buildDashboardPdf = (data, reportTitle) => {
 
     card(42, 526, 160, 58, 'COMPLETENESS', `${formatPdfNumber(data.catalogCompleteness)}%`, color.blue);
     progress(54, 536, 136, 6, data.catalogCompleteness);
-    card(222, 526, 160, 58, 'COMPANIES', formatPdfNumber(data.totalCompanies), color.green);
+    card(222, 526, 160, 58, 'PRODUCTS UPDATED', `${formatPdfNumber(data.productsUpdated)} (${data.productsUpdatedChange}%)`, color.red);
     card(402, 526, 168, 58, 'SUPPLIERS', formatPdfNumber(data.totalSuppliers), color.amber);
 
-    sectionTitle('Marketing Activity', 486);
-    card(42, 408, 160, 58, 'TESTIMONIALS', `${formatPdfNumber(data.totalTestimonials)} (${data.testimonialsChange}%)`, color.red);
-    card(222, 408, 160, 58, 'EVENTS', `${formatPdfNumber(data.totalEvents)} (${data.eventsChange}%)`, color.blue);
-    card(402, 408, 168, 58, 'MARKETING ASSETS', `${formatPdfNumber(data.totalMaterials)} (${data.materialsChange}%)`, color.green);
+    card(42, 446, 160, 58, 'COMPANIES', formatPdfNumber(data.totalCompanies), color.green);
 
-    sectionTitle('Charts', 366);
-    barChart('Products per Category', data.categoriesData, 'count', 42, 196, 252, 150, color.blue);
-    barChart('Top Suppliers', data.suppliersData, 'product_count', 318, 196, 252, 150, color.green);
+    sectionTitle('Marketing Activity', 426);
+    card(42, 348, 160, 58, 'TESTIMONIALS', `${formatPdfNumber(data.totalTestimonials)} (${data.testimonialsChange}%)`, color.red);
+    card(222, 348, 160, 58, 'EVENTS', `${formatPdfNumber(data.totalEvents)} (${data.eventsChange}%)`, color.blue);
+    card(402, 348, 168, 58, 'MARKETING ASSETS', `${formatPdfNumber(data.totalMaterials)} (${data.materialsChange}%)`, color.green);
 
-    sectionTitle('Notes', 154);
-    text('Inactive products are hidden from public catalog pages. Missing images counts products without a main image or image records.', 42, 130, 8.5, color.muted);
-    text('Percent changes compare against the previous equivalent date range. All-time reports use full catalog totals.', 42, 114, 8.5, color.muted);
+    sectionTitle('Charts', 306);
+    barChart('Products per Category', data.categoriesData, 'count', 42, 136, 252, 150, color.blue);
+    barChart('Top Suppliers', data.suppliersData, 'product_count', 318, 136, 252, 150, color.green);
+
+    sectionTitle('Notes', 94);
+    text('Inactive products are hidden from public catalog pages. Missing images counts products without a main image or image records.', 42, 70, 8.5, color.muted);
+    text('Products updated counts unique products touched by product edits, status changes, or related material updates.', 42, 54, 8.5, color.muted);
+    text('Percent changes compare against the previous equivalent date range. All-time reports use full catalog totals.', 42, 38, 8.5, color.muted);
 
     const contentStream = content.join('\n');
     const objects = [

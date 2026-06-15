@@ -78,6 +78,20 @@ const buildTestimonyWhere = (search, productIds) => {
     return { where: conditions.length ? 'WHERE ' + conditions.join(' AND ') : '', params };
 };
 
+async function logProductActivity(connection, productIds, activityType) {
+    const ids = [...new Set((Array.isArray(productIds) ? productIds : [productIds])
+        .map((id) => parseInt(id, 10))
+        .filter((id) => Number.isFinite(id)))];
+
+    if (ids.length === 0) return;
+
+    const values = ids.map((productId) => [productId, activityType]);
+    await connection.query(
+        "INSERT INTO product_activity_logs (product_id, activity_type) VALUES ?",
+        [values]
+    );
+}
+
 const getMarketingData = async (req) => {
     const { search, product_id, category, companies: selectedCompanies, products: selectedProducts } = req.query;
 
@@ -318,6 +332,7 @@ router.post('/materials/add', upload.single('file'), async (req, res) => {
             if (pIds.length > 0) {
                 const values = pIds.map(pid => [pid, materialId]);
                 await connection.query("INSERT INTO product_marketing (product_id, material_id) VALUES ?", [values]);
+                await logProductActivity(connection, pIds, 'material_added');
             }
         }
 
@@ -365,6 +380,10 @@ router.post('/materials/edit/:id', upload.single('file'), async (req, res) => {
     try {
         connection = await pool.getConnection();
         await connection.beginTransaction();
+        const [currentLinks] = await connection.query(
+            "SELECT product_id FROM product_marketing WHERE material_id = ?",
+            [req.params.id]
+        );
 
         let finalFilePath = existing_file;
         let finalFileType = undefined;
@@ -430,13 +449,16 @@ router.post('/materials/edit/:id', upload.single('file'), async (req, res) => {
 
         // Update Products
         await connection.query("DELETE FROM product_marketing WHERE material_id = ?", [req.params.id]);
-        if (product_ids) {
-            const pIds = Array.isArray(product_ids) ? product_ids : (product_ids ? [product_ids] : []);
-            if (pIds.length > 0) {
-                const values = pIds.map(pid => [pid, req.params.id]);
-                await connection.query("INSERT INTO product_marketing (product_id, material_id) VALUES ?", [values]);
-            }
+        const pIds = Array.isArray(product_ids) ? product_ids : (product_ids ? [product_ids] : []);
+        if (pIds.length > 0) {
+            const values = pIds.map(pid => [pid, req.params.id]);
+            await connection.query("INSERT INTO product_marketing (product_id, material_id) VALUES ?", [values]);
         }
+        await logProductActivity(
+            connection,
+            [...currentLinks.map((row) => row.product_id), ...pIds],
+            'material_updated'
+        );
 
         await connection.commit();
         res.redirect(`/admin/marketing/materials?category=${category || 'BROCHURE'}`);
