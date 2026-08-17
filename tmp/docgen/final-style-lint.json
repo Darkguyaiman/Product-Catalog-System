@@ -1,0 +1,160 @@
+{
+  "input": "C:\\Users\\Mohamed Aiman\\Desktop\\Product Catalog System\\Product Catalog System Documentation\\Product Catalog System Per Tab Explanation.docx",
+  "fonts_by_char_count": {
+    "Times New Roman": 1009
+  },
+  "direct_run_formatting_runs": 163,
+  "direct_paragraph_formatting_paragraphs": 253,
+  "heading_like_paragraphs_not_heading_style": [
+    {
+      "para_index": 11,
+      "text": "Product Catalog System",
+      "style": "Normal"
+    },
+    {
+      "para_index": 13,
+      "text": "Table of Contents",
+      "style": "Normal"
+    },
+    {
+      "para_index": 257,
+      "text": "Sidebar tab",
+      "style": "Normal"
+    },
+    {
+      "para_index": 258,
+      "text": "Sub pages/actions",
+      "style": "Normal"
+    },
+    {
+      "para_index": 259,
+      "text": "Access note",
+      "style": "Normal"
+    },
+    {
+      "para_index": 287,
+      "text": "Role",
+      "style": "Normal"
+    },
+    {
+      "para_index": 288,
+      "text": "Can view",
+      "style": "Normal"
+    },
+    {
+      "para_index": 289,
+      "text": "Can change",
+      "style": "Normal"
+    },
+    {
+      "para_index": 305,
+      "text": "Sub-tab",
+      "style": "Normal"
+    },
+    {
+      "para_index": 306,
+      "text": "Information",
+      "style": "Normal"
+    },
+    {
+      "para_index": 307,
+      "text": "Main actions",
+      "style": "Normal"
+    },
+    {
+      "para_index": 320,
+      "text": "Area",
+      "style": "Normal"
+    },
+    {
+      "para_index": 321,
+      "text": "Fields/actions",
+      "style": "Normal"
+    },
+    {
+      "para_index": 332,
+      "text": "Settings tab",
+      "style": "Normal"
+    },
+    {
+      "para_index": 333,
+      "text": "Purpose",
+      "style": "Normal"
+    },
+    {
+      "para_index": 334,
+      "text": "Important actions",
+      "style": "Normal"
+    },
+    {
+      "para_index": 347,
+      "text": "Public page",
+      "style": "Normal"
+    },
+    {
+      "para_index": 348,
+      "text": "What the visitor can do",
+      "style": "Normal"
+    }
+  ],
+  "examples": {
+    "direct_paragraph_formatting": [
+      {
+        "para_index": 11,
+        "text": "Product Catalog System",
+        "style": "Normal"
+      },
+      {
+        "para_index": 62,
+        "text": "This guide explains each tab in the Product Catalog System, the information shown there, who normally uses it, and the e",
+        "style": "Normal"
+      },
+      {
+        "para_index": 63,
+        "text": "Reference style: module purpose, information displayed, main actions, workflow, and controls. Role notes below describe ",
+        "style": "Normal"
+      },
+      {
+        "para_index": 65,
+        "text": "End-to-end process: Sign in -> Review Dashboard -> Maintain reference data -> Add suppliers and companies -> Create prod",
+        "style": "Normal"
+      },
+      {
+        "para_index": 67,
+        "text": "This is the practical navigation map for the authenticated left sidebar. Marketing and Product Catalogue sections can be",
+        "style": "Normal"
+      }
+    ],
+    "direct_run_formatting": [
+      {
+        "para_index": 11,
+        "run_text": "Product Catalog System",
+        "style": "Normal"
+      },
+      {
+        "para_index": 13,
+        "run_text": "Table of Contents",
+        "style": "Normal"
+      },
+      {
+        "para_index": 61,
+        "run_text": "Tab Explanation and Step-by-Step User Guide",
+        "style": "Normal"
+      },
+      {
+        "para_index": 64,
+        "run_text": "System Flow",
+        "style": "Heading 1"
+      },
+      {
+        "para_index": 65,
+        "run_text": "End-to-end process:",
+        "style": "Normal"
+      }
+    ]
+  },
+  "notes": [
+    "Direct formatting is not always wrong, but it often causes inconsistent output when templates change.",
+    "Heading-like paragraphs not using Heading styles can break TOC and accessibility."
+  ]
+}
