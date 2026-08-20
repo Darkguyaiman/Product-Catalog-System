@@ -13,8 +13,8 @@
                 <p class="page-subtitle">Upload your spreadsheet to batch-process records.</p>
             </div>
         </div>
-        <a href="<%= templateUrl %>" target="_blank" class="download-template-btn">
-            <i class="fas fa-file-download"></i> <span class="d-none-mobile">Get Google Sheets Template</span><span
+        <a href="<%= templateUrl %>" class="download-template-btn" download>
+            <i class="fas fa-file-excel"></i> <span class="d-none-mobile">Download Excel Template</span><span
                 class="d-only-mobile">Template</span>
         </a>
     </div>
@@ -164,8 +164,12 @@
                                 <div class="card" style="border-radius: 20px;">
                                     <h3 style="margin-top: 0; margin-bottom: 1.5rem;">Instructions</h3>
                                     <ul class="instruction-list">
-                                        <li><i class="fas fa-check-circle"></i> Use the provided template for best
-                                            results.</li>
+                                        <li><i class="fas fa-check-circle"></i> Download the Excel template and fill
+                                            in your data.</li>
+                                        <% if (type === 'Categories') { %>
+                                            <li><i class="fas fa-check-circle"></i> Parent Category is a dropdown of
+                                                existing top-level categories. Leave it blank for a new parent.</li>
+                                        <% } %>
                                         <li><i class="fas fa-check-circle"></i> Don't change column headers in row 1.
                                         </li>
                                         <li><i class="fas fa-check-circle"></i> System will skip duplicates

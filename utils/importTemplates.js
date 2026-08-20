@@ -1,0 +1,168 @@
+const ExcelJS = require('exceljs');
+
+const TEMPLATES = {
+    countries: {
+        filename: 'countries-import-template.xlsx',
+        sheetName: 'Countries',
+        headerColor: 'FF005B96',
+        columns: [
+            { header: 'Country', key: 'country', width: 40 }
+        ],
+        instructions: [
+            'Enter one country name per row in column A (Country).',
+            'Do not change or delete the header in row 1.',
+            'Empty rows are ignored during import.',
+            'Countries that already exist in the system are skipped as duplicates.'
+        ]
+    },
+    'product-types': {
+        filename: 'product-types-import-template.xlsx',
+        sheetName: 'Product Types',
+        headerColor: 'FF009688',
+        columns: [
+            { header: 'Product Type', key: 'productType', width: 40 }
+        ],
+        instructions: [
+            'Enter one product type per row in column A (Product Type).',
+            'Do not change or delete the header in row 1.',
+            'Empty rows are ignored during import.',
+            'Product types that already exist in the system are skipped as duplicates.'
+        ]
+    },
+    categories: {
+        filename: 'categories-import-template.xlsx',
+        sheetName: 'Categories',
+        headerColor: 'FF7B1FA2',
+        columns: [
+            { header: 'Category Name', key: 'name', width: 36 },
+            { header: 'Parent Category', key: 'parent', width: 36 }
+        ],
+        instructions: [
+            'Column A (Category Name) is required — one category per row.',
+            'Column B (Parent Category) is a dropdown of top-level categories currently in the system.',
+            'Leave Parent Category blank to create a new top-level category.',
+            'Do not type a parent name that is not in the dropdown — it must already exist.',
+            'Import parent categories first, then download a fresh template to add subcategories.',
+            'Do not change or delete the headers in row 1.',
+            'Categories that already exist are skipped as duplicates.'
+        ]
+    }
+};
+
+const DATA_ROW_COUNT = 25;
+const PARENT_DROPDOWN_LAST_ROW = 1000;
+
+function styleHeaderRow(sheet, headerColor, columnCount) {
+    const headerRow = sheet.getRow(1);
+    headerRow.height = 24;
+    headerRow.font = { bold: true, color: { argb: 'FFFFFFFF' }, size: 12, name: 'Calibri' };
+    headerRow.alignment = { vertical: 'middle', horizontal: 'left' };
+    headerRow.fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: headerColor }
+    };
+
+    for (let col = 1; col <= columnCount; col++) {
+        const cell = headerRow.getCell(col);
+        cell.border = {
+            bottom: { style: 'thin', color: { argb: headerColor } }
+        };
+    }
+}
+
+function addParentCategoryDropdown(workbook, sheet, parentCategories) {
+    const names = (parentCategories || []).map((name) => String(name).trim()).filter(Boolean);
+    if (names.length === 0) return;
+
+    const listSheet = workbook.addWorksheet('ParentOptions', { state: 'hidden' });
+    listSheet.state = 'hidden';
+    listSheet.getColumn(1).width = 36;
+    names.forEach((name, index) => {
+        listSheet.getCell(index + 1, 1).value = name;
+    });
+
+    sheet.dataValidations.add(`B2:B${PARENT_DROPDOWN_LAST_ROW}`, {
+        type: 'list',
+        allowBlank: true,
+        formulae: [`ParentOptions!$A$1:$A$${names.length}`],
+        showInputMessage: true,
+        promptTitle: 'Parent Category',
+        prompt: 'Pick a top-level category from the system, or leave blank.',
+        showErrorMessage: true,
+        errorStyle: 'warning',
+        errorTitle: 'Unknown parent',
+        error: 'Choose a parent from the dropdown, or leave blank for a top-level category.'
+    });
+}
+
+async function generateImportTemplate(type, options = {}) {
+    const config = TEMPLATES[type];
+    if (!config) return null;
+
+    const workbook = new ExcelJS.Workbook();
+    workbook.creator = 'Product Catalog System';
+    workbook.created = new Date();
+    workbook.modified = new Date();
+
+    const sheet = workbook.addWorksheet(config.sheetName, {
+        views: [{ state: 'frozen', ySplit: 1, showGridLines: true }]
+    });
+
+    sheet.columns = config.columns;
+
+    styleHeaderRow(sheet, config.headerColor, config.columns.length);
+
+    sheet.autoFilter = {
+        from: { row: 1, column: 1 },
+        to: { row: 1, column: config.columns.length }
+    };
+
+    for (let i = 0; i < DATA_ROW_COUNT; i++) {
+        const row = sheet.addRow(config.columns.map(() => ''));
+        row.height = 20;
+        row.alignment = { vertical: 'middle' };
+        row.eachCell({ includeEmpty: true }, (cell) => {
+            cell.border = {
+                top: { style: 'hair', color: { argb: 'FFE5E7EB' } },
+                left: { style: 'hair', color: { argb: 'FFE5E7EB' } },
+                bottom: { style: 'hair', color: { argb: 'FFE5E7EB' } },
+                right: { style: 'hair', color: { argb: 'FFE5E7EB' } }
+            };
+        });
+    }
+
+    if (type === 'categories') {
+        addParentCategoryDropdown(workbook, sheet, options.parentCategories);
+    }
+
+    const instructions = [...config.instructions];
+    if (type === 'categories' && (!options.parentCategories || options.parentCategories.length === 0)) {
+        instructions.splice(1, 0, 'No top-level categories exist yet. Leave Parent Category blank, import them first, then download a fresh template to add subcategories.');
+    }
+
+    const info = workbook.addWorksheet('Instructions');
+    info.columns = [
+        { header: 'How to use this template', key: 'text', width: 90 }
+    ];
+    styleHeaderRow(info, config.headerColor, 1);
+
+    instructions.forEach((line, index) => {
+        const row = info.addRow([`${index + 1}. ${line}`]);
+        row.height = 22;
+        row.alignment = { vertical: 'middle', wrapText: true };
+        row.font = { name: 'Calibri', size: 11 };
+    });
+
+    const note = info.addRow(['Fill in the first worksheet, save this file, then upload it on the import page.']);
+    note.height = 22;
+    note.font = { name: 'Calibri', size: 11, italic: true, color: { argb: 'FF6B7280' } };
+
+    return workbook;
+}
+
+function getTemplateMeta(type) {
+    return TEMPLATES[type] || null;
+}
+
+module.exports = { generateImportTemplate, getTemplateMeta };

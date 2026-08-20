@@ -60,12 +60,9 @@ app.use(async (req, res, next) => {
   res.locals.brandLogo = '/QSS Healthcare.png';
   res.locals.brandName = 'Q-Product Catalogue';
 
-  // Template Links
+  // Template Links (product specs still use a Google Sheet; import templates are generated)
   res.locals.templates = {
-    specs: process.env.LINK_TEMPLATE_SPECS || 'https://docs.google.com/spreadsheets/d/1rsj9z5fF3X0N2GR0GRte_mvfiYkum_eoXpfpHGa1Cbc/edit?usp=sharing',
-    country: process.env.LINK_TEMPLATE_COUNTRY || 'https://docs.google.com/spreadsheets/d/1Z5YX-KwK9UlplEV4l884WX5fu3pl21slR6Ds3wbCglM/edit?usp=sharing',
-    product_type: process.env.LINK_TEMPLATE_PRODUCT_TYPE || 'https://docs.google.com/spreadsheets/d/1KLMLkfl45CuUjhCz_fn4XmRr3_nNVTLBZHPur7aihZA/edit?usp=sharing',
-    category: process.env.LINK_TEMPLATE_CATEGORY || 'https://docs.google.com/spreadsheets/d/1dgpEkZbMPKc1_WyV8BqVq1_B6DtFbvaQz1H48pXya6o/edit?usp=sharing'
+    specs: process.env.LINK_TEMPLATE_SPECS || 'https://docs.google.com/spreadsheets/d/1rsj9z5fF3X0N2GR0GRte_mvfiYkum_eoXpfpHGa1Cbc/edit?usp=sharing'
   };
 
   next();

@@ -3,6 +3,7 @@ const router = express.Router();
 const multer = require('multer');
 const xlsx = require('xlsx');
 const { pool } = require('../config/database');
+const { generateImportTemplate, getTemplateMeta } = require('../utils/importTemplates');
 
 // Middleware to check auth
 router.use((req, res, next) => {
@@ -13,15 +14,35 @@ router.use((req, res, next) => {
 const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
 
-const TEMPLATES = {
-    country: process.env.LINK_TEMPLATE_COUNTRY || 'https://docs.google.com/spreadsheets/d/1Z5YX-KwK9UlplEV4l884WX5fu3pl21slR6Ds3wbCglM/edit?usp=sharing',
-    product_type: process.env.LINK_TEMPLATE_PRODUCT_TYPE || 'https://docs.google.com/spreadsheets/d/1KLMLkfl45CuUjhCz_fn4XmRr3_nNVTLBZHPur7aihZA/edit?usp=sharing',
-    category: process.env.LINK_TEMPLATE_CATEGORY || 'https://docs.google.com/spreadsheets/d/1dgpEkZbMPKc1_WyV8BqVq1_B6DtFbvaQz1H48pXya6o/edit?usp=sharing'
-};
-
 // Import Index (Selection)
 router.get('/', async (req, res) => {
-    res.render('import/index', { templates: TEMPLATES });
+    res.render('import/index');
+});
+
+// Generated Excel templates (ExcelJS)
+router.get('/template/:type', async (req, res) => {
+    const meta = getTemplateMeta(req.params.type);
+    if (!meta) return res.redirect('/admin/import');
+
+    try {
+        const templateOptions = {};
+        if (req.params.type === 'categories') {
+            const [parents] = await pool.query(
+                "SELECT name FROM categories WHERE parent_id IS NULL ORDER BY name ASC"
+            );
+            templateOptions.parentCategories = parents.map((row) => row.name);
+        }
+
+        const workbook = await generateImportTemplate(req.params.type, templateOptions);
+        const buffer = await workbook.xlsx.writeBuffer();
+
+        res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        res.setHeader('Content-Disposition', `attachment; filename="${meta.filename}"`);
+        res.send(Buffer.from(buffer));
+    } catch (err) {
+        console.error(err);
+        res.redirect(`/admin/import/${req.params.type}?error=Failed to generate template`);
+    }
 });
 
 // Dedicated Import Pages
@@ -32,7 +53,7 @@ router.get('/countries', (req, res) => {
         type: 'Countries',
         icon: 'fa-globe-americas',
         color: '#005b96',
-        templateUrl: TEMPLATES.country,
+        templateUrl: '/admin/import/template/countries',
         action: '/admin/import/countries',
         error: req.query.error,
         success: req.query.success,
@@ -47,7 +68,7 @@ router.get('/product-types', (req, res) => {
         type: 'Product Types',
         icon: 'fa-tags',
         color: '#009688',
-        templateUrl: TEMPLATES.product_type,
+        templateUrl: '/admin/import/template/product-types',
         action: '/admin/import/product-types',
         error: req.query.error,
         success: req.query.success,
@@ -62,7 +83,7 @@ router.get('/categories', (req, res) => {
         type: 'Categories',
         icon: 'fa-folder-tree',
         color: '#7b1fa2',
-        templateUrl: TEMPLATES.category,
+        templateUrl: '/admin/import/template/categories',
         action: '/admin/import/categories',
         error: req.query.error,
         success: req.query.success,
