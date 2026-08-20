@@ -60,11 +60,6 @@ app.use(async (req, res, next) => {
   res.locals.brandLogo = '/QSS Healthcare.png';
   res.locals.brandName = 'Q-Product Catalogue';
 
-  // Template Links (product specs still use a Google Sheet; import templates are generated)
-  res.locals.templates = {
-    specs: process.env.LINK_TEMPLATE_SPECS || 'https://docs.google.com/spreadsheets/d/1rsj9z5fF3X0N2GR0GRte_mvfiYkum_eoXpfpHGa1Cbc/edit?usp=sharing'
-  };
-
   next();
 });
 

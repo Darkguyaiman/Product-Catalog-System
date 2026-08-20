@@ -6,6 +6,7 @@ const path = require('path');
 const fs = require('fs');
 const sharp = require('sharp');
 const { validateRequired } = require('../utils/validation');
+const { generateImportTemplate, getTemplateMeta } = require('../utils/importTemplates');
 
 // Configure Multer (Memory Storage for Sharp processing of images, direct save for PDFs if needed manually)
 const storage = multer.memoryStorage();
@@ -140,6 +141,29 @@ router.get('/', async (req, res) => {
     } catch (err) {
         console.error(err);
         res.status(500).send('Server Error');
+    }
+});
+
+router.get('/template/specs', async (req, res) => {
+    const meta = getTemplateMeta('specs');
+    try {
+        const [rows] = await pool.query(`
+            SELECT DISTINCT spec_key AS name
+            FROM product_specifications
+            WHERE TRIM(COALESCE(spec_key, '')) <> ''
+            ORDER BY spec_key ASC
+        `);
+        const workbook = await generateImportTemplate('specs', {
+            specKeys: rows.map((row) => row.name)
+        });
+        const buffer = await workbook.xlsx.writeBuffer();
+
+        res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        res.setHeader('Content-Disposition', `attachment; filename="${meta.filename}"`);
+        res.send(Buffer.from(buffer));
+    } catch (err) {
+        console.error(err);
+        res.redirect('/admin/products/create?error=Failed to generate specs template');
     }
 });
 

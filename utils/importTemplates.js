@@ -46,11 +46,28 @@ const TEMPLATES = {
             'Do not change or delete the headers in row 1.',
             'Categories that already exist are skipped as duplicates.'
         ]
+    },
+    specs: {
+        filename: 'product-specs-import-template.xlsx',
+        sheetName: 'Specifications',
+        headerColor: 'FF005B96',
+        columns: [
+            { header: 'Specification Name', key: 'name', width: 36 },
+            { header: 'Value', key: 'value', width: 40 }
+        ],
+        instructions: [
+            'Column A (Specification Name) is a dropdown of names already used in the catalog.',
+            'Pick an existing name for consistency, or type a new one.',
+            'Column B (Value) is the value for this product.',
+            'Do not change or delete the headers in row 1.',
+            'Save this file, then use Import Specs from Excel on the product form.'
+        ],
+        footerNote: 'Fill in the Specifications sheet, save this file, then import it on the product create or edit page.'
     }
 };
 
 const DATA_ROW_COUNT = 25;
-const PARENT_DROPDOWN_LAST_ROW = 1000;
+const DROPDOWN_LAST_ROW = 1000;
 
 function styleHeaderRow(sheet, headerColor, columnCount) {
     const headerRow = sheet.getRow(1);
@@ -71,28 +88,37 @@ function styleHeaderRow(sheet, headerColor, columnCount) {
     }
 }
 
-function addParentCategoryDropdown(workbook, sheet, parentCategories) {
-    const names = (parentCategories || []).map((name) => String(name).trim()).filter(Boolean);
-    if (names.length === 0) return;
+function addHiddenListDropdown(workbook, sheet, {
+    names,
+    listSheetName,
+    targetRange,
+    promptTitle,
+    prompt,
+    errorTitle,
+    error,
+    allowCustom = false
+}) {
+    const list = (names || []).map((name) => String(name).trim()).filter(Boolean);
+    if (list.length === 0) return;
 
-    const listSheet = workbook.addWorksheet('ParentOptions', { state: 'hidden' });
+    const listSheet = workbook.addWorksheet(listSheetName, { state: 'hidden' });
     listSheet.state = 'hidden';
     listSheet.getColumn(1).width = 36;
-    names.forEach((name, index) => {
+    list.forEach((name, index) => {
         listSheet.getCell(index + 1, 1).value = name;
     });
 
-    sheet.dataValidations.add(`B2:B${PARENT_DROPDOWN_LAST_ROW}`, {
+    sheet.dataValidations.add(targetRange, {
         type: 'list',
         allowBlank: true,
-        formulae: [`ParentOptions!$A$1:$A$${names.length}`],
+        formulae: [`${listSheetName}!$A$1:$A$${list.length}`],
         showInputMessage: true,
-        promptTitle: 'Parent Category',
-        prompt: 'Pick a top-level category from the system, or leave blank.',
+        promptTitle,
+        prompt,
         showErrorMessage: true,
-        errorStyle: 'warning',
-        errorTitle: 'Unknown parent',
-        error: 'Choose a parent from the dropdown, or leave blank for a top-level category.'
+        errorStyle: allowCustom ? 'information' : 'warning',
+        errorTitle,
+        error
     });
 }
 
@@ -133,12 +159,36 @@ async function generateImportTemplate(type, options = {}) {
     }
 
     if (type === 'categories') {
-        addParentCategoryDropdown(workbook, sheet, options.parentCategories);
+        addHiddenListDropdown(workbook, sheet, {
+            names: options.parentCategories,
+            listSheetName: 'ParentOptions',
+            targetRange: `B2:B${DROPDOWN_LAST_ROW}`,
+            promptTitle: 'Parent Category',
+            prompt: 'Pick a top-level category from the system, or leave blank.',
+            errorTitle: 'Unknown parent',
+            error: 'Choose a parent from the dropdown, or leave blank for a top-level category.'
+        });
+    }
+
+    if (type === 'specs') {
+        addHiddenListDropdown(workbook, sheet, {
+            names: options.specKeys,
+            listSheetName: 'SpecOptions',
+            targetRange: `A2:A${DROPDOWN_LAST_ROW}`,
+            promptTitle: 'Specification Name',
+            prompt: 'Pick an existing specification name, or type a new one.',
+            errorTitle: 'New specification name',
+            error: 'This name is not in the current catalog. You can keep it as a new specification.',
+            allowCustom: true
+        });
     }
 
     const instructions = [...config.instructions];
     if (type === 'categories' && (!options.parentCategories || options.parentCategories.length === 0)) {
         instructions.splice(1, 0, 'No top-level categories exist yet. Leave Parent Category blank, import them first, then download a fresh template to add subcategories.');
+    }
+    if (type === 'specs' && (!options.specKeys || options.specKeys.length === 0)) {
+        instructions.splice(1, 0, 'No specification names exist yet. Type names in column A; later downloads will include them in the dropdown.');
     }
 
     const info = workbook.addWorksheet('Instructions');
@@ -154,7 +204,7 @@ async function generateImportTemplate(type, options = {}) {
         row.font = { name: 'Calibri', size: 11 };
     });
 
-    const note = info.addRow(['Fill in the first worksheet, save this file, then upload it on the import page.']);
+    const note = info.addRow([config.footerNote || 'Fill in the first worksheet, save this file, then upload it on the import page.']);
     note.height = 22;
     note.font = { name: 'Calibri', size: 11, italic: true, color: { argb: 'FF6B7280' } };
 
